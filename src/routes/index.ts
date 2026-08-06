@@ -1,0 +1,48 @@
+import { Router } from 'express';
+import { authRoutes } from './auth.routes';
+import { studentRoutes } from './student.routes';
+import { teacherRoutes } from './teacher.routes';
+import { employeeRoutes } from './employee.routes';
+import { classRoutes } from './class.routes';
+import { subjectRoutes } from './subject.routes';
+import { attendanceRoutes } from './attendance.routes';
+import { paymentRoutes } from './payment.routes';
+import { financeRoutes } from './finance.routes';
+import { ppdbRoutes } from './ppdb.routes';
+import { documentRoutes } from './document.routes';
+import { reportRoutes } from './report.routes';
+import { dashboardRoutes } from './dashboard.routes';
+import { notificationRoutes } from './notification.routes';
+import { whatsappRoutes } from './whatsapp.routes';
+import { aiRoutes } from './ai.routes';
+import { systemRoutes } from './system.routes';
+import { payrollRoutes } from './payroll.routes';
+import { inventoryRoutes } from './inventory.routes';
+import { dapodikRoutes } from './dapodik.routes';
+import { legerRoutes } from './leger.routes';
+
+export const indexRoutes = Router();
+
+indexRoutes.use('/auth', authRoutes);
+indexRoutes.use('/students', studentRoutes);
+indexRoutes.use('/teachers', teacherRoutes);
+indexRoutes.use('/employees', employeeRoutes);
+indexRoutes.use('/classes', classRoutes);
+indexRoutes.use('/subjects', subjectRoutes);
+indexRoutes.use('/attendance', attendanceRoutes);
+indexRoutes.use('/payments', paymentRoutes);
+indexRoutes.use('/finance', financeRoutes);
+indexRoutes.use('/ppdb', ppdbRoutes);
+indexRoutes.use('/documents', documentRoutes);
+indexRoutes.use('/reports', reportRoutes);
+indexRoutes.use('/dashboard', dashboardRoutes);
+indexRoutes.use('/notifications', notificationRoutes);
+indexRoutes.use('/whatsapp', whatsappRoutes);
+indexRoutes.use('/ai', aiRoutes);
+indexRoutes.use('/system', systemRoutes);
+indexRoutes.use('/payroll', payrollRoutes);
+indexRoutes.use('/inventory', inventoryRoutes);
+indexRoutes.use('/dapodik', dapodikRoutes);
+indexRoutes.use('/leger', legerRoutes);
+
+

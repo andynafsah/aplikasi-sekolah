@@ -1,0 +1,156 @@
+                    </div>
+
+                    {/* Virtual Scanning Target Box OR Camera Viewfinder */}
+                    <div className="relative border-2 border-dashed border-indigo-500/40 hover:border-indigo-400 rounded-2xl bg-slate-950/80 overflow-hidden flex flex-col transition-all duration-300 group shadow-inner">
+                      
+                      {studentScanBeepAlert && (
+                        <div className="absolute inset-0 bg-emerald-950/95 flex flex-col items-center justify-center text-emerald-400 z-50 animate-fade-in backdrop-blur-sm">
+                          <CheckCircle2 className="h-16 w-16 text-emerald-400 animate-bounce shadow-emerald-500/50 drop-shadow-lg" />
+                          <span className="font-extrabold text-lg tracking-widest uppercase mt-4 text-emerald-300 drop-shadow-md">BEEP! BERHASIL TERPINDAI</span>
+                          <span className="text-sm text-emerald-100 font-medium mt-1">{scannedStudentDetail?.name}</span>
+                        </div>
+                      )}
+
+                      {studentScanDevice === 'EXTERNAL' ? (
+                        <>
+                          <div 
+                            className="p-8 flex flex-col items-center justify-center text-center cursor-text min-h-[300px]"
+                            onClick={() => document.getElementById('barcode-input-field')?.focus()}
+                          >
+                            <div className="absolute top-4 right-4 flex items-center gap-2 bg-slate-900/50 px-2 py-1 rounded-full border border-slate-800/50 backdrop-blur-sm">
+                              <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                              </span>
+                              <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">Menunggu Pemindai...</span>
+                            </div>
+
+                            <div className="p-4 bg-indigo-500/10 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300 group-hover:bg-indigo-500/20">
+                              <QrCode className="h-12 w-12 text-indigo-400 animate-pulse" />
+                            </div>
+                            
+                            <h4 className="text-sm font-bold text-white mb-1">Mode Pindai Aktif</h4>
+                            <p className="text-xs text-slate-400 font-medium max-w-sm mb-6 leading-relaxed">
+                              Arahkan Barcode Kartu Pelajar atau tempelkan Smart Card RFID pada perangkat pembaca (Scanner) yang terhubung.
+                            </p>
+                            
+                            {/* Manual input inside Scanner */}
+                            <form 
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                handleScanStudentCard(studentScanInput);
+                              }}
+                              className="flex items-center gap-2 w-full max-w-md relative"
+                            >
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span className="text-slate-500 text-xs font-bold">NIS:</span>
+                              </div>
+                              <input
+                                id="barcode-input-field"
+                                type="text"
+                                autoFocus
+                                autoComplete="off"
+                                placeholder="Pindai atau ketik NIS secara manual..."
+                                value={studentScanInput}
+                                onChange={(e) => setStudentScanInput(e.target.value)}
+                                className="flex-1 bg-slate-900/90 border-2 border-slate-700/80 rounded-xl pl-12 pr-4 py-3 text-sm font-mono font-bold text-emerald-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 shadow-inner placeholder:text-slate-600 transition-all placeholder:font-sans placeholder:font-normal"
+                              />
+                              <button
+                                type="submit"
+                                className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition cursor-pointer shadow-md hover:shadow-indigo-500/25 active:scale-95 flex items-center gap-2"
+                              >
+                                Proses
+                              </button>
+                            </form>
+                            <p className="text-[10px] text-slate-500 mt-4 flex items-center gap-1.5">
+                              <HelpCircle className="h-3 w-3" /> Scanner otomatis mengirimkan perintah 'Enter' setelah membaca kode.
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="relative w-full aspect-[4/3] bg-black sm:aspect-video flex items-center justify-center overflow-hidden rounded-t-2xl">
+                            {cameraStream ? (
+                              <>
+                                <video 
+                                  ref={videoRef}
+                                  autoPlay 
+                                  playsInline 
+                                  className="absolute inset-0 w-full h-full object-cover"
+                                />
+                                {/* Viewfinder Overlay */}
+                                <div className="absolute inset-0 z-10 pointer-events-none flex flex-col">
+                                  <div className="flex-1 bg-slate-950/60 backdrop-blur-[2px]"></div>
+                                  <div className="flex h-48 sm:h-64">
+                                    <div className="flex-1 bg-slate-950/60 backdrop-blur-[2px]"></div>
+                                    <div className="w-64 sm:w-80 relative">
+                                      {/* Scanner Corners */}
+                                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-emerald-500 rounded-tl-xl"></div>
+                                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-emerald-500 rounded-tr-xl"></div>
+                                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-emerald-500 rounded-bl-xl"></div>
+                                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-emerald-500 rounded-br-xl"></div>
+                                      {/* Scanning Line Animation */}
+                                      <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-emerald-400/50 -translate-x-1/2 animate-scan-line shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                                    </div>
+                                    <div className="flex-1 bg-slate-950/60 backdrop-blur-[2px]"></div>
+                                  </div>
+                                  <div className="flex-1 bg-slate-950/60 backdrop-blur-[2px] flex items-end justify-center pb-4">
+                                    <span className="bg-slate-900/80 text-white text-[10px] font-bold px-3 py-1.5 rounded-full backdrop-blur">Posisikan Barcode di dalam kotak</span>
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center text-slate-400 p-6">
+                                <Camera className="h-10 w-10 mb-3 opacity-50" />
+                                <span className="text-xs font-bold">Menyiapkan Kamera...</span>
+                                {scanError && <p className="text-red-400 mt-2 text-[10px] max-w-xs">{scanError}</p>}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Manual input fallback for Camera mode */}
+                          <div className="p-4 bg-slate-900 border-t border-slate-800">
+                            <form 
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                handleScanStudentCard(studentScanInput);
+                              }}
+                              className="flex items-center gap-2 w-full"
+                            >
+                              <input
+                                type="text"
+                                placeholder="Atau ketik NIS manual..."
+                                value={studentScanInput}
+                                onChange={(e) => setStudentScanInput(e.target.value)}
+                                className="flex-1 bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500 shadow-inner"
+                              />
+                              <button
+                                type="submit"
+                                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-lg cursor-pointer"
+                              >
+                                Cek
+                              </button>
+                            </form>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Scanned Student Information Panel */}
+                  {scannedStudentDetail && (
+                    <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-4 animate-fade-in text-xs">
+                      <div className="w-12 h-12 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow">
+                        {scannedStudentDetail.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 space-y-0.5 min-w-0">
+                        <span className="text-[10px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded-md">
+                          PRESENSI KARTU OK
+                        </span>
+                        <strong className="block text-slate-800 text-sm font-extrabold mt-1 truncate">{scannedStudentDetail.name}</strong>
+                        <div className="text-[11px] text-slate-500 flex flex-wrap gap-x-2">
+                          <span>NIS: <strong className="font-bold text-slate-700">{scannedStudentDetail.nis}</strong></span>
+                          <span>•</span>
+                          <span>Waktu: <strong className="font-bold text-slate-700">{scannedStudentDetail.scannedAt}</strong></span>
+                        </div>
+                      </div>

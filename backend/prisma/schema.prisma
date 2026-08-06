@@ -1,0 +1,304 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model School {
+  id              String   @id @default("school-main")
+  name            String   @default("SMA Unggulan Nusantara")
+  foundation_name String   @default("Yayasan Bina Pemuda Nusantara")
+  npsn            String   @default("12345678")
+  address         String   @default("Jl. Raya Pendidikan No. 10, Jakarta")
+  logo            String   @default("/logo.png")
+  favicon         String   @default("/favicon.ico")
+  email           String   @default("info@sekolah.sch.id")
+  phone           String   @default("021-5551234")
+  website         String   @default("www.sekolah.sch.id")
+  timezone        String   @default("Asia/Jakarta")
+  currency        String   @default("IDR")
+  language        String   @default("id")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model AcademicYear {
+  id         String     @id @default(uuid())
+  name       String     // e.g. "2025/2026"
+  status     String     @default("ACTIVE") // "ACTIVE" or "INACTIVE"
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  deleted_at DateTime?
+  semesters  Semester[]
+}
+
+model Semester {
+  id               String       @id @default(uuid())
+  academic_year_id String
+  name             String       // e.g. "Ganjil" or "Genap"
+  status           String       @default("ACTIVE")
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+  academic_year    AcademicYear @relation(fields: [academic_year_id], references: [id], onDelete: Cascade)
+}
+
+model Role {
+  id               String           @id @default(uuid())
+  name             String
+  code             String           @unique
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  deleted_at       DateTime?
+  role_permissions RolePermission[]
+  users            User[]
+}
+
+model Permission {
+  id               String           @id @default(uuid())
+  name             String
+  code             String           @unique
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  deleted_at       DateTime?
+  role_permissions RolePermission[]
+}
+
+model RolePermission {
+  id            String     @id @default(uuid())
+  role_id       String
+  permission_id String
+  created_at    DateTime   @default(now())
+  role          Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@unique([role_id, permission_id])
+}
+
+model User {
+  id                    String      @id @default(uuid())
+  email                 String      @unique
+  username              String      @unique
+  password_hash         String
+  name                  String
+  role_id               String
+  phone                 String?
+  status                String      @default("ACTIVE")
+  photo                 String?
+  signature             String?
+  created_at            DateTime    @default(now())
+  updated_at            DateTime    @updatedAt
+  deleted_at            DateTime?
+  role                  Role        @relation(fields: [role_id], references: [id])
+  audit_logs            AuditLog[]
+}
+
+model Teacher {
+  id         String     @id @default(uuid())
+  name       String
+  nip        String?    @unique
+  department String?
+  position   String?
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  deleted_at DateTime?
+}
+
+model Employee {
+  id         String     @id @default(uuid())
+  name       String
+  nip        String?    @unique
+  position   String?
+  status     String     @default("TETAP")
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  deleted_at DateTime?
+}
+
+model Student {
+  id           String       @id @default(uuid())
+  name         String
+  nis          String       @unique
+  nisn         String?      @unique
+  status       String       @default("AKTIF")
+  class_id     String?
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+  deleted_at   DateTime?
+  class        Class?       @relation(fields: [class_id], references: [id])
+  parents      Parent[]
+  attendance   Attendance[]
+  payments     Payment[]
+  documents    Document[]
+}
+
+model Parent {
+  id         String    @id @default(uuid())
+  student_id String
+  name       String
+  email      String?
+  phone      String?
+  relation   String    // e.g. "Ayah", "Ibu", "Wali"
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  student    Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+model Class {
+  id         String     @id @default(uuid())
+  name       String     // e.g. "VII-A"
+  grade      String     // e.g. "7"
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  deleted_at DateTime?
+  students   Student[]
+}
+
+model Subject {
+  id         String    @id @default(uuid())
+  name       String    // e.g. "Matematika"
+  code       String    @unique
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+}
+
+model Attendance {
+  id         String    @id @default(uuid())
+  student_id String
+  status     String    // e.g. "HADIR", "SAKIT", "IZIN", "ALFA"
+  date       String    // YYYY-MM-DD
+  check_in   String?
+  check_out  String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  student    Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id          String    @id @default(uuid())
+  student_id  String
+  amount      Float
+  payment_for String    // e.g. "SPP Juli 2026"
+  status      String    @default("UNPAID") // "PAID", "UNPAID", "PARTIAL"
+  paid_at     DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  student     Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+model Payroll {
+  id           String    @id @default(uuid())
+  employee_id  String
+  basic_salary Float
+  allowance    Float     @default(0)
+  deductions   Float     @default(0)
+  net_salary   Float
+  month        String    // e.g. "Juni"
+  year         Int       // e.g. 2026
+  status       String    @default("UNPAID") // "PAID", "UNPAID"
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
+}
+
+model Finance {
+  id          String    @id @default(uuid())
+  category    String    // e.g. "SPP", "OPERASIONAL"
+  amount      Float
+  type        String    // "INCOME" or "EXPENSE"
+  description String?
+  date        String    // YYYY-MM-DD
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+}
+
+model Inventory {
+  id         String    @id @default(uuid())
+  item_name  String
+  quantity   Int
+  location   String?
+  status     String    @default("BAIK")
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+}
+
+model Document {
+  id         String    @id @default(uuid())
+  student_id String
+  name       String
+  category   String    // e.g. "IJAZAH", "KK", "AKTA"
+  file_type  String
+  file_size  Int
+  file_url   String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  student    Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  recipient  String
+  type       String    // "WHATSAPP", "EMAIL", "SYSTEM"
+  title      String
+  message    String
+  status     String    @default("PENDING") // "SENT", "PENDING", "FAILED"
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  user_id    String?
+  action     String   // e.g. "INSERT", "UPDATE", "DELETE"
+  table_name String
+  details    String
+  ip_address String?
+  user_agent String?
+  created_at DateTime @default(now())
+  user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+model SystemSetting {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  value      String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  user_id          String
+  login_date       String
+  login_time       String
+  ip_address       String?
+  browser          String?
+  os               String?
+  device           String?
+  location         String?
+  status           String    @default("ACTIVE")
+  last_activity_at DateTime  @default(now())
+  expires_at       DateTime
+  created_at       DateTime  @default(now())
+  ended_at         DateTime?
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  user_id     String
+  token       String   @unique
+  expires_at  DateTime
+  is_revoked  Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}

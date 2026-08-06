@@ -1,0 +1,16 @@
+export { AuthService } from './auth.service';
+export { StudentService } from './student.service';
+export { TeacherService } from './teacher.service';
+export { EmployeeService } from './employee.service';
+export { AttendanceService } from './attendance.service';
+export { FinanceService } from './finance.service';
+export { PaymentService } from './payment.service';
+export { PpdbService } from './ppdb.service';
+export { ClassService } from './class.service';
+export { SubjectService } from './subject.service';
+export { ReportService } from './report.service';
+export { DocumentService } from './document.service';
+export { NotificationService } from './notification.service';
+export { WhatsappService } from './whatsapp.service';
+export { SettingService } from './setting.service';
+export { AuditService } from './audit.service';

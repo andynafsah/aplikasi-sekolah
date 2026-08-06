@@ -1,0 +1,483 @@
+src/services/attendance.service.ts:      throw new Error(`Double Scan Terdeteksi! ${data.name} sudah melakukan presensi ${data.type} hari ini.`);
+src/services/attendance.service.ts:      recipient: record.name,
+src/services/attendance.service.ts:      console.log(`[Parent Portal Sync] Auto WhatsApp sent to Guardian of ${record.name}: "Putra/Putri Anda berstatus ${record.status} pada KBM hari ini."`);
+src/services/student.service.ts:        s.name?.toLowerCase().includes(q) ||
+src/services/student.service.ts:        iden.name?.toLowerCase().includes(q) ||
+src/components/tu/LetterForm.tsx:      setFileAttachment(`https://example.com/vault/uploads/${Date.now()}_${e.target.files![0].name}`);
+src/components/tu/LetterForm.tsx:                    <option key={tmpl.code} value={tmpl.code}>{tmpl.name} ({tmpl.code})</option>
+src/components/tu/LetterForm.tsx:                  <option key={cat.id} value={cat.id}>{cat.name} ({cat.code})</option>
+src/components/tu/AnalyticsCard.tsx:                <div key={item.name} className="flex items-center justify-between text-[10px]">
+src/components/tu/AnalyticsCard.tsx:                    <span className="text-slate-600">{item.name}</span>
+src/components/teacher/TeacherAssessments.tsx:                      <span className="text-xs font-bold text-slate-700">{player.name}</span>
+src/components/teacher/TeacherAssessments.tsx:                      <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherAssessments.tsx:                      <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherAssessments.tsx:                      <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherAssessments.tsx:                    <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherAttendance.tsx:                    <td className="py-3 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherKarakter.tsx:                      <option key={t.studentId} value={t.studentId}>{t.name}</option>
+src/components/teacher/TeacherKarakter.tsx:                    <h4 className="font-extrabold text-slate-800 text-xs">{t.name}</h4>
+src/components/teacher/TeacherKarakter.tsx:                    <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherKarakter.tsx:                    <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherKarakter.tsx:                    <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherKarakter.tsx:                    <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherFinalReports.tsx:                    <td className="py-3.5 px-4 font-bold text-slate-800">{item.name}</td>
+src/components/teacher/TeacherFinalReports.tsx:                  <option key={s.studentId} value={s.studentId}>{s.name}</option>
+src/components/teacher/TeacherFinalReports.tsx:                  <div className="flex"><span className="w-24 font-bold text-slate-400">Nama Siswa</span><span className="font-bold text-slate-800">: {currentRaporStudent.name}</span></div>
+src/components/boarding/ServicesSection.tsx:                    <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+src/components/boarding/ServicesSection.tsx:                    <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+src/components/boarding/AsramaSection.tsx:    if (!newGedung.code || !newGedung.name) return;
+src/components/boarding/AsramaSection.tsx:    if (!newKamar.code || !newKamar.name || !newKamar.gedungId) return;
+src/components/boarding/AsramaSection.tsx:                  <h5 className="font-extrabold text-slate-800 text-xs mt-2">{gd.name}</h5>
+src/components/boarding/AsramaSection.tsx:                    <h5 className="font-extrabold text-slate-800 mt-1">{km.name}</h5>
+src/components/boarding/AsramaSection.tsx:                  <h5 className="font-bold text-slate-800 text-xs">{my.name}</h5>
+src/components/boarding/AsramaSection.tsx:                  value={newGedung.name}
+src/components/boarding/AsramaSection.tsx:                    <option key={g.id} value={g.id}>{g.name}</option>
+src/components/boarding/AsramaSection.tsx:                    value={newKamar.name}
+src/components/boarding/AsramaSection.tsx:                    <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+src/components/boarding/AsramaSection.tsx:                    <option key={k.id} value={k.id}>{k.name} ({k.code})</option>
+src/components/boarding/AsramaSection.tsx:                    <option key={k.id} value={k.id}>{k.name} ({k.code})</option>
+src/components/boarding/TahfidzSection.tsx:                    <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+src/components/boarding/AuditSection.tsx:                    <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+src/components/student/StudentMutation.tsx:                          <p className="font-bold text-slate-850">{student ? student.name : 'Unknown Student'}</p>
+src/components/student/StudentFormModal.tsx:                {st.num}. {st.name}
+src/components/Sidebar.tsx:                  <span>{item.name}</span>
+src/components/EnterpriseAcademicEngine.tsx:      const student_name = student ? student.name : 'Farhan Ramadhan';
+src/components/EnterpriseAcademicEngine.tsx:      const student_name = student ? student.name : 'Farhan Ramadhan';
+src/components/EnterpriseAcademicEngine.tsx:                <div style="display: flex;"><span style="width: 120px; color: #64748b; font-weight: bold; text-transform: uppercase;">Nama Santri/Siswa</span><span class="text-slate-900 font-black" style="font-weight: 900; color: #0f172a;">: ${student.name}</span></div>
+src/components/EnterpriseAcademicEngine.tsx:    triggerNotif('info', `Membuka dialog cetak PDF untuk ${student.name}...`);
+src/components/EnterpriseAcademicEngine.tsx:            <title>Rapor Santri - ${student.name}</title>
+src/components/EnterpriseAcademicEngine.tsx:      name: `${tpl.name} (Salinan)`,
+src/components/EnterpriseAcademicEngine.tsx:                        <option key={s.studentId} value={s.studentId}>{s.name} ({s.nis})</option>
+src/components/EnterpriseAcademicEngine.tsx:                        <option key={s.studentId} value={s.studentId}>{s.name} ({s.nis})</option>
+src/components/EnterpriseAcademicEngine.tsx:                      <h5 className="font-bold text-xs text-slate-800">{j.name}</h5>
+src/components/EnterpriseAcademicEngine.tsx:                        <span className="font-bold">{re.name} ({re.subject})</span>
+src/components/EnterpriseAcademicEngine.tsx:                            <span className="font-bold block">{ch.name}</span>
+src/components/EnterpriseAcademicEngine.tsx:                          <span className="font-bold text-slate-800 block">{ch.name}</span>
+src/components/EnterpriseAcademicEngine.tsx:                        triggerNotif('info', `Simulasi berganti peran menjadi ${item.role}: ${item.name}`);
+src/components/EnterpriseAcademicEngine.tsx:                      {activeStudent.name}
+src/components/EnterpriseAcademicEngine.tsx:                        {s.name} (Avg: {s.avg})
+src/components/EnterpriseAcademicEngine.tsx:                            {row.name}
+src/components/EnterpriseAcademicEngine.tsx:                                triggerNotif('info', `Menyiapkan Live Print Preview Rapor untuk ${row.name}...`);
+src/components/EnterpriseAcademicEngine.tsx:                    <h4 className="font-extrabold text-xs text-slate-800">{tpl.name}</h4>
+src/components/EnterpriseAcademicEngine.tsx:                    <option key={s.studentId} value={s.studentId}>{s.name}</option>
+src/components/EnterpriseDocumentEngine.tsx:                <h1>${schoolProfile.name}</h1>
+src/components/EnterpriseDocumentEngine.tsx:          fileName: file.name,
+src/components/EnterpriseDocumentEngine.tsx:                        <h2 className="text-sm md:text-lg font-black uppercase tracking-tight m-0 text-slate-900">{schoolProfile.name}</h2>
+src/components/EnterpriseDocumentEngine.tsx:                        <p className="text-xs font-bold text-white truncate max-w-xs">{uploadedFile.name}</p>
+src/routes/dapodik.routes.ts:  req.body.username = authUser ? (authUser.name || authUser.username) : 'System Administrator';
+src/routes/dapodik.routes.ts:  req.body.username = authUser ? (authUser.name || authUser.username) : 'Operator';
+src/routes/dapodik.routes.ts:  req.body.username = authUser ? (authUser.name || authUser.username) : 'Operator';
+src/routes/rbac.routes.ts:        rbacData.roles[existingIdx].name = name;
+src/routes/rbac.routes.ts:        rbacData.permissions[existingIdx].name = name;
+src/routes/rbac.routes.ts:        rbacData.menus[existingIdx].name = name;
+src/backend/queue/bullmq.ts:    logger.debug(`⚡ Executing Job: ${job.name} (Attempt ${job.attemptsMade}/${job.maxAttempts})`, { jobId: job.id });
+src/backend/queue/bullmq.ts:      logger.info(`✅ Job completed successfully: ${job.name}`, { jobId: job.id, duration_ms: Date.now() - (job.processedAt || 0) });
+src/backend/queue/bullmq.ts:      logger.warn(`⚠️ Job execution failed: ${job.name}`, { jobId: job.id, error: error.message });
+src/backend/queue/bullmq.ts:        logger.error(`❌ Job permanently failed after ${job.maxAttempts} attempts: ${job.name}`, error, { jobId: job.id });
+src/backend/modules/auth/auth.service.ts:        name: user.name,
+src/backend/modules/user/user.service.ts:      name: data.name,
+src/backend/modules/user/user.service.ts:    logger.info(`👤 Created user profile: ${user.name}`);
+src/backend/modules/user/user.controller.ts:        name: user.name,
+src/backend/modules/user/user.controller.ts:      name: validated.name,
+src/backend/modules/user/user.controller.ts:        name: user.name,
+src/backend/middleware/validation.ts:    this.name = 'RequestValidationError';
+src/backend/middleware/rbac.ts:    this.name = 'AuthorizationError';
+src/backend/app.ts:      const isValidationError = err.name === 'RequestValidationError';
+src/backend/app.ts:      const isAuthError = err.name === 'AuthorizationError';
+src/pages/Dashboard.tsx:                  {r.name}
+src/pages/Branding.tsx:                    <span>{preset.name}</span>
+src/pages/Attendance.tsx:          name: r.name || r.personName || 'Siswa / Guru',
+src/pages/Attendance.tsx:      name: activePerson.name,
+src/pages/Attendance.tsx:      name: found.name,
+src/pages/Attendance.tsx:        setGateLog(prev => [`[${checkTime}] SUCCESS: ${found.name} (${found.role}) checked-in via Gate Scanner.`, ...prev]);
+src/pages/Attendance.tsx:      originalTeacherName: original.name,
+src/pages/Attendance.tsx:      substituteTeacherName: sub.name,
+src/pages/Attendance.tsx:        alert(`PENUGASAN BERHASIL: ${sub.name} ditugaskan menggantikan ${original.name}.`);
+src/pages/Attendance.tsx:      name: person.name,
+src/pages/Attendance.tsx:        alert(`SUKSES: Presensi manual untuk ${person.name} berhasil disimpan.`);
+src/pages/Attendance.tsx:    const nameStr = r.name || '';
+src/pages/Attendance.tsx:                              <p>{r.name}</p>
+src/pages/Attendance.tsx:                      <option key={p.id} value={p.id}>{p.name} ({p.role})</option>
+src/pages/Attendance.tsx:                      <option key={p.id} value={p.id}>{p.name} ({p.role})</option>
+src/pages/Attendance.tsx:                      <p className="text-xs font-bold text-white tracking-wide uppercase">{cardPerson.name}</p>
+src/pages/Attendance.tsx:                      <option key={p.id} value={p.id}>{p.name}</option>
+src/pages/Attendance.tsx:                      <option key={p.id} value={p.id}>{p.name}</option>
+src/pages/Attendance.tsx:                      <td className="py-3 px-4 font-bold text-slate-800">{p.name}</td>
+src/pages/Attendance.tsx:    payload.name, 
+src/pages/Pegawai.tsx:    const matchesSearch = t.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+src/pages/Pegawai.tsx:    const matchesSearch = e.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+src/pages/Pegawai.tsx:              <span>{tab.name}</span>
+src/pages/Pegawai.tsx:                              <span className="text-slate-800 text-xs font-bold block">{t.name}</span>
+src/pages/Pegawai.tsx:                              onClick={() => handleDeleteItem(t.id, 'guru', t.name)}
+src/pages/Pegawai.tsx:                              <span className="text-slate-800 text-xs font-bold block">{e.name}</span>
+src/pages/Pegawai.tsx:                              onClick={() => handleDeleteItem(e.id, 'karyawan', e.name)}
+src/pages/Pegawai.tsx:                    <span className="text-xs font-black block mt-0.5 uppercase">{kepalaSekolah ? kepalaSekolah.name : (tenant?.nama_sekolah || 'Ahmad Ghozali, S.Pd.')}</span>
+src/pages/Pegawai.tsx:                      <span className="text-xs font-bold block mt-1">{wakaStaff ? wakaStaff.name : 'Ibu Ratna Sari, S.Si.'}</span>
+src/pages/Pegawai.tsx:                      <span className="text-xs font-bold block mt-1">{tuStaff ? tuStaff.name : 'Yusuf Mansur, A.Md.'}</span>
+src/pages/Pegawai.tsx:                      <span className="text-xs font-bold block mt-1">{asramaStaff ? asramaStaff.name : 'Ustadz Muhammad Yusuf'}</span>
+src/pages/Pegawai.tsx:                            <span className="font-bold text-slate-800 block truncate">{s.name}</span>
+src/pages/Pegawai.tsx:                      <h4 className="text-xs font-black text-slate-800 mt-2 block">{pos.name}</h4>
+src/pages/Pegawai.tsx:                      <h4 className="text-xs font-black text-slate-800 mt-2 block">{rnk.name}</h4>
+src/pages/Pegawai.tsx:                      <h4 className="text-xs font-black text-slate-800 mt-2 block">{st.name}</h4>
+src/pages/Pegawai.tsx:                      <option key={t.id} value={t.id}>{t.name} (NIP: {t.nip})</option>
+src/pages/Pegawai.tsx:                      <option key={e.id} value={e.id}>{e.name} (NIK: {e.nik})</option>
+src/pages/Pegawai.tsx:                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest font-mono mb-4">Linimasa {selectedStaff.name}</h4>
+src/pages/Pegawai.tsx:                      <option key={t.id} value={t.id}>{t.name} (Guru)</option>
+src/pages/Pegawai.tsx:                      <option key={e.id} value={e.id}>{e.name} (Karyawan)</option>
+src/pages/Pegawai.tsx:                          <td className="px-6 py-4">{d.name}</td>
+src/pages/Pegawai.tsx:                    <option key={t.id} value={t.id}>{t.name} (NIP: {t.nip})</option>
+src/pages/Pegawai.tsx:                    <option key={e.id} value={e.id}>{e.name} (NIK: {e.nik})</option>
+src/pages/Pegawai.tsx:                  <span className="text-xs font-bold text-slate-800 block mt-1 uppercase">{selectedStaff.name}</span>
+src/pages/Pegawai.tsx:                    <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/Pegawai.tsx:                    <option key={e.id} value={e.id}>{e.name}</option>
+src/pages/Pegawai.tsx:                  <span className="text-xs font-bold text-slate-800 block mt-1 uppercase">{selectedStaff.name}</span>
+src/pages/Pegawai.tsx:                      <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/Pegawai.tsx:                      <option key={e.id} value={e.id}>{e.name}</option>
+src/pages/Pegawai.tsx:                      <span className="text-xs font-black text-slate-800 uppercase tracking-tight block">{selectedStaff.name}</span>
+src/pages/Pegawai.tsx:              <h3 className="font-extrabold text-sm block uppercase mt-3 tracking-tight">{selectedStaff.name}</h3>
+src/pages/Pegawai.tsx:                      value={formData.name || ''}
+src/pages/Boarding.tsx:    triggerAction('CREATE', 'ASRAMA', `Gedung asrama baru ${g.name} (${g.code}) ditambahkan`);
+src/pages/Boarding.tsx:    triggerAction('CREATE', 'ASRAMA', `Kamar baru ${k.name} (${k.code}) dibuat di lantai ${k.floor} dengan ${k.capacity} bed`);
+src/pages/PlotingGuru.tsx:                    {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+src/pages/PlotingGuru.tsx:                    {academicYears.map(ay => <option key={ay.id} value={ay.id}>{ay.name}</option>)}
+src/pages/PlotingGuru.tsx:                    {semesters.map(sem => <option key={sem.id} value={sem.id}>{sem.name}</option>)}
+src/pages/PlotingGuru.tsx:                    {classes.map(cl => <option key={cl.id} value={cl.id}>{cl.name}</option>)}
+src/pages/PlotingGuru.tsx:                    {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
+src/pages/PlotingGuru.tsx:                    {academicYears.map(ay => <option key={ay.id} value={ay.id}>{ay.name}</option>)}
+src/pages/PlotingGuru.tsx:                    {semesters.map(sem => <option key={sem.id} value={sem.id}>{sem.name}</option>)}
+src/pages/PlotingGuru.tsx:                          <span className="truncate">{t.name}</span>
+src/pages/PlotingGuru.tsx:                          <span>{cl.name}</span>
+src/pages/PlotingGuru.tsx:                          <span className="truncate">{s.name}</span>
+src/pages/PlotingGuru.tsx:                      {academicYears.map(ay => <option key={ay.id} value={ay.id}>{ay.name}</option>)}
+src/pages/PlotingGuru.tsx:                      {academicYears.map(ay => <option key={ay.id} value={ay.id}>{ay.name}</option>)}
+src/pages/PlotingGuru.tsx:                      {semesters.map(sem => <option key={sem.id} value={sem.id}>{sem.name}</option>)}
+src/pages/PlotingGuru.tsx:                      {semesters.map(sem => <option key={sem.id} value={sem.id}>{sem.name}</option>)}
+src/pages/AICopilot.tsx:                    <span className={`text-xs font-bold ${selectedAssistant === as.id && !activeConvId ? textAccent : 'text-slate-700'}`}>{as.name}</span>
+src/pages/AICopilot.tsx:                    <option key={p.id} value={p.id}>{p.name}</option>
+src/pages/AICopilot.tsx:                          <span>{p.name}</span>
+src/pages/Asset.tsx:      content += `"${item.id}","${item.code}","${item.name}","${item.category}","${item.status}","${item.purchase_date}",${item.cost},"${item.location}","${item.depreciation_method}",${item.book_value || item.cost}\n`;
+src/pages/Asset.tsx:    const aName = ast.name || '';
+src/pages/Asset.tsx:                          <p className="font-bold text-slate-800 text-sm">{ast.name}</p>
+src/pages/Asset.tsx:                                name: ast.name,
+src/pages/Asset.tsx:                      <td className="p-3.5 font-semibold text-slate-800">{assetObj ? assetObj.name : 'Aset Tetap'}</td>
+src/pages/Asset.tsx:                          <p className="font-bold text-slate-800">{ast.name}</p>
+src/pages/Asset.tsx:                      <td className="p-3.5 font-semibold text-slate-700">{assetObj ? assetObj.name : 'Aset'}</td>
+src/pages/Asset.tsx:                    value={newAsset.name}
+src/pages/Asset.tsx:                    <option key={a.id} value={a.id}>{a.name} ({a.code})</option>
+src/pages/Asset.tsx:                    <option key={a.id} value={a.id}>{a.name} ({a.code})</option>
+src/pages/Asset.tsx:                    <option key={a.id} value={a.id}>{a.name} ({a.code})</option>
+src/pages/Asset.tsx:                <h4 className="font-extrabold text-slate-800 text-sm">{showLabelModal.name}</h4>
+src/pages/Tenants.tsx:      name: ten.name,
+src/pages/Tenants.tsx:                          {ten.name[0]}
+src/pages/Tenants.tsx:                          <h4 className="font-bold text-slate-800 text-sm">{ten.name}</h4>
+src/pages/Tenants.tsx:                          onClick={() => handleDeleteTenant(ten.id, ten.name)}
+src/pages/FirstRunDatabaseSetup.tsx:                          <p className="text-[10px] font-bold text-slate-500 uppercase">{check.name}</p>
+src/pages/AutomationWorkflow.tsx:    setLaunchTitle(`${wf.name} - ${new Date().toLocaleDateString('id-ID')}`);
+src/pages/AutomationWorkflow.tsx:    setDefName(tpl.name);
+src/pages/AutomationWorkflow.tsx:    setDefName(def.name);
+src/pages/AutomationWorkflow.tsx:                        <h4 className="font-bold text-slate-800 text-sm">{tpl.name}</h4>
+src/pages/AutomationWorkflow.tsx:                        <option key={c.id} value={c.id}>{c.name}</option>
+src/pages/AutomationWorkflow.tsx:                          <td className="p-4 font-bold text-slate-800">{def.name}</td>
+src/pages/AutomationWorkflow.tsx:                        <option key={conn.id} value={conn.id}>{conn.name}</option>
+src/pages/AutomationWorkflow.tsx:                          <td className="p-4 font-bold text-slate-800">{conn.name}</td>
+src/pages/AutomationWorkflow.tsx:                                setN8nName(conn.name);
+src/pages/Dapodik.tsx:            fileName: file.name,
+src/pages/Dapodik.tsx:            fileName: file.name,
+src/pages/MobilePlatform.tsx:          triggerPushNotification('Upload Berhasil', `${newFile.name} siap dikaitkan ke sistem.`);
+src/pages/MobilePlatform.tsx:                <span key={entry.name} style={{ color: entry.color }}>{entry.name} ({entry.value}%)</span>
+src/pages/AuditCompliance.tsx:                    value={frameworkForm.name}
+src/pages/AuditCompliance.tsx:                      <h4 className="text-base font-bold text-slate-900 mt-2">{frame.name}</h4>
+src/pages/AuditCompliance.tsx:                        <span className="text-xs font-bold text-slate-700 block">{cat.name}</span>
+src/pages/AuditCompliance.tsx:                          <option key={c.id} value={c.id}>{c.name}</option>
+src/pages/AuditCompliance.tsx:                      <option key={s.id} value={s.id}>[{s.code}] {s.name}</option>
+src/pages/AuditCompliance.tsx:                    [{std.code}] {std.name} - Bobot Penilaian: {std.weight}%
+src/pages/Keuangan.tsx:    const desc = (item.description || item.name || item.account_name || '').toLowerCase();
+src/pages/Keuangan.tsx:    const cName = c.name || '';
+src/pages/Keuangan.tsx:                      <div key={asset.name} className="flex items-center justify-between text-[10px] text-slate-500">
+src/pages/Keuangan.tsx:                          <span className="truncate max-w-[120px] font-semibold">{asset.name}</span>
+src/pages/Keuangan.tsx:                        <td className="p-3 font-sans text-slate-800 font-bold">{coa.name}</td>
+src/pages/Keuangan.tsx:                        <option key={c.id} value={c.code}>{c.code} - {c.name}</option>
+src/pages/Keuangan.tsx:                                  <td className="p-3 font-sans text-slate-800 font-bold">{coa.name}</td>
+src/pages/Keuangan.tsx:                      <option key={c.id} value={c.code}>{c.code} - {c.name}</option>
+src/pages/Keuangan.tsx:                      <option key={c.id} value={c.code}>{c.code} - {c.name}</option>
+src/pages/Keuangan.tsx:                          <option key={c.id} value={c.code}>{c.code} - {c.name}</option>
+src/pages/NotificationGateway.tsx:        name: f.name,
+src/pages/NotificationGateway.tsx:                                  {room.name}
+src/pages/NotificationGateway.tsx:                                {currentRoom.name}
+src/pages/NotificationGateway.tsx:                                              <span className="truncate underline font-bold">{file.name}</span>
+src/pages/NotificationGateway.tsx:                                  <span>📎 {f.name} ({f.size})</span>
+src/pages/NotificationGateway.tsx:                              name: f.name,
+src/pages/NotificationGateway.tsx:                              <span className="font-semibold text-slate-700 truncate max-w-xs">{f.name}</span>
+src/pages/NotificationGateway.tsx:                        <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/NotificationGateway.tsx:                          <h4 className="text-xs font-bold text-slate-800">{t.name}</h4>
+src/pages/NotificationGateway.tsx:                          <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/NotificationGateway.tsx:                              <h4 className="text-xs font-bold text-slate-800">{rule.name}</h4>
+src/pages/NotificationGateway.tsx:                          <strong className="text-slate-800 text-xs">{log.name}</strong>
+src/pages/Akademik.tsx:    return t ? t.name : 'Belum Ditentukan';
+src/pages/Akademik.tsx:    return c ? c.name : 'Semua Kelas';
+src/pages/Akademik.tsx:    return r ? `${r.name} (${r.building})` : 'Outdoor / Lapangan';
+src/pages/Akademik.tsx:    return s ? s.name : 'Unknown Subject';
+src/pages/Akademik.tsx:    return m ? m.name : 'Umum / Tanpa Jurusan';
+src/pages/Akademik.tsx:    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+src/pages/Akademik.tsx:    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+src/pages/Akademik.tsx:                        <p className="font-bold text-slate-800 text-sm">Semester {sem.name}</p>
+src/pages/Akademik.tsx:                        <h4 className="font-extrabold text-slate-800 text-xs mt-1">{cur.name}</h4>
+src/pages/Akademik.tsx:                      <p className="font-bold text-slate-800 text-sm">{mj.name}</p>
+src/pages/Akademik.tsx:                        <p className="font-extrabold text-slate-800 text-sm">{cls.name}</p>
+src/pages/Akademik.tsx:                        <p className="font-bold text-slate-800">{rb.name}</p>
+src/pages/Akademik.tsx:                      <p className="font-extrabold text-slate-800">{rm.name}</p>
+src/pages/Akademik.tsx:                      <p className="font-extrabold text-slate-800 text-sm">{sb.name}</p>
+src/pages/Akademik.tsx:                        <option key={c.id} value={c.id}>{c.name}</option>
+src/pages/Akademik.tsx:                        <option key={m.id} value={m.id}>{m.name}</option>
+src/pages/Akademik.tsx:                          <p className="font-bold text-slate-800">{std.name}</p>
+src/pages/Akademik.tsx:                      value={formData.name || 'Ganjil'}
+src/pages/Akademik.tsx:                      value={formData.name || ''}
+src/pages/Akademik.tsx:                      value={formData.name || ''}
+src/pages/Akademik.tsx:                      value={formData.name || ''}
+src/pages/Akademik.tsx:                        <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/Akademik.tsx:                          <option key={m.id} value={m.id}>{m.name}</option>
+src/pages/Akademik.tsx:                          <option key={r.id} value={r.id}>{r.name}</option>
+src/pages/Akademik.tsx:                      value={formData.name || ''}
+src/pages/Akademik.tsx:                        <option key={c.id} value={c.id}>{c.name}</option>
+src/pages/Akademik.tsx:                          <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/Akademik.tsx:                      value={formData.name || ''}
+src/pages/Akademik.tsx:                      value={formData.name || ''}
+src/pages/Akademik.tsx:                          <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/Akademik.tsx:                        <option key={sb.id} value={sb.id}>{sb.name}</option>
+src/pages/Akademik.tsx:                          <option key={c.id} value={c.id}>{c.name}</option>
+src/pages/Akademik.tsx:                          <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/Akademik.tsx:                        <option key={r.id} value={r.id}>{r.name}</option>
+src/pages/Admission.tsx:              <span>{tab.name}</span>
+src/pages/Admission.tsx:                            <span className="font-medium text-slate-700">{w.name}</span>
+src/pages/Admission.tsx:                            <span className="font-medium text-slate-700">{p.name}</span>
+src/pages/Admission.tsx:                        <td className="py-2.5 font-semibold text-slate-700">{p.name}</td>
+src/pages/Admission.tsx:                      {(periods || []).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+src/pages/Admission.tsx:                            <span className="font-semibold text-slate-700 block">{w.name}</span>
+src/pages/Admission.tsx:                            <span className="text-[10px] text-slate-400 font-mono block">{perObj ? perObj.name : ''}</span>
+src/pages/Admission.tsx:                        <td className="py-2.5 font-semibold text-slate-700">{p.name}</td>
+src/pages/Admission.tsx:                {(waves || []).map((w: any) => <option key={w.id} value={w.id}>{w.name}</option>)}
+src/pages/Admission.tsx:                {(programs || []).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+src/pages/Admission.tsx:                      {(waves || []).map((w: any) => <option key={w.id} value={w.id}>{w.name}</option>)}
+src/pages/Admission.tsx:                      <div className="text-[10px] text-slate-400 mt-0.5">{waveObj ? waveObj.name : ''}</div>
+src/pages/Admission.tsx:                {(waves || []).map((w: any) => <option key={w.id} value={w.id}>{w.name}</option>)}
+src/pages/Admission.tsx:                    {(periods || []).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+src/pages/Admission.tsx:                    {(waves || []).filter((w: any) => w.status === 'ACTIVE').map((w: any) => <option key={w.id} value={w.id}>{w.name}</option>)}
+src/pages/Admission.tsx:                    {(programs || []).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+src/pages/Admission.tsx:                          <span className="font-semibold text-slate-300 block">{doc.name}</span>
+src/pages/Admission.tsx:                              name: doc.name,
+src/pages/Admission.tsx:                            <span className="font-bold text-slate-700 block">{doc.name}</span>
+src/pages/VirtualClassroom.tsx:            { id: res.data.data.participant.id, name: res.data.data.participant.name, role: res.data.data.participant.role, status: 'JOINED' },
+src/pages/VirtualClassroom.tsx:              name: approvedUser.name,
+src/pages/VirtualClassroom.tsx:                    <h4 className="text-sm font-bold text-slate-800 mt-3 line-clamp-1">{vc.name}</h4>
+src/pages/VirtualClassroom.tsx:                            title: `Kelas Sinkronus: ${vc.name}`,
+src/pages/VirtualClassroom.tsx:                          <span className="text-xs font-semibold text-white truncate">{wait.name}</span>
+src/pages/VirtualClassroom.tsx:                            {bo.name}
+src/pages/VirtualClassroom.tsx:                              {p.name[0]}
+src/pages/VirtualClassroom.tsx:                              <p className="text-xs font-semibold text-slate-200 truncate">{p.name}</p>
+src/pages/VirtualClassroom.tsx:                      <option key={c.id} value={c.id}>{c.name}</option>
+src/pages/VirtualClassroom.tsx:                      <option key={cl.id} value={cl.id}>{cl.name}</option>
+src/pages/VirtualClassroom.tsx:                    <option key={t.id} value={t.id}>{t.name}</option>
+src/pages/VirtualClassroom.tsx:                      <option key={vc.id} value={vc.id}>{vc.name}</option>
+src/pages/Procurement.tsx:                    <td className="p-3.5 font-bold text-slate-800">{v.name}</td>
+src/pages/Procurement.tsx:                    <option key={v.id} value={v.id}>{v.name}</option>
+src/pages/Procurement.tsx:                  value={newVendor.name}
+src/pages/SetupWizardPage.tsx:      name: d.name ?? '',
+src/pages/SetupWizardPage.tsx:                  {st.name}
+src/pages/SetupWizardPage.tsx:                        <span className="text-xs font-black uppercase text-slate-800">{pl.name}</span>
+src/pages/SetupWizardPage.tsx:                  <div className="flex justify-between"><span>Nama Tenant:</span> <strong>{watchData.name}</strong></div>
+src/pages/Sistem.tsx:                          <span className="truncate">{cat.name}</span>
+src/pages/Sistem.tsx:                              <td className="p-4 font-bold text-slate-900">{role.name}</td>
+src/pages/Sistem.tsx:                              <td className="p-4 font-bold text-slate-900">{menu.name}</td>
+src/pages/BillingSpp.tsx:    setTypeName(type.name);
+src/pages/BillingSpp.tsx:              {tab.name}
+src/pages/BillingSpp.tsx:                      <div key={item.name} className="flex items-center justify-between text-[11px]">
+src/pages/BillingSpp.tsx:                          <span className="text-slate-600 truncate max-w-[130px]">{item.name}</span>
+src/pages/BillingSpp.tsx:                      <option key={c.id} value={c.id}>{c.name}</option>
+src/pages/BillingSpp.tsx:                            <h4 className="font-bold text-slate-800 mt-1.5">{type.name}</h4>
+src/pages/BillingSpp.tsx:                      <option key={ft.id} value={ft.id}>{ft.name} (Rp {ft.amount.toLocaleString('id-ID')})</option>
+src/pages/BillingSpp.tsx:                      <option key={c.id} value={c.id}>{c.name}</option>
+src/pages/BillingSpp.tsx:                      <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+src/pages/BillingSpp.tsx:                    <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+src/pages/Inventory.tsx:    const name = it.name || '';
+src/pages/Inventory.tsx:    const name = it.name || '';
+src/pages/Inventory.tsx:      content += `"${item.id}","${item.code}","${item.name}","${catName}",${item.quantity},"${item.unit}","${whName}","${item.rack || ''}"\n`;
+src/pages/Inventory.tsx:    const name = item.name || '';
+src/pages/Inventory.tsx:                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+src/pages/Inventory.tsx:                  <option key={wh.id} value={wh.id}>{wh.name}</option>
+src/pages/Inventory.tsx:                            <p className="font-bold text-slate-800 text-sm">{item.name}</p>
+src/pages/Inventory.tsx:                                  name: item.name || '',
+src/pages/Inventory.tsx:                              <h4 style="margin: 6px 0; font-size: 11px; font-weight: bold; height: 32px; overflow: hidden; color: #1e293b;">${it.name}</h4>
+src/pages/Inventory.tsx:                    value={newItem.name || ''}
+src/pages/Inventory.tsx:                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+src/pages/Inventory.tsx:                      <option key={wh.id} value={wh.id}>{wh.name}</option>
+src/pages/Inventory.tsx:                    <option key={item.id} value={item.id}>{item.name} ({item.code}) - Stok: {item.quantity}</option>
+src/pages/Inventory.tsx:                          <option key={wh.id} value={wh.id}>{wh.name}</option>
+src/pages/Inventory.tsx:                          <option key={wh.id} value={wh.id}>{wh.name}</option>
+src/pages/Inventory.tsx:                <p className="font-bold text-amber-900">{selectedOpnameItem.name}</p>
+src/pages/Inventory.tsx:                <h4 className="font-extrabold text-slate-800 text-sm">{showLabelModal.name}</h4>
+src/pages/Inventory.tsx:                      <h4 className="font-extrabold text-slate-800 text-sm mt-0.5">{scanResult.name}</h4>
+src/pages/Inventory.tsx:        <h5 className="font-extrabold text-slate-800 text-xs line-clamp-2 min-h-[2rem]">{item.name}</h5>
+src/pages/Inventory.tsx:                    <title>Cetak Label - ${item.name}</title>
+src/pages/Inventory.tsx:                      <h4>${item.name}</h4>
+src/pages/DatabaseManagement.tsx:                          <h5 className="text-xs font-bold text-slate-800">{mig.name}</h5>
+src/pages/TataUsaha.tsx:                    value={newTemplate.name}
+src/pages/TataUsaha.tsx:                      <strong className="text-slate-800">{tmpl.name}</strong>
+src/pages/ParentPortal.tsx:              <h3 className="text-sm font-extrabold">{portalData.parent.name} ({portalData.parent.email})</h3>
+src/pages/ParentPortal.tsx:                <h2 className="text-xl font-black text-slate-800 mt-2">Portal Monitoring {portalData.parent.name}</h2>
+src/pages/ParentPortal.tsx:                    <p className="text-sm font-bold text-slate-800">{std.name}</p>
+src/pages/ParentPortal.tsx:                          <p className="text-xs font-bold text-slate-800">{inv.name || 'SPP Bulan Juli 2026'}</p>
+src/pages/ParentPortal.tsx:                        <UserCheck className="h-4 w-4 text-blue-600" /> {parent.name}
+src/pages/ParentPortal.tsx:                      <option key={p.id} value={p.id}>{p.name}</option>
+src/pages/ParentPortal.tsx:                      <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+src/pages/BusinessIntelligence.tsx:              <span>{tab.name}</span>
+src/pages/BusinessIntelligence.tsx:                          <span className="text-xs font-bold text-slate-800">{job.name}</span>
+src/pages/BusinessIntelligence.tsx:                        <option key={job.id} value={job.id}>{job.name}</option>
+src/pages/BusinessIntelligence.tsx:                    <h3 className="text-sm font-bold text-slate-800">{mart.name}</h3>
+src/pages/BusinessIntelligence.tsx:                      <span className="font-bold text-slate-700 block text-xs">{kpi.name}</span>
+src/lib/audit-server-data.ts:          `Melaksanakan penilaian kepatuhan regulasi ${framework.name}. Tingkat Kepatuhan: ${rate.toFixed(2)}%`,
+src/lib/audit-server-data.ts:                      `- Kerangka regulasi kepatuhan aktif: ${frameworks.map(f => f.name).join(', ')}\n` +
+src/lib/tu-server-data.ts:      actor_name: authUser.name || username,
+src/lib/tu-server-data.ts:          auditDoc('UPDATE_TEMPLATE', `Mengubah draf template surat: ${template.name}`);
+src/lib/tu-server-data.ts:          name: data.name || 'Template Surat Baru',
+src/lib/tu-server-data.ts:        auditDoc('CREATE_TEMPLATE', `Membuat draf template surat baru: ${template.name}`);
+src/lib/db-server-data.ts:    query_text: 'SELECT s.name, s.parent_name, t.amount_due, t.due_date\nFROM students s\nJOIN tuitions t ON s.id = t.student_id\nWHERE t.status = \'unpaid\' AND t.due_date < NOW();',
+src/lib/db-server-data.ts:            `Database provider ${prov.name} updated config details`,
+src/lib/db-server-data.ts:          return { success: true, message: `Provider ${prov.name} updated.`, data: prov };
+src/lib/db-server-data.ts:        `Migration version ${mig.version} ("${mig.name}") successfully executed in ${execTime}ms`,
+src/lib/db-server-data.ts:        const table = schema.tables.find(t => t.name === newImport.target_table);
+src/security/jwt.service.ts:        name: user.name,
+src/security/jwt.service.ts:        name: user.name,
+src/security/jwt.service.ts:            name: payload.name,
+src/database/seeders/SeederEngine.ts:          row.name,
+src/database/helpers/TestingSuite.ts:      if (!found || found.name !== 'Rian Hidayat') {
+src/database/helpers/TestingSuite.ts:      logs.push(`Data verifikasi cocok: ${found.name} (${found.nisn})`);
+src/database/scripts/installerHelper.ts:        name: data.name,
+src/database/scripts/installerHelper.ts:        name: data.name,
+src/database/scripts/installerHelper.ts:        name: user.name,
+src/database/mysql/MysqlProvider.ts:          newRecord.name = params[2] || 'Ahmad Fauzi';
+src/database/repositories/Repositories.ts:      name: data.name,
+src/database/services/Services.ts:    if (!data.name || !data.nisn) {
+src/controllers/employee.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Karyawan', `Menambahkan karyawan baru: ${employee.name}`);
+src/controllers/employee.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'UPDATE', 'Karyawan', `Mengubah data karyawan: ${req.body.name}`);
+src/controllers/employee.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'DELETE', 'Karyawan', `Menghapus karyawan: ${db.employees[index].name}`);
+src/controllers/employee.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'SdmConfig', `Menambahkan jabatan baru: ${pos.name}`);
+src/controllers/employee.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'SdmConfig', `Menambahkan golongan baru: ${rank.name}`);
+src/controllers/employee.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'SdmConfig', `Menambahkan status kepegawaian baru: ${status.name}`);
+src/controllers/employee.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'SdmDocument', `Menambahkan dokumen kepegawaian baru: ${sdoc.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Akademik', `Menambahkan tahun ajaran baru: ${item.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Akademik', `Menambahkan semester baru: ${item.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Akademik', `Menambahkan kurikulum baru: ${item.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Akademik', `Menambahkan jurusan baru: ${item.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Kelas', `Membuat kelas baru: ${item.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Akademik', `Menambahkan Rombel baru: ${item.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Akademik', `Menambahkan ruangan baru: ${item.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Akademik', `Menambahkan mata pelajaran baru: ${item.name}`);
+src/controllers/class.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Akademik', `Menambahkan jam pelajaran baru: ${item.name}`);
+src/controllers/class.controller.ts:                name: item.name,
+src/controllers/class.controller.ts:                code: item.code || `C-${item.name}-${Date.now()}`,
+src/controllers/class.controller.ts:                name: item.name,
+src/controllers/class.controller.ts:            course_name: course ? course.name : 'Mata Pelajaran',
+src/controllers/class.controller.ts:            teacher_name: teacher ? teacher.name : 'Guru Pengampu',
+src/controllers/class.controller.ts:            classroom_name: cls ? cls.name : 'Semua Kelas',
+src/controllers/auth.controller.ts:          name: user.name,
+src/controllers/auth.controller.ts:          name: newUser.name,
+src/controllers/system.controller.ts:              name: name || DB.tenants[idx].name,
+src/controllers/system.controller.ts:            logActivity(tenantId, authUser.id, username, role, 'UPDATE', 'Tenant', `Mengubah profil tenant: ${DB.tenants[idx].name}`);
+src/controllers/system.controller.ts:            logActivity(tenantId, authUser.id, username, role, 'DELETE', 'Tenant', `Menghapus tenant: ${DB.tenants[idx].name}`);
+src/controllers/system.controller.ts:                definition.name = name;
+src/controllers/system.controller.ts:              title: title || `${workflow.name} Run`,
+src/controllers/system.controller.ts:                integration.name = name;
+src/controllers/system.controller.ts:            logActivity(tenantId, authUser.id, username, role, 'ETL_RUN', 'Data Warehouse', `Triggered ETL Job ${job.name} successfully.`);
+src/controllers/system.controller.ts:            return res.json({ success: true, message: `Pekerjaan ETL "${job.name}" sukses dijalankan secara incremental.`, data: history });
+src/controllers/system.controller.ts:            logActivity(tenantId, authUser.id, username, role, 'DATAMART_REFRESH', 'Data Warehouse', `Refreshed Data Mart ${mart.name}`);
+src/controllers/system.controller.ts:            return res.json({ success: true, message: `Data Mart "${mart.name}" berhasil di-refresh dari data Warehouse.`, data: mart });
+src/controllers/report.controller.ts:                  student_name: r.name,
+src/controllers/report.controller.ts:                    component_name: comp.name,
+src/controllers/report.controller.ts:                  student_name: r.name,
+src/controllers/report.controller.ts:              const newValStr = item.isNum ? String(item.val) : String(item.name);
+src/controllers/report.controller.ts:                      component_name: item.isNum ? item.name : String(item.name)
+src/controllers/report.controller.ts:                      component_name: item.isNum ? item.name : String(item.name),
+src/controllers/report.controller.ts:              class: cls ? cls.name : 'Semua Kelas',
+src/controllers/report.controller.ts:              subject: sub ? sub.name : 'Mata Pelajaran',
+src/controllers/report.controller.ts:              room: room ? room.name : 'Ruangan',
+src/controllers/report.controller.ts:              subject: sub ? sub.name : 'Mata Pelajaran',
+src/controllers/report.controller.ts:              class: cls ? cls.name : 'Kelas',
+src/controllers/notification.controller.ts:            name: p.name || 'Wali Murid',
+src/controllers/notification.controller.ts:            name: emp.name || 'Guru/Staf',
+src/controllers/notification.controller.ts:            name: std.name || 'Siswa',
+src/controllers/notification.controller.ts:            recipient_name: user.name,
+src/controllers/payment.controller.ts:          student_name: student ? student.name : 'Siswa Tidak Dikenal',
+src/controllers/payment.controller.ts:          fee_name: feeType ? feeType.name : 'Tagihan Kustom',
+src/controllers/payment.controller.ts:          student_name: student ? student.name : 'Siswa Tidak Dikenal',
+src/controllers/payment.controller.ts:          fee_name: feeType ? feeType.name : 'Tagihan Kustom',
+src/controllers/payment.controller.ts:        name: name || DB.feeTypes[idx].name,
+src/controllers/payment.controller.ts:          description: description || `Tagihan ${feeType.name} periode ${limitDueDate.substring(0, 7)}`,
+src/controllers/payment.controller.ts:      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Billing Engine', `Menghasilkan ${generatedCount} tagihan ${feeType.name} [Target: ${target_type}]`);
+src/controllers/payment.controller.ts:          student_name: student ? student.name : 'Siswa Tidak Dikenal',
+src/controllers/payment.controller.ts:          student_name: student ? student.name : 'Siswa Tidak Dikenal',
+src/controllers/payment.controller.ts:          description: `Penerimaan Setoran Tabungan Siswa: ${student.name}`,
+src/controllers/payment.controller.ts:          description: `Penerimaan Setoran Tabungan Siswa: ${student.name}`,
+src/controllers/payment.controller.ts:      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Student Savings', `Mencatat ${type === 'DEPOSIT' ? 'Setoran' : 'Penarikan'} Tabungan Rp ${valAmount.toLocaleString('id-ID')} untuk ${student.name}`);
+src/controllers/payment.controller.ts:      const msg = `Yth. Orang tua dari ${student ? student.name : 'Siswa'}. Diingatkan bahwa tagihan ${feeType ? feeType.name : 'Pendidikan'} sebesar Rp ${invoice.amount.toLocaleString('id-ID')} akan jatuh tempo pada ${invoice.due_date}. Silakan selesaikan pembayaran melalui Virtual Account atau QRIS di portal Anda. Terima kasih.`;
+src/controllers/payment.controller.ts:          student_name: student ? student.name : 'Siswa Tidak Dikenal',
+src/controllers/attendance.controller.ts:        logActivity(tenantId, authUser?.id || 'system', username, role, 'CREATE', 'Absensi Enterprise', `Absen ${req.body.type} via ${req.body.method} sukses untuk ${req.body.name}`);
+src/controllers/attendance.controller.ts:            name: authUser.name,
+src/controllers/attendance.controller.ts:          name: guest_name || authUser.name,
+src/controllers/attendance.controller.ts:      logActivity(tId, authUser.id, authUser.username, authUser.role, 'JOIN', 'Video Conference', `User ${authUser.name} bergabung ke room "${schedule.title}"`);
+src/controllers/attendance.controller.ts:          participant_name: p ? p.name : 'Unknown User',
+src/controllers/attendance.controller.ts:          host_name: host ? host.name : 'Sistem'
+src/controllers/attendance.controller.ts:            sender_name: authUser.name,
+src/controllers/attendance.controller.ts:        const name = prov ? prov.name : 'Custom WebRTC';
+src/controllers/teacher.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'INSERT', 'Guru', `Menambahkan guru baru: ${teacher.name}`);
+src/controllers/teacher.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'UPDATE', 'Guru', `Mengubah data guru: ${req.body.name}`);
+src/controllers/teacher.controller.ts:        logActivity(tenantId, authUser.id, username, role, 'DELETE', 'Guru', `Menghapus guru: ${DB.teachers[index].name}`);
+src/controllers/teacher.controller.ts:            teacher_name: teacherObj ? teacherObj.name : 'Guru Tidak Diketahui',
+src/controllers/teacher.controller.ts:            class_name: classObj ? classObj.name : 'Kelas Tidak Diketahui',
+src/controllers/teacher.controller.ts:            subject_name: subjectObj ? subjectObj.name : 'Semua Mapel / Wali Kelas',
+src/controllers/teacher.controller.ts:            academic_year_name: ayObj ? ayObj.name : 'Tahun Tidak Diketahui',
+src/controllers/teacher.controller.ts:            semester_name: semObj ? semObj.name : 'Semester Tidak Diketahui'
+src/controllers/document.controller.ts:            const sheet = workbook.addWorksheet(sheetData.name || `Sheet ${idx + 1}`);
+src/controllers/document.controller.ts:            zip.file(file.name, file.content, { base64: file.isBase64 || false });
+src/controllers/ppdb.controller.ts:                period_name: period ? period.name : '',
+src/controllers/ppdb.controller.ts:                wave_name: wave ? wave.name : '',
+src/controllers/ppdb.controller.ts:                program_name: prog ? prog.name : '',
+src/controllers/ppdb.controller.ts:                  period_name: periodObj ? periodObj.name : '',
+src/controllers/ppdb.controller.ts:                  wave_name: waveObj ? waveObj.name : '',
+src/controllers/ppdb.controller.ts:                  program_name: progObj ? progObj.name : '',
+src/controllers/ppdb.controller.ts:              verified_by: authUser.name,
+src/controllers/ppdb.controller.ts:              interviewer_name: interviewer_name || authUser.name,
+src/controllers/ppdb.controller.ts:              tester_name: tester_name || authUser.name,
+src/controllers/ppdb.controller.ts:                program_name: prog ? prog.name : '',
+src/controllers/ppdb.controller.ts:              verified_by: authUser.name,
+src/controllers/ppdb.controller.ts:                name: w.name,
+src/controllers/ppdb.controller.ts:                name: p.name,
+src/core/error-handler.ts:    this.name = this.constructor.name;
+src/core/error-handler.ts:          name: error.name,
+src/inventory/services.ts:      const destItem = destItems.find(i => i.name === item.name && i.warehouse_id === options.toWarehouseId);
+src/inventory/services.ts:      item_name: item.name,
+src/inventory/controllers.ts:          logActivity(tenantId, userId, username, role, 'CREATE', 'Asset & Inventory', `Membuat barang baru: ${created.name} (${created.code})`);
+src/inventory/controllers.ts:          logActivity(tenantId, userId, username, role, 'UPDATE', 'Asset & Inventory', `Memperbarui barang: ${updated.name} (${updated.code})`);
+src/inventory/controllers.ts:          logActivity(tenantId, userId, username, role, 'CREATE', 'Asset & Inventory', `Membuat kategori barang: ${created.name}`);
+src/inventory/controllers.ts:          logActivity(tenantId, userId, username, role, 'CREATE', 'Asset & Inventory', `Membuat gudang baru: ${created.name}`);
+src/inventory/controllers.ts:          logActivity(tenantId, userId, username, role, 'CREATE', 'Asset & Inventory', `Membuat supplier baru: ${created.name}`);
+src/inventory/controllers.ts:          logActivity(tenantId, userId, username, role, 'CREATE', 'Fixed Asset', `Membuat aset tetap: ${created.name} (${created.code})`);
+src/inventory/controllers.ts:          logActivity(tenantId, userId, username, role, 'UPDATE', 'Fixed Asset', `Memperbarui aset tetap: ${updated.name} (${updated.code})`);
+src/inventory/controllers.ts:                name: item.name,
+src/inventory/controllers.ts:                name: ast.name,
+src/__tests__/domain/entity.base.test.ts:    return this.props.name;
+src/__tests__/domain/entity.base.test.ts:    expect(entity.name).toBe('Pesantren Al-Hikmah');
+src/__tests__/domain/entity.base.test.ts:    expect(obj.name).toBe('Serialization Test');
+src/auth/auth.service.ts:      name: user.name,
+src/auth/auth.service.ts:          name: user.name,
+src/auth/auth.service.ts:      name: newUser.name,
+src/auth/auth.service.ts:          name: newUser.name,
+src/auth/auth.service.ts:      name: payload.name,
+src/auth/auth.service.ts:    if (profileData.name) data.name = profileData.name;
+src/auth/auth.service.ts:        name: updatedUser.name,
+src/auth/auth.repository.ts:                name: roleData.name,
+src/mappers/attendance.mapper.ts:      name: dto.name,
+src/mappers/attendance.mapper.ts:      name: entity.name,
+src/mappers/student.mapper.ts:        name: flat.name || flat.nama_lengkap || 'Tanpa Nama',
+src/mappers/student.mapper.ts:      name: student.identitas.name,
+src/mappers/student.mapper.ts:        Nama: student.identitas.name,
+src/mappers/student.mapper.ts:        nama: student.identitas.name,

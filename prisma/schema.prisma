@@ -1,0 +1,1874 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model School {
+  id              String   @id @default("school-main")
+  name            String   @default("SMA Unggulan Nusantara")
+  foundation_name String   @default("Yayasan Bina Pemuda Nusantara")
+  npsn            String   @default("12345678")
+  address         String   @default("Jl. Raya Pendidikan No. 10, Jakarta")
+  logo            String   @default("/logo.png")
+  favicon         String   @default("/favicon.ico")
+  email           String   @default("info@sekolah.sch.id")
+  phone           String   @default("021-5551234")
+  website         String   @default("www.sekolah.sch.id")
+  timezone        String   @default("Asia/Jakarta")
+  currency        String   @default("IDR")
+  language        String   @default("id")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model AcademicYear {
+  id         String     @id @default(uuid())
+  name       String     // e.g. "2025/2026"
+  status     String     @default("ACTIVE") // "ACTIVE" or "INACTIVE"
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  deleted_at DateTime?
+  semesters  Semester[]
+}
+
+model Semester {
+  id               String       @id @default(uuid())
+  academic_year_id String
+  name             String       // e.g. "Ganjil" or "Genap"
+  status           String       @default("ACTIVE")
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+  academic_year    AcademicYear @relation(fields: [academic_year_id], references: [id], onDelete: Cascade)
+}
+
+model Role {
+  id               String           @id @default(uuid())
+  name             String
+  code             String           @unique
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  deleted_at       DateTime?
+  role_permissions RolePermission[]
+  users            User[]
+}
+
+model Permission {
+  id               String           @id @default(uuid())
+  name             String
+  code             String           @unique
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  deleted_at       DateTime?
+  role_permissions RolePermission[]
+}
+
+model RolePermission {
+  id            String     @id @default(uuid())
+  role_id       String
+  permission_id String
+  created_at    DateTime   @default(now())
+  role          Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@unique([role_id, permission_id])
+}
+
+model User {
+  id                    String      @id @default(uuid())
+  email                 String      @unique
+  username              String      @unique
+  password_hash         String
+  name                  String
+  role_id               String
+  phone                 String?
+  status                String      @default("ACTIVE")
+  photo                 String?
+  signature             String?
+  created_at            DateTime    @default(now())
+  updated_at            DateTime    @updatedAt
+  deleted_at            DateTime?
+  role                  Role        @relation(fields: [role_id], references: [id])
+  audit_logs            AuditLog[]
+}
+
+model Teacher {
+  id         String     @id @default(uuid())
+  name       String
+  nip        String?    @unique
+  department String?
+  position   String?
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  deleted_at DateTime?
+}
+
+model TeacherAssignment {
+  id               String   @id @default(uuid())
+  tenant_id        String   @default("tenant-1")
+  teacher_id       String
+  unit_id          String
+  academic_year_id String
+  semester_id      String
+  class_id         String
+  subject_id       String?
+  assignment_type  String   // TEACHER, SUBJECT_TEACHER, HOMEROOM, TAHFIDZ, EXTRACURRICULAR, MUSYRIF
+  is_homeroom      Boolean  @default(false)
+  status           String   @default("ACTIVE")
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  deleted_at       DateTime?
+
+  subject          Subject? @relation(fields: [subject_id], references: [id])
+
+  @@map("teacher_assignments")
+}
+
+model Employee {
+  id         String     @id @default(uuid())
+  name       String
+  nip        String?    @unique
+  position   String?
+  status     String     @default("TETAP")
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  deleted_at DateTime?
+}
+
+model Student {
+  id           String            @id @default(uuid())
+  name         String
+  nis          String            @unique
+  nisn         String?           @unique
+  status       String            @default("AKTIF")
+  class_id     String?
+  created_at   DateTime          @default(now())
+  updated_at   DateTime          @updatedAt
+  deleted_at   DateTime?
+  class        Class?            @relation(fields: [class_id], references: [id])
+  parents      Parent[]
+  guardians    StudentGuardian[]
+  attendance   Attendance[]
+  payments     Payment[]
+  documents    Document[]
+  scores           AssessmentScore[]
+  final_scores     StudentFinalScore[]
+  rankings         StudentRanking[]
+  promotion_results PromotionResult[]
+  graduation_results GraduationResult[]
+}
+
+model Parent {
+  id         String    @id @default(uuid())
+  student_id String
+  name       String
+  email      String?
+  phone      String?
+  relation   String    // e.g. "Ayah", "Ibu", "Wali"
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  student    Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+model Guardian {
+  id          String            @id @default(uuid())
+  name        String
+  nik         String?           @unique
+  phone       String?
+  email       String?
+  address     String?
+  occupation  String?
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  deleted_at  DateTime?
+  students    StudentGuardian[]
+}
+
+model StudentGuardian {
+  student_id  String
+  guardian_id String
+  relation    String // e.g. "Ayah", "Ibu", "Wali"
+  created_at  DateTime @default(now())
+
+  student     Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  guardian    Guardian @relation(fields: [guardian_id], references: [id], onDelete: Cascade)
+
+  @@id([student_id, guardian_id])
+}
+
+model Class {
+  id         String     @id @default(uuid())
+  name       String     // e.g. "VII-A"
+  grade      String     // e.g. "7"
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  deleted_at DateTime?
+  students   Student[]
+}
+
+model Curriculum {
+  id           String    @id @default(uuid())
+  tenant_id    String    @default("tenant-1")
+  code         String    @unique
+  name         String    // e.g. "Kurikulum Merdeka 2024"
+  description  String?   @db.Text
+  academic_year String?  // tahun_ajaran
+  semester     String?   // GANJIL, GENAP, BOTH
+  level        String?   // jenjang
+  unit         String?   // unit
+  status       String    @default("ACTIVE")
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
+  subjects     Subject[]
+
+  @@map("curriculums")
+}
+
+model SubjectCategory {
+  id          String    @id @default(uuid())
+  tenant_id   String    @default("tenant-1")
+  name        String    // e.g. "Umum", "Diniyah"
+  description String?   @db.Text
+  color       String?   @default("#64748b")
+  icon        String?   @default("Book")
+  order       Int       @default(0)
+  status      String    @default("ACTIVE")
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  subjects    Subject[]
+
+  @@map("subject_categories")
+}
+
+model Subject {
+  id                 String    @id @default(uuid())
+  tenant_id          String    @default("tenant-1")
+  category_id        String?
+  curriculum_id      String?
+  code               String    @unique
+  name               String    // e.g. "Matematika"
+  name_arabic        String?   // nama_arab
+  name_english       String?   // nama_inggris
+  level              String?   // jenjang
+  unit               String?   // unit
+  semester           String?   // GANJIL, GENAP, BOTH
+  kkm                Int       @default(75)
+  weight             Float?    @default(1.0) // bobot
+  hours_per_week     Int?      @default(2)   // jam_per_minggu
+  color              String?   @default("#64748b")
+  icon               String?   @default("BookOpen")
+  order              Int       @default(0)
+  is_rapor           Boolean   @default(true)
+  is_leger           Boolean   @default(true)
+  is_absensi         Boolean   @default(true)
+  is_tahfidz         Boolean   @default(false)
+  status             String    @default("ACTIVE")
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+
+  category           SubjectCategory? @relation(fields: [category_id], references: [id])
+  curriculum         Curriculum?      @relation(fields: [curriculum_id], references: [id])
+  learning_outcomes  SubjectCP[]
+  learning_objectives SubjectTP[]
+  teacher_assignments TeacherAssignment[]
+  assessment_formulas AssessmentFormula[]
+  scores             AssessmentScore[]
+  final_scores       StudentFinalScore[]
+
+  @@map("subjects")
+}
+
+model SubjectCP {
+  id          String    @id @default(uuid())
+  subject_id  String
+  level       String?   // jenjang
+  semester    String?   // semester
+  content     String    @db.Text // Learning Outcome / Capaian Pembelajaran
+  order       Int       @default(0)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+
+  subject     Subject   @relation(fields: [subject_id], references: [id])
+
+  @@map("subject_cp")
+}
+
+model SubjectTP {
+  id          String    @id @default(uuid())
+  subject_id  String
+  content     String    @db.Text // Learning Objective / Tujuan Pembelajaran
+  order       Int       @default(0)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+
+  subject     Subject   @relation(fields: [subject_id], references: [id])
+
+  @@map("subject_tp")
+}
+
+model AssessmentType {
+  id          String    @id @default(uuid())
+  tenant_id   String    @default("tenant-1")
+  name        String    // e.g. "Tugas", "UH", "PTS", "PAS"
+  code        String    @unique
+  weight      Float     @default(1.0)
+  status      String    @default("ACTIVE")
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  scores      AssessmentScore[]
+  components  AssessmentComponent[]
+
+  @@map("assessment_types")
+}
+
+model AssessmentComponent {
+  id          String    @id @default(uuid())
+  tenant_id   String    @default("tenant-1")
+  type_id     String?
+  name        String    // e.g. "Pengetahuan", "Keterampilan", "Sikap"
+  code        String    @unique
+  weight      Float     @default(1.0)
+  status      String    @default("ACTIVE")
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  scores      AssessmentScore[]
+
+  type        AssessmentType? @relation(fields: [type_id], references: [id])
+
+  @@map("assessment_components")
+}
+
+model AssessmentFormula {
+  id          String    @id @default(uuid())
+  tenant_id   String    @default("tenant-1")
+  subject_id  String
+  name        String    // e.g. "Formula Semester Ganjil"
+  formula     String    // e.g. "0.3*Tugas + 0.2*UH + 0.2*PTS + 0.3*PAS"
+  status      String    @default("ACTIVE")
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  subject     Subject   @relation(fields: [subject_id], references: [id])
+
+  @@map("assessment_formulas")
+}
+
+model AssessmentScore {
+  id              String    @id @default(uuid())
+  tenant_id       String    @default("tenant-1")
+  student_id      String
+  subject_id      String
+  type_id         String
+  component_id    String
+  teacher_id      String
+  academic_year_id String
+  semester        String
+  score           Float
+  notes           String?   @db.Text
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  student         Student             @relation(fields: [student_id], references: [id])
+  subject         Subject             @relation(fields: [subject_id], references: [id])
+  type            AssessmentType      @relation(fields: [type_id], references: [id])
+  component       AssessmentComponent @relation(fields: [component_id], references: [id])
+
+  @@map("assessment_scores")
+}
+
+model StudentFinalScore {
+  id               String    @id @default(uuid())
+  tenant_id        String    @default("tenant-1")
+  student_id       String
+  subject_id       String
+  academic_year_id String
+  semester         String
+  score_final      Float
+  predicate        String?   // A, B, C, D
+  description      String?   @db.Text
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  student          Student   @relation(fields: [student_id], references: [id])
+  subject          Subject   @relation(fields: [subject_id], references: [id])
+
+  @@map("student_final_scores")
+}
+
+model StudentRanking {
+  id               String    @id @default(uuid())
+  tenant_id        String    @default("tenant-1")
+  student_id       String
+  classroom_id     String
+  academic_year_id String
+  semester         String
+  average_score    Float
+  rank             Int
+  total_students   Int
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  student          Student   @relation(fields: [student_id], references: [id])
+
+  @@map("student_rankings")
+}
+
+model ReportTemplate {
+  id           String    @id @default(uuid())
+  tenant_id    String    @default("tenant-1")
+  name         String
+  type         String    // MERDEKA, K13, etc.
+  is_default   Boolean   @default(false)
+  page_size    String    @default("A4") // A4, F4, Legal
+  orientation  String    @default("PORTRAIT") // PORTRAIT, LANDSCAPE
+  margin_top   Int       @default(20)
+  margin_right Int       @default(20)
+  margin_bottom Int      @default(20)
+  margin_left  Int       @default(20)
+  config       String?   @db.Text // JSON for blocks/sections
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  @@map("report_templates")
+}
+
+model PromotionResult {
+  id               String    @id @default(uuid())
+  tenant_id        String    @default("tenant-1")
+  academic_year    String
+  student_id       String
+  student_name     String
+  current_class    String
+  next_class       String?
+  status           String    @default("PENDING") // PROMOTED, RETAINED, PENDING
+  notes            String?   @db.Text
+  approved_by      String?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+
+  student          Student   @relation(fields: [student_id], references: [id])
+
+  @@map("promotion_results")
+}
+
+model GraduationResult {
+  id               String    @id @default(uuid())
+  tenant_id        String    @default("tenant-1")
+  academic_year    String
+  student_id       String
+  student_name     String
+  nis              String
+  nisn             String?
+  average_score    Float     @default(0)
+  status           String    @default("PENDING") // GRADUATED, FAILED, PENDING
+  notes            String?   @db.Text
+  approved_by      String?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+
+  student          Student   @relation(fields: [student_id], references: [id])
+
+  @@map("graduation_results")
+}
+
+model Attendance {
+  id           String    @id @default(uuid())
+  tenant_id    String    @default("system")
+  student_id   String?
+  user_id      String?
+  date         String    // YYYY-MM-DD
+  time_in      String?
+  time_out     String?
+  status       String    // e.g. "HADIR", "SAKIT", "IZIN", "ALFA"
+  type         String    @default("STUDENT")
+  notes        String?   @db.Text
+  location_lat Float?
+  location_lng Float?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
+  created_by   String?
+  updated_by   String?
+  student      Student?  @relation(fields: [student_id], references: [id])
+}
+
+model AttendanceRule {
+  id          String   @id @default(uuid())
+  tenant_id   String   @default("tenant-1")
+  content     Json
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  deleted_at  DateTime?
+
+  @@map("attendance_rules")
+}
+
+model ReplacementTeacher {
+  id          String   @id @default(uuid())
+  tenant_id   String   @default("tenant-1")
+  content     Json
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  deleted_at  DateTime?
+
+  @@map("replacement_teachers")
+}
+
+model AttendanceGeofence {
+  id          String   @id @default(uuid())
+  tenant_id   String   @default("tenant-1")
+  content     Json
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  deleted_at  DateTime?
+
+  @@map("attendance_geofences")
+}
+
+model Payment {
+  id          String    @id @default(uuid())
+  student_id  String
+  amount      Float
+  payment_for String    // e.g. "SPP Juli 2026"
+  status      String    @default("UNPAID") // "PAID", "UNPAID", "PARTIAL"
+  paid_at     DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  student     Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+model PayrollMaster {
+  id                      String    @id @default(uuid())
+  tenant_id               String    @default("tenant-1")
+  employee_id             String
+  employee_name           String
+  role                    String
+  base_salary             Float
+  daily_allowance         Float
+  position_allowance      Float
+  family_allowance        Float
+  certification_allowance Float
+  functional_allowance    Float
+  pondok_allowance        Float
+  bpjs_subsidy            Float
+  tax_subsidy             Float
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  deleted_at              DateTime?
+
+  @@map("payroll_masters")
+}
+
+model PayrollRun {
+  id              String    @id @default(uuid())
+  tenant_id       String    @default("tenant-1")
+  employee_id     String
+  payroll_period  String
+  data            Json
+  approval_status String?
+  payment_status  String?
+  paid_at         DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+
+  @@map("payroll_runs")
+}
+
+model PayrollLoan {
+  id                  String    @id @default(uuid())
+  tenant_id           String    @default("tenant-1")
+  employee_id         String
+  employee_name       String
+  loan_amount         Float
+  tenor_months        Int
+  monthly_installment Float
+  remaining_amount    Float
+  reason              String?
+  approval_status     String
+  payment_status      String
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+
+  @@map("payroll_loans")
+}
+
+model PayrollKasbon {
+  id            String    @id @default(uuid())
+  tenant_id     String    @default("tenant-1")
+  employee_id   String
+  employee_name String
+  kasbon_amount Float
+  reason        String?
+  status        String
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+
+  @@map("payroll_kasbon")
+}
+
+model PayrollAuditLog {
+  id          String   @id @default(uuid())
+  tenant_id   String   @default("tenant-1")
+  actor_id    String
+  actor_name  String
+  actor_role  String
+  action_type String
+  module      String
+  description String
+  payload     String?  @db.Text
+  created_at  DateTime @default(now())
+  deleted_at  DateTime?
+
+  @@map("payroll_audit_logs")
+}
+
+model Finance {
+  id          String    @id @default(uuid())
+  category    String    // e.g. "SPP", "OPERASIONAL"
+  amount      Float
+  type        String    // "INCOME" or "EXPENSE"
+  description String?
+  date        String    // YYYY-MM-DD
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+}
+
+model Inventory {
+  id         String    @id @default(uuid())
+  item_name  String
+  quantity   Int
+  location   String?
+  status     String    @default("BAIK")
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+}
+
+model Document {
+  id         String    @id @default(uuid())
+  student_id String
+  name       String
+  category   String    // e.g. "IJAZAH", "KK", "AKTA"
+  file_type  String
+  file_size  Int
+  file_url   String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  student    Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  recipient  String
+  type       String    // "WHATSAPP", "EMAIL", "SYSTEM"
+  title      String
+  message    String
+  status     String    @default("PENDING") // "SENT", "PENDING", "FAILED"
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  tenant_id     String?
+  user_id       String?
+  user_name     String?
+  action        String   // e.g. "INSERT", "UPDATE", "DELETE"
+  table_name    String?
+  details       String?  @db.Text
+  document_type String?
+  target_scope  String?
+  format        String?
+  module        String?
+  hash_id       String?
+  status        String?
+  ip_address    String?
+  user_agent    String?
+  created_at    DateTime @default(now())
+  user          User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id         String   @id @default(uuid())
+  tenant_id  String   @default("system")
+  key        String   @unique
+  value      String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, key])
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  user_id          String
+  login_date       String
+  login_time       String
+  ip_address       String?
+  browser          String?
+  os               String?
+  device           String?
+  location         String?
+  status           String    @default("ACTIVE")
+  last_activity_at DateTime  @default(now())
+  expires_at       DateTime
+  created_at       DateTime  @default(now())
+  ended_at         DateTime?
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  user_id     String
+  token       String   @unique @db.VarChar(512)
+  expires_at  DateTime
+  is_revoked  Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+model DapodikChecklist {
+  id            String   @id @default(uuid())
+  checklist_num Int      @unique
+  title         String
+  status        String   @default("Belum") // Belum, Proses, Selesai
+  tanggal       String?  // YYYY-MM-DD
+  pic           String?  // Penanggung Jawab
+  catatan       String?  // Notes
+  lampiran_name String?  // Name of attached file
+  lampiran_url  String?  // URL of attached file
+  custom_fields String?  // JSON-stringified details for specific checklist requirements
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
+model DapodikLog {
+  id            String   @id @default(uuid())
+  checklist_num Int
+  username      String
+  action        String   // TAMBAH, EDIT, UPLOAD, HAPUS, VALIDASI
+  details       String   // Descriptive message or JSON
+  created_at    DateTime @default(now())
+}
+
+model Announcement {
+  id                String                  @id @default(uuid())
+  title             String
+  content           String                  @db.Text
+  type              String                  // "Informasi", "Akademik", "Keuangan", "PPDB", "Kegiatan", "Libur", "Ujian", "Rapat", "Tahfidz", "Asrama", "Darurat"
+  priority          String                  @default("MEDIUM") // "LOW", "MEDIUM", "HIGH"
+  is_pinned         Boolean                 @default(false)
+  status            String                  @default("Draft") // "Draft", "Scheduled", "Sending", "Sent", "Failed", "Expired", "Archived"
+  sender_id         String?
+  sender_name       String?
+  scheduled_at      DateTime?
+  recurrence        String                  @default("NONE") // "NONE", "DAILY", "WEEKLY", "MONTHLY"
+  channels          String                  @db.Text // JSON list of channels, e.g. ["IN_APP", "EMAIL", "WHATSAPP", "PUSH", "SMS"]
+  recipients_filter String                  @db.Text // JSON describing targets, e.g. { roles: [], units: [], classes: [], subjects: [], dorms: [] }
+  attachment_name   String?
+  attachment_url    String?
+  external_link     String?
+  qr_code_data      String?
+  created_at        DateTime                @default(now())
+  updated_at        DateTime                @updatedAt
+  deleted_at        DateTime?
+
+  comments          AnnouncementComment[]
+  likes             AnnouncementLike[]
+  recipients        AnnouncementRecipient[]
+}
+
+model AnnouncementRecipient {
+  id              String       @id @default(uuid())
+  announcement_id String
+  user_id         String?
+  recipient_name  String
+  recipient_phone String?
+  recipient_email String?
+  role            String?
+  channel         String       // "IN_APP", "EMAIL", "WHATSAPP", "PUSH", "SMS"
+  status          String       @default("PENDING") // "PENDING", "SENT", "FAILED", "READ"
+  retry_count     Int          @default(0)
+  error_message   String?      @db.Text
+  read_at         DateTime?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+
+  announcement    Announcement @relation(fields: [announcement_id], references: [id], onDelete: Cascade)
+}
+
+model AnnouncementComment {
+  id              String       @id @default(uuid())
+  announcement_id String
+  user_id         String
+  user_name       String
+  comment         String       @db.Text
+  created_at      DateTime     @default(now())
+
+  announcement    Announcement @relation(fields: [announcement_id], references: [id], onDelete: Cascade)
+}
+
+model AnnouncementLike {
+  id              String       @id @default(uuid())
+  announcement_id String
+  user_id         String
+  created_at      DateTime     @default(now())
+
+  announcement    Announcement @relation(fields: [announcement_id], references: [id], onDelete: Cascade)
+}
+
+model PiketSchedule {
+  id         String   @id @default(uuid())
+  tenant_id  String   @default("tenant-1")
+  day        String
+  students   String   @db.Text // Store JSON string of student names
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("piket_schedules")
+}
+
+model BroadcastTemplate {
+  id              String       @id @default(uuid())
+  name            String
+  category        String
+  subject         String?
+  content         String       @db.Text
+  channel         String       // "EMAIL", "WHATSAPP", "PUSH", "SMS"
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+}
+
+model Letter {
+  id               String       @id @default(uuid())
+  tenant_id        String       @default("tenant-1")
+  letter_number    String       @unique
+  agenda_number    String
+  letter_date      DateTime     @default(now())
+  received_date    DateTime?
+  sender           String
+  receiver         String?
+  destination      String?
+  subject          String
+  summary          String?      @db.Text
+  letter_type_id   String
+  letter_type_code String       // "INCOMING", "OUTGOING", "SK", "UNDANGAN", etc.
+  status           String       @default("DRAFT") // "DRAFT", "REVIEW", "VERIFICATION", "APPROVAL", "SIGNED", "PUBLISHED", "ARCHIVED"
+  confidentiality  String       @default("BIASA") // "BIASA", "RAHASIA", "SANGAT_RAHASIA"
+  urgency          String       @default("BIASA") // "BIASA", "SEGERA", "PENTING"
+  file_path        String?
+  qr_code_hash     String?
+  version          Int          @default(1)
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+  created_by       String?
+  updated_by       String?
+
+  letter_type      LetterType   @relation(fields: [letter_type_id], references: [id])
+  dispositions     Disposition[]
+  approvals        Approval[]
+  signatures       DigitalSignature[]
+}
+
+model LetterType {
+  id               String       @id @default(uuid())
+  name             String       // e.g. "Surat Masuk", "Surat Keluar", "SK"
+  code             String       @unique // e.g. "INCOMING", "OUTGOING", "SK"
+  description      String?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  letters          Letter[]
+}
+
+model LetterTemplate {
+  id               String       @id @default(uuid())
+  name             String
+  code             String       @unique
+  letter_type_id   String
+  number_format    String       // format template like "001/SD-DH/{{month}}/{{year}}"
+  content_template String       @db.Text
+  variables        String       // JSON array of variables
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+}
+
+model LetterNumber {
+  id               String       @id @default(uuid())
+  template_code    String
+  current_sequence Int          @default(1)
+  year             Int
+  month            Int
+  last_generated   String?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+}
+
+model Disposition {
+  id               String       @id @default(uuid())
+  tenant_id        String       @default("tenant-1")
+  letter_id        String
+  disposition_date DateTime     @default(now())
+  instruction      String       @db.Text
+  sender_id        String
+  priority         String       @default("BIASA") // "BIASA", "SEGERA", "PENTING"
+  status           String       @default("PENDING") // "PENDING", "IN_PROGRESS", "COMPLETED", "REJECTED"
+  deadline         DateTime?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+
+  letter           Letter       @relation(fields: [letter_id], references: [id], onDelete: Cascade)
+  logs             DispositionLog[]
+}
+
+model DispositionLog {
+  id               String       @id @default(uuid())
+  disposition_id   String
+  receiver_role    String
+  receiver_user_id String?
+  status           String       @default("PENDING")
+  notes            String?      @db.Text
+  action_date      DateTime?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  disposition      Disposition  @relation(fields: [disposition_id], references: [id], onDelete: Cascade)
+}
+
+model Approval {
+  id               String       @id @default(uuid())
+  letter_id        String
+  stage            Int          @default(1) // 1 = TU, 2 = Kepsek, 3 = Yayasan, etc.
+  approver_role    String       // e.g. "TU", "KEPALA_SEKOLAH", "YAYASAN"
+  status           String       @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  letter           Letter       @relation(fields: [letter_id], references: [id], onDelete: Cascade)
+  logs             ApprovalLog[]
+}
+
+model ApprovalLog {
+  id               String       @id @default(uuid())
+  approval_id      String
+  actor_name       String
+  actor_role       String
+  status           String       // "APPROVED", "REJECTED"
+  notes            String?      @db.Text
+  created_at       DateTime     @default(now())
+
+  approval         Approval     @relation(fields: [approval_id], references: [id], onDelete: Cascade)
+}
+
+model DigitalSignature {
+  id               String       @id @default(uuid())
+  letter_id        String
+  signer_name      String
+  signer_role      String
+  signature_hash   String       @db.Text
+  qr_code_path     String?
+  ip_address       String?
+  user_agent       String?
+  signed_at        DateTime     @default(now())
+
+  letter           Letter       @relation(fields: [letter_id], references: [id], onDelete: Cascade)
+}
+
+model Archive {
+  id               String       @id @default(uuid())
+  tenant_id        String       @default("tenant-1")
+  title            String
+  archive_number   String       @unique
+  letter_id        String?
+  document_type    String       // "INCOMING", "OUTGOING", "LEGAL", "OTHER"
+  box_number       String?
+  shelf_position   String?
+  retention_years  Int          @default(5)
+  file_path        String?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+}
+
+model Leger {
+  id               String               @id @default(uuid())
+  tenant_id        String               @default("tenant-1")
+  class_id         String
+  subject_id       String
+  teacher_id       String
+  academic_year    String
+  semester         String
+  kkm              Int                  @default(75)
+  status           String               @default("DRAFT") // DRAFT, SUBMITTED, APPROVED_HOMEROOM, APPROVED_PRINCIPAL, PUBLISHED
+  locked           Boolean              @default(false)
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+  deleted_at       DateTime?
+
+  studentScores    StudentScore[]
+  approvals        LegerApprovalLog[]
+  reports          LegerAnalysisReport[]
+
+  @@map("legers")
+}
+
+model StudentScore {
+  id               String               @id @default(uuid())
+  leger_id         String
+  student_id       String
+  student_name     String
+  student_nis      String
+  student_nisn     String
+  gender           String               @default("L")
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+  deleted_at       DateTime?
+
+  leger            Leger                @relation(fields: [leger_id], references: [id], onDelete: Cascade)
+  scoreComponents  ScoreComponent[]
+  scoreLogs        ScoreLog[]
+
+  @@map("student_scores")
+}
+
+model ScoreComponent {
+  id               String               @id @default(uuid())
+  student_score_id String
+  component_type   String               // HARIAN, STS, PTS, SAS, PAS, PAT, PRAKTIK, PROYEK, PORTOFOLIO, TAFHIDZ, EKSKUL, SIKAP
+  component_name   String
+  score            Float                @default(0)
+  weight           Float                @default(1)
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+
+  studentScore     StudentScore         @relation(fields: [student_score_id], references: [id], onDelete: Cascade)
+
+  @@map("score_components")
+}
+
+model ScoreLog {
+  id               String               @id @default(uuid())
+  student_score_id String
+  actor_name       String
+  actor_role       String
+  action_type      String               // CREATE, UPDATE, DELETE
+  previous_value   String               @db.Text
+  new_value        String               @db.Text
+  created_at       DateTime             @default(now())
+
+  studentScore     StudentScore         @relation(fields: [student_score_id], references: [id], onDelete: Cascade)
+
+  @@map("score_logs")
+}
+
+model LegerApprovalLog {
+  id               String               @id @default(uuid())
+  leger_id         String
+  actor_name       String
+  actor_role       String
+  action           String               // SUBMIT, APPROVE_HOMEROOM, APPROVE_PRINCIPAL, PUBLISH, REJECT
+  notes            String?              @db.Text
+  created_at       DateTime             @default(now())
+
+  leger            Leger                @relation(fields: [leger_id], references: [id], onDelete: Cascade)
+
+  @@map("approval_logs")
+}
+
+model LegerAnalysisReport {
+  id               String               @id @default(uuid())
+  leger_id         String
+  average          Float                @default(0)
+  median           Float                @default(0)
+  min_score        Float                @default(0)
+  max_score        Float                @default(0)
+  pass_percentage  Float                @default(0)
+  distribution     String               @db.Text // JSON string
+  cp_analysis      String?              @db.Text
+  tp_analysis      String?              @db.Text
+  atp_analysis     String?              @db.Text
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+
+  leger            Leger                @relation(fields: [leger_id], references: [id], onDelete: Cascade)
+
+  @@map("analysis_reports")
+}
+
+model AcademicAnalysis {
+  id               String       @id @default(uuid())
+  tenant_id        String       @default("tenant-1")
+  academic_year    String
+  semester         String
+  class_id         String
+  subject_id       String
+  cp_count         Int          @default(0)
+  tp_count         Int          @default(0)
+  atp_count        Int          @default(0)
+  modules_count    Int          @default(0)
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+
+  @@map("academic_analysis")
+}
+
+model GradeStatistic {
+  id               String       @id @default(uuid())
+  tenant_id        String       @default("tenant-1")
+  academic_year    String
+  semester         String
+  class_id         String
+  subject_id       String
+  highest_score    Float        @default(0)
+  lowest_score     Float        @default(0)
+  average_score    Float        @default(0)
+  median_score     Float        @default(0)
+  mode_score       Float        @default(0)
+  std_dev          Float        @default(0)
+  pass_percentage  Float        @default(0)
+  distribution     String       @db.Text // JSON string
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+
+  @@map("grade_statistics")
+}
+
+model AttendanceStatistic {
+  id               String       @id @default(uuid())
+  tenant_id        String       @default("tenant-1")
+  academic_year    String
+  semester         String
+  class_id         String
+  student_id       String
+  student_name     String
+  hadir            Int          @default(0)
+  izin             Int          @default(0)
+  sakit            Int          @default(0)
+  alfa             Int          @default(0)
+  terlambat        Int          @default(0)
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+
+  @@map("attendance_statistics")
+}
+
+model AchievementStatistic {
+  id               String       @id @default(uuid())
+  tenant_id        String       @default("tenant-1")
+  academic_year    String
+  student_id       String
+  student_name     String
+  achievement_type String       // "AKADEMIK", "NON_AKADEMIK", "TAFHIDZ", "OLIMPIADE", "LOMBA", "KEJUARAAN"
+  title            String
+  grade            String?      // e.g. "Juara 1", "Gold Medal"
+  organizer        String?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+
+  @@map("achievement_statistics")
+}
+
+model ViolationStatistic {
+  id               String       @id @default(uuid())
+  tenant_id        String       @default("tenant-1")
+  academic_year    String
+  student_id       String
+  student_name     String
+  severity         String       // "RINGAN", "SEDANG", "BERAT"
+  description      String       @db.Text
+  points           Int          @default(0)
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+
+  @@map("violation_statistics")
+}
+
+model Major {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  name        String
+  description String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+
+  @@map("majors")
+}
+
+model Room {
+  id         String    @id @default(uuid())
+  name       String
+  building   String?
+  capacity   Int       @default(0)
+  type       String    @default("CLASSROOM") // CLASSROOM, LAB, OFFICE, OUTDOOR
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  @@map("rooms")
+}
+
+model Classroom {
+  id                  String    @id @default(uuid())
+  name                String
+  code                String    @unique
+  level               String
+  capacity            Int       @default(0)
+  major_id            String?
+  room_id             String?
+  homeroom_teacher_id String?
+  status              String    @default("ACTIVE")
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+
+  @@map("classrooms")
+}
+
+model Rombel {
+  id            String    @id @default(uuid())
+  name          String
+  classroom_id  String
+  teacher_id    String
+  academic_year String?
+  semester      String?
+  student_count Int       @default(0)
+  status        String    @default("ACTIVE")
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+
+  @@map("rombels")
+}
+
+model TimeSlot {
+  id         String    @id @default(uuid())
+  name       String
+  start_time String
+  end_time   String
+  is_break   Boolean   @default(false)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  @@map("time_slots")
+}
+
+model Schedule {
+  id           String    @id @default(uuid())
+  day          String    // SENIN, SELASA, etc.
+  time_slot_id String
+  subject_id   String
+  teacher_id   String
+  classroom_id String?
+  rombel_id    String?
+  room_id      String?
+  academic_year String?
+  semester      String?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
+
+  @@map("schedules")
+}
+
+model AcademicCalendar {
+  id         String    @id @default(uuid())
+  title      String
+  date_start DateTime
+  date_end   DateTime?
+  type       String    // HOLIDAY, EXAM, EVENT, KBM
+  description String?  @db.Text
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  @@map("academic_calendars")
+}
+
+model Agenda {
+  id              String    @id @default(uuid())
+  schedule_id     String
+  teacher_id      String
+  date            DateTime
+  topic           String
+  description     String?   @db.Text
+  status          String    @default("COMPLETED")
+  attendance_count Int      @default(0)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+
+  @@map("agendas")
+}
+
+model TeacherLoad {
+  id               String    @id @default(uuid())
+  teacher_id       String
+  total_hours      Int       @default(0)
+  linear_hours     Int       @default(0)
+  additional_hours Int       @default(0)
+  academic_year    String?
+  semester         String?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+
+  @@map("teacher_loads")
+}
+
+model StudentMutation {
+  id               String    @id @default(uuid())
+  student_id       String
+  action           String    // NAIK_KELAS, PINDAH_ROMBEL, PINDAH_JURUSAN, DROP_OUT, ALUMNI
+  from_class_id    String?
+  to_class_id      String?
+  from_major_id    String?
+  to_major_id      String?
+  notes            String?   @db.Text
+  mutation_date    DateTime  @default(now())
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@map("student_mutations")
+}
+
+model VirtualClassroom {
+  id          String    @id @default(uuid())
+  name        String
+  subject_id  String
+  class_id    String
+  teacher_id  String
+  description String?   @db.Text
+  status      String    @default("ACTIVE")
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+
+  @@map("virtual_class_rooms")
+}
+
+model VirtualClassMember {
+  id                   String    @id @default(uuid())
+  virtual_classroom_id String
+  user_id              String
+  role                 String    // TEACHER, STUDENT
+  status               String    @default("ACTIVE")
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  deleted_at           DateTime?
+
+  @@map("virtual_class_members")
+}
+
+model TeachingJournal {
+  id              String    @id @default(uuid())
+  tenant_id       String    @default("tenant-1")
+  schedule_id     String
+  teacher_id      String
+  date            DateTime  @default(now())
+  topic           String
+  description     String?   @db.Text
+  material_url    String?
+  attendance_json String?   @db.Text // JSON snapshot of attendance
+  status          String    @default("DRAFT") // DRAFT, PUBLISHED, APPROVED
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+
+  @@map("teaching_journals")
+}
+
+model LearningPlanning {
+  id            String    @id @default(uuid())
+  tenant_id     String    @default("tenant-1")
+  subject_id    String
+  teacher_id    String
+  academic_year String
+  semester      String
+  type          String    // CP, TP, ATP, MODUL_AJAR, PROTA, PROMES
+  title         String
+  content       String?   @db.Text // Store JSON or Rich Text
+  file_url      String?
+  status        String    @default("ACTIVE")
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+
+  @@map("learning_plannings")
+}
+
+model Assignment {
+  id             String    @id @default(uuid())
+  tenant_id      String    @default("tenant-1")
+  title          String
+  description    String?   @db.Text
+  subject_id     String
+  teacher_id     String
+  class_id       String?
+  rombel_id      String?
+  due_date       DateTime?
+  max_score      Float     @default(100)
+  type           String    @default("TUGAS") // TUGAS, KUIS, PROYEK
+  status         String    @default("PUBLISHED")
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+
+  @@map("assignments")
+}
+
+model StudentAssignment {
+  id             String    @id @default(uuid())
+  assignment_id  String
+  student_id     String
+  submission_url String?
+  score          Float?
+  feedback       String?   @db.Text
+  submitted_at   DateTime?
+  status         String    @default("PENDING") // PENDING, SUBMITTED, GRADED
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  @@map("student_assignments")
+}
+
+model Examination {
+  id             String    @id @default(uuid())
+  tenant_id      String    @default("tenant-1")
+  title          String
+  subject_id     String
+  teacher_id     String
+  type           String    // STS, PTS, SAS, PAS, PAT
+  duration_mins  Int       @default(90)
+  start_time     DateTime?
+  end_time       DateTime?
+  status         String    @default("DRAFT")
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+
+  @@map("examinations")
+}
+
+model COA {
+  id             String    @id @default(uuid())
+  tenant_id      String    @default("tenant-1")
+  code           String
+  name           String
+  category       String    // ASET, KEWAJIBAN, EKUITAS, PENDAPATAN, BEBAN
+  normal_balance String    // DEBIT, KREDIT
+  parent_id      String?
+  is_header      Boolean   @default(false)
+  status         String    @default("ACTIVE")
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+
+  @@map("coas")
+}
+
+model BankAccount {
+  id             String    @id @default(uuid())
+  tenant_id      String    @default("tenant-1")
+  name           String
+  bank_name      String
+  account_number String
+  account_holder String
+  coa_id         String?
+  balance        Float     @default(0)
+  status         String    @default("ACTIVE")
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+
+  @@map("bank_accounts")
+}
+
+model AccountingTransaction {
+  id             String    @id @default(uuid())
+  tenant_id      String    @default("tenant-1")
+  date           DateTime  @default(now())
+  type           String    // RECEIPT, PAYMENT, TRANSFER
+  doc_type       String    // CASH, BANK, JOURNAL
+  ref_no         String
+  description    String?   @db.Text
+  total_amount   Float     @default(0)
+  status         String    @default("POSTED") // DRAFT, POSTED, CANCELLED
+  created_by     String?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+
+  @@map("accounting_transactions")
+}
+
+model JournalVoucher {
+  id             String    @id @default(uuid())
+  tenant_id      String    @default("tenant-1")
+  voucher_no     String
+  date           DateTime  @default(now())
+  description    String?   @db.Text
+  status         String    @default("POSTED") // DRAFT, POSTED
+  is_auto        Boolean   @default(false)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+
+  @@map("journal_vouchers")
+}
+
+model JournalItem {
+  id                 String    @id @default(uuid())
+  journal_voucher_id String
+  coa_id             String
+  debit              Float     @default(0)
+  credit             Float     @default(0)
+  description        String?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  @@map("journal_items")
+}
+
+model BudgetPlan {
+  id              String    @id @default(uuid())
+  tenant_id       String    @default("tenant-1")
+  coa_id          String
+  period          String    // e.g. "2026" or "2026-07"
+  amount          Float     @default(0)
+  realized_amount Float     @default(0)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+
+  @@map("budget_plans")
+}
+
+model BankReconciliation {
+  id               String    @id @default(uuid())
+  tenant_id        String    @default("tenant-1")
+  period           String
+  bank_account_id  String
+  starting_balance Float     @default(0)
+  ending_balance   Float     @default(0)
+  matched_count    Int       @default(0)
+  unmatched_count  Int       @default(0)
+  status           String    @default("DRAFT") // DRAFT, COMPLETED
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+
+  @@map("bank_reconciliations")
+}
+
+model AccountingClosing {
+  id         String    @id @default(uuid())
+  tenant_id  String    @default("tenant-1")
+  period     String
+  type       String    // BULANAN, SEMESTER, TAHUNAN
+  closed_by  String
+  closed_at  DateTime  @default(now())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  @@map("accounting_closings")
+}
+
+model AccountingApproval {
+  id               String    @id @default(uuid())
+  tenant_id        String    @default("tenant-1")
+  ref_id           String
+  type             String    // JOURNAL, TRANSACTION, CLOSING
+  staff_status     String    @default("PENDING")
+  tu_status        String    @default("PENDING")
+  bendahara_status String    @default("PENDING")
+  yayasan_status   String    @default("PENDING")
+  current_level    String    @default("STAFF")
+  history_json     String?   @db.Text
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@map("accounting_approvals")
+}
+
+model QuestionBank {
+  id              String    @id @default(uuid())
+  tenant_id       String    @default("tenant-1")
+  subject_id      String?
+  grade           String?
+  title           String
+  content         String    @db.Text // Rich text or HTML
+  options         String?   @db.Text // JSON string for multiple choice options
+  answer          String?   @db.Text // Correct answer
+  explanation     String?   @db.Text
+  type            String    @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE, ESSAY, TRUE_FALSE
+  difficulty      String    @default("MEDIUM") // EASY, MEDIUM, HARD
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+
+  @@map("question_banks")
+}
+
+model NotificationQueue {
+  id               String    @id @default(uuid())
+  tenant_id        String?
+  template_id      String?
+  channel_name     String?
+  recipient        String
+  payload          String?   @db.Text
+  status           String    @default("PENDING")
+  retry_count      Int       @default(0)
+  scheduled_at     DateTime?
+  error_message    String?   @db.Text
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  created_by       String?
+  updated_by       String?
+
+  @@map("notification_queues")
+}
+
+model BroadcastCampaign {
+  id               String    @id @default(uuid())
+  tenant_id        String
+  name             String
+  description      String?   @db.Text
+  channel_name     String?
+  template_id      String?
+  status           String    @default("QUEUED")
+  total_recipients Int       @default(0)
+  sent_count       Int       @default(0)
+  failed_count     Int       @default(0)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  created_by       String?
+  updated_by       String?
+
+  receivers        BroadcastReceiver[]
+  @@map("broadcast_campaigns")
+}
+
+model BroadcastReceiver {
+  id               String    @id @default(uuid())
+  tenant_id        String
+  campaign_id      String
+  receiver_type    String?
+  receiver_id      String?
+  status           String    @default("Queued")
+  error_message    String?   @db.Text
+  sent_at          DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  created_by       String?
+  updated_by       String?
+
+  campaign         BroadcastCampaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  @@map("broadcast_receivers")
+}
+
+model AutomationRule {
+  id               String    @id @default(uuid())
+  tenant_id        String
+  name             String
+  event_trigger    String?
+  condition_config String?   @db.Text
+  action_channel   String?
+  template_id      String?
+  is_active        Boolean   @default(true)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  created_by       String?
+  updated_by       String?
+
+  @@map("automation_rules")
+}
+
+model DeliveryStatistic {
+  id               String    @id @default(uuid())
+  tenant_id        String
+  date             String    // YYYY-MM-DD
+  channel          String?
+  channel_name     String?
+  total_sent       Int       @default(0)
+  total_failed     Int       @default(0)
+  total_delivered  Int       @default(0)
+  total_opened     Int       @default(0)
+  sent_count       Int       @default(0)
+  delivered_count  Int       @default(0)
+  read_count       Int       @default(0)
+  failed_count     Int       @default(0)
+  cost             Float     @default(0)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  created_by       String?
+  updated_by       String?
+
+  @@map("delivery_statistics")
+}
+
+model SystemLog {
+  id          String   @id @default(uuid())
+  tenant_id   String   @default("tenant-1")
+  user_id     String?
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  module      String   // AKADEMIK, KEUANGAN, etc.
+  resource    String?  // Table name
+  resource_id String?
+  payload     String?  @db.Text
+  ip_address  String?
+  user_agent  String?
+  created_at  DateTime @default(now())
+
+  @@map("system_logs")
+}
+
+model NotificationTemplate {
+  id               String    @id @default(uuid())
+  tenant_id        String
+  name             String
+  channel_name     String?
+  category         String?
+  subject          String?
+  body             String    @db.Text
+  variables        String?   @db.Text
+  status           String    @default("ACTIVE")
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  created_by       String?
+  updated_by       String?
+
+  @@map("notification_templates")
+}
+
+model NotificationLog {
+  id               String    @id @default(uuid())
+  tenant_id        String?
+  queue_id         String?
+  channel_name     String?
+  provider_name    String?
+  recipient        String?
+  status           String?
+  message          String?   @db.Text
+  payload          Json?
+  response_payload Json?
+  sent_at          DateTime?
+  read_at          DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime? @updatedAt
+  deleted_at       DateTime?
+  created_by       String?
+  updated_by       String?
+
+  @@map("notification_logs")
+}
+
+model EmailMessage {
+  id               String    @id @default(uuid())
+  tenant_id        String?
+  account_id       String?
+  recipient_email  String?
+  from             String
+  to               String
+  subject          String
+  body             String    @db.Text
+  body_text        String?   @db.Text
+  body_html        String?   @db.Text
+  status           String    @default("PENDING")
+  sent_at          DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime? @updatedAt
+  deleted_at       DateTime?
+
+  @@map("email_messages")
+}
+
+model PushNotification {
+  id               String    @id @default(uuid())
+  tenant_id        String?
+  device_id        String?
+  user_id          String?
+  title            String
+  body             String    @db.Text
+  payload          Json?
+  status           String    @default("PENDING")
+  sent_at          DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime? @updatedAt
+  deleted_at       DateTime?
+
+  @@map("push_notifications")
+}
+
+model AcademicSetting {
+  id                    String   @id @default(uuid())
+  tenant_id             String   @default("tenant-1")
+  semester              String   @default("GANJIL") // GANJIL, GENAP
+  curriculum            String   @default("MERDEKA") // MERDEKA, K13
+  kkm_value             Int      @default(75)
+  doc_number_pattern    String   @default("DH/RAPOR/[YEAR]/[SEQ]")
+  use_digital_signature Boolean  @default(true)
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  @@map("academic_settings")
+}
+
+model KopSuratConfig {
+  id           String   @id @default(uuid())
+  tenant_id    String   @default("tenant-1")
+  nama_yayasan String
+  nama_sekolah String
+  alamat       String   @db.Text
+  kode_pos     String?
+  telepon      String?
+  website      String?
+  email        String?
+  logo_url     String?
+  moto         String?
+  visi         String?  @db.Text
+  misi         String?  @db.Text
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("kop_surat_configs")
+}
+
+
+
+
+

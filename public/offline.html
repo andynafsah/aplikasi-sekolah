@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mode Offline - Enterprise ERP Sekolah & Pesantren</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 36px 28px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .icon-badge {
+      width: 72px;
+      height: 72px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 2px solid #f59e0b;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .icon-badge svg { width: 36px; height: 36px; fill: #f59e0b; }
+    h1 { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #ffffff; }
+    p { font-size: 14px; color: #94a3b8; line-height: 1.6; margin-bottom: 24px; }
+    .features-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .features-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #f59e0b; letter-spacing: 1px; margin-bottom: 8px; }
+    .features-list { font-size: 12px; color: #cbd5e1; list-style-position: inside; }
+    .features-list li { margin-bottom: 4px; }
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 14px 20px;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #1d4ed8; }
+    .status-badge {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 4px 12px;
+      rounded: 9999px;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-badge">
+      <svg viewBox="0 0 24 24">
+        <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.58 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/>
+      </svg>
+    </div>
+    <h1>Koneksi Internet Terputus</h1>
+    <p>Aplikasi Enterprise ERP Sekolah sedang berjalan dalam <strong>Mode Offline</strong>. Anda tetap dapat mengakses halaman dan data yang telah tersimpan dalam cache lokal.</p>
+
+    <div class="features-box">
+      <div class="features-title">Halaman & Fitur Offline Tersedia:</div>
+      <ul class="features-list">
+        <li>✓ Ringkasan Dashboard & Statistik Terakhir</li>
+        <li>✓ Profil User, NIP & Hak Akses RBAC</li>
+        <li>✓ Master Data Sekolah & Siswa Ter-cache</li>
+        <li>✓ Input Draft & Antrean Presensi Offline</li>
+      </ul>
+    </div>
+
+    <button class="btn" onclick="window.location.reload()">Coba Muat Ulang Halaman</button>
+    <div class="status-badge" id="netStatus">STATUS: OFFLINE</div>
+  </div>
+
+  <script>
+    function updateStatus() {
+      const badge = document.getElementById('netStatus');
+      if (navigator.onLine) {
+        badge.style.color = '#10b981';
+        badge.style.background = 'rgba(16, 185, 129, 0.15)';
+        badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        badge.innerText = 'STATUS: ONLINE - MENGHUBUNGKAN KEMBALI...';
+        setTimeout(() => window.location.href = '/', 1000);
+      } else {
+        badge.style.color = '#ef4444';
+        badge.style.background = 'rgba(239, 68, 68, 0.15)';
+        badge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        badge.innerText = 'STATUS: OFFLINE';
+      }
+    }
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+  </script>
+</body>
+</html>

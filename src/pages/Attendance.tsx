@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { GoogleMapsAttendanceView } from '../components/attendance/GoogleMapsAttendanceView';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Clock, 
@@ -56,10 +57,12 @@ import {
   PieChart, 
   Pie 
 } from 'recharts';
+import SmartAttendanceCore from '../components/attendance/SmartAttendanceCore';
 import EnterpriseQrSecurityEngine from '../components/EnterpriseQrSecurityEngine';
 import EnterpriseEmployeeAttendanceWorkspace from '../components/EnterpriseEmployeeAttendanceWorkspace';
 import EnterpriseAttendanceCommandCenter from '../components/EnterpriseAttendanceCommandCenter';
 import EnterpriseAttendanceSettings from '../components/EnterpriseAttendanceSettings';
+import { AttendanceScheduler } from '../components/AttendanceScheduler';
 
 // ============================================================================
 // TYPES & INTERFACES FOR SPRINT 8
@@ -74,6 +77,7 @@ type AttendanceTab =
   | 'QR_BARCODE' 
   | 'CARD_CENTER' 
   | 'RULES' 
+  | 'SCHEDULER'
   | 'REPLACEMENT' 
   | 'PAYROLL' 
   | 'DEVELOPER';
@@ -123,7 +127,7 @@ interface LeaveRequest {
 
 export default function Attendance() {
   const { user, tenant, previewRole } = useAuth();
-  const [activeSubTab, setActiveSubTab] = useState<AttendanceTab>('DASHBOARD');
+  const [activeSubTab, setActiveSubTab] = useState<AttendanceTab>('COMMAND_CENTER');
   const isPondok = tenant?.type === 'PONDOK' || tenant?.type === 'KEDUA';
 
   // Role Normalization for Smart Attendance UI
@@ -149,32 +153,34 @@ export default function Attendance() {
   const isEmployee = activeRole === 'PEGAWAI' || activeRole === 'KARYAWAN' || activeRole === 'STAFF' || activeRole === 'EMPLOYEE' || activeRole === 'KEPALA_SEKOLAH';
   const isSuperAdmin = (activeRole === 'SUPER_ADMIN' || !activeRole) && !isTeacher && !isTreasurer && !isOperator && !isStudentOrParent && !isEmployee;
 
-      const allSubTabs: { id: AttendanceTab, label: string }[] = [
+  const allSubTabs: { id: AttendanceTab, label: string }[] = [
+    { id: 'COMMAND_CENTER', label: 'Smart Attendance Core' },
     { id: 'DASHBOARD', label: isTeacher ? 'Riwayat Kehadiran' : 'Dashboard' },
     { id: 'EMPLOYEE_WORKSPACE', label: 'Rekam Presensi' },
     { id: 'LEAVE_REQUEST', label: 'Izin & Cuti' },
     { id: 'MONITORING', label: 'Monitor Live' },
+    { id: 'SCHEDULER', label: 'Kalender & Jadwal Kerja' },
     { id: 'RULES', label: 'Pengaturan' }
   ];
 
-      const visibleSubTabs = allSubTabs.filter(tab => {
+  const visibleSubTabs = allSubTabs.filter(tab => {
     if (isSuperAdmin) return true;
     if (isTeacher) {
-      return ['DASHBOARD', 'EMPLOYEE_WORKSPACE', 'LEAVE_REQUEST'].includes(tab.id);
+      return ['COMMAND_CENTER', 'DASHBOARD', 'EMPLOYEE_WORKSPACE', 'LEAVE_REQUEST'].includes(tab.id);
     }
     if (isTreasurer) {
-      return ['DASHBOARD', 'LEAVE_REQUEST', 'MONITORING'].includes(tab.id);
+      return ['COMMAND_CENTER', 'DASHBOARD', 'LEAVE_REQUEST', 'MONITORING'].includes(tab.id);
     }
     if (isOperator) {
-      return ['DASHBOARD', 'MONITORING', 'LEAVE_REQUEST', 'EMPLOYEE_WORKSPACE'].includes(tab.id);
+      return ['COMMAND_CENTER', 'DASHBOARD', 'MONITORING', 'LEAVE_REQUEST', 'EMPLOYEE_WORKSPACE', 'SCHEDULER'].includes(tab.id);
     }
     if (isStudentOrParent) {
-      return ['DASHBOARD', 'LEAVE_REQUEST', 'EMPLOYEE_WORKSPACE'].includes(tab.id);
+      return ['COMMAND_CENTER', 'DASHBOARD', 'LEAVE_REQUEST', 'EMPLOYEE_WORKSPACE'].includes(tab.id);
     }
     if (isEmployee) {
-      return ['DASHBOARD', 'LEAVE_REQUEST', 'EMPLOYEE_WORKSPACE'].includes(tab.id);
+      return ['COMMAND_CENTER', 'DASHBOARD', 'LEAVE_REQUEST', 'EMPLOYEE_WORKSPACE'].includes(tab.id);
     }
-    return ['DASHBOARD'].includes(tab.id);
+    return ['COMMAND_CENTER', 'DASHBOARD'].includes(tab.id);
   });
 
   useEffect(() => {
@@ -350,6 +356,16 @@ export default function Attendance() {
   // Real Backend Data Synchronization Engine
   const [loading, setLoading] = useState(false);
 
+  const safeJsonParse = async (res: Response) => {
+    if (!res.ok) return null;
+    try {
+      const text = await res.text();
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  };
+
   const fetchBackendData = async () => {
     setLoading(true);
     try {
@@ -359,8 +375,8 @@ export default function Attendance() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenant_id: tenant?.id || 'tenant-1' })
       });
-      const dataAtt = await resAtt.json();
-      if (dataAtt.success && dataAtt.data?.length > 0) {
+      const dataAtt = await safeJsonParse(resAtt);
+      if (dataAtt && dataAtt.success && dataAtt.data?.length > 0) {
         setRecords(dataAtt.data.map((r: any) => ({
           id: r.id || '',
           personId: r.personId || '',
@@ -383,8 +399,8 @@ export default function Attendance() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenant_id: tenant?.id || 'tenant-1' })
       });
-      const dataRules = await resRules.json();
-      if (dataRules.success && dataRules.data) {
+      const dataRules = await safeJsonParse(resRules);
+      if (dataRules && dataRules.success && dataRules.data) {
         setRuleEngine({
           lateGracePeriod: dataRules.data.lateGracePeriod || 10,
           penaltyUnder30: dataRules.data.rules?.find((r: any) => r.maxRange === 15 || r.maxRange === 30)?.deductionValue || 15000,
@@ -401,8 +417,8 @@ export default function Attendance() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenant_id: tenant?.id || 'tenant-1' })
       });
-      const dataGeo = await resGeo.json();
-      if (dataGeo.success && dataGeo.data?.length > 0) {
+      const dataGeo = await safeJsonParse(resGeo);
+      if (dataGeo && dataGeo.success && dataGeo.data?.length > 0) {
         const geo = dataGeo.data[0];
         setGpsSettings({
           latitude: geo.latitude || -6.2088,
@@ -419,8 +435,8 @@ export default function Attendance() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenant_id: tenant?.id || 'tenant-1' })
       });
-      const dataRep = await resRep.json();
-      if (dataRep.success && dataRep.data?.length > 0) {
+      const dataRep = await safeJsonParse(resRep);
+      if (dataRep && dataRep.success && dataRep.data?.length > 0) {
         setReplacements(dataRep.data.map((r: any) => ({
           id: r.id,
           originalTeacherId: r.originalTeacherId,
@@ -437,6 +453,8 @@ export default function Attendance() {
       }
     } catch (err) {
       console.error("Failed to fetch backend data", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -842,6 +860,13 @@ export default function Attendance() {
       {/* MAIN CONTAINER RENDER CHANGER */}
       <div className="space-y-6">
         
+        {/* TAB 0: SMART ATTENDANCE CORE (UNIFIED ENGINE) */}
+        {activeSubTab === 'COMMAND_CENTER' && (
+          <div className="space-y-6">
+            <SmartAttendanceCore />
+          </div>
+        )}
+
         {/* TAB 1: ATTENDANCE DASHBOARD & RIWAYAT GURU */}
         {activeSubTab === 'DASHBOARD' && (
           isTeacher ? (
@@ -1516,93 +1541,22 @@ export default function Attendance() {
         {activeSubTab === 'GPS' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Geofence Map Simulator */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-800">Simulator Radius Geofencing GPS</h3>
-                <p className="text-xs text-slate-500">Menyediakan pembatasan area check-in aman dengan deteksi lokasi akurat smartphone.</p>
-              </div>
+            {/* Geofence Map Live View */}
+            <div className="lg:col-span-2 space-y-4">
+              <GoogleMapsAttendanceView
+                selectedLocation={{
+                  id: 'LOC-MAIN',
+                  name: 'Kampus Sekolah Utama',
+                  code: 'MAIN',
+                  latitude: gpsSettings.latitude,
+                  longitude: gpsSettings.longitude,
+                  radius: gpsSettings.radius,
+                  status: 'ACTIVE'
+                }}
+              />
 
-              {/* Map Canvas Simulator */}
-              <div className="h-72 bg-slate-900 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col justify-between p-4 text-white font-mono">
-                {/* Geofence Ring */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  {/* Central Coordinate Marker */}
-                  <div className="h-4 w-4 bg-indigo-500 rounded-full animate-ping absolute" />
-                  <div className="h-3 w-3 bg-indigo-600 rounded-full z-10 border-2 border-white" />
-                  
-                  {/* Geofence circular limit */}
-                  <div 
-                    style={{ 
-                      width: `${gpsSettings.radius * 1.5}px`, 
-                      height: `${gpsSettings.radius * 1.5}px`,
-                      maxWidth: '100%',
-                      maxHeight: '100%' 
-                    }} 
-                    className="border-2 border-dashed border-indigo-400/40 rounded-full bg-indigo-500/5 animate-pulse flex items-center justify-center"
-                  >
-                    <span className="text-[9px] text-indigo-300 bg-slate-900/80 px-2 py-0.5 rounded">GEOFENCE LIMIT ({gpsSettings.radius}m)</span>
-                  </div>
-                </div>
-
-                {/* Simulated Mobile Client Position Pin */}
-                <div 
-                  className="absolute z-20 flex flex-col items-center pointer-events-none"
-                  style={{
-                    left: `calc(50% + ${(emulatorGps.lng - gpsSettings.longitude) * 500000}px)`,
-                    top: `calc(50% + ${(emulatorGps.lat - gpsSettings.latitude) * 500000}px)`,
-                    transform: 'translate(-50%, -100%)'
-                  }}
-                >
-                  <MapPin className="h-6 w-6 text-emerald-500 animate-bounce" />
-                  <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded whitespace-nowrap shadow-md border border-emerald-500">
-                    Siswa Mobile GPS
-                  </span>
-                </div>
-
-                {/* Overlay details */}
-                <div className="z-10 flex justify-between items-start text-[10px]">
-                  <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800 space-y-1">
-                    <p className="font-bold text-indigo-400">Pusat Koordinat Sekolah</p>
-                    <p className="text-slate-300">Lat: {gpsSettings.latitude.toFixed(6)}</p>
-                    <p className="text-slate-300 font-mono">Lng: {gpsSettings.longitude.toFixed(6)}</p>
-                  </div>
-
-                  <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800 space-y-1 text-right">
-                    <p className="font-bold text-emerald-400 font-mono">Posisi HP Simulator</p>
-                    <p className="text-slate-300">Lat: {emulatorGps.lat.toFixed(6)}</p>
-                    <p className="text-slate-300">Lng: {emulatorGps.lng.toFixed(6)}</p>
-                  </div>
-                </div>
-
-                {/* Status Indicator */}
-                <div className="z-10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-950/95 p-3 rounded-xl border border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-emerald-500 animate-pulse" />
-                    <span className="text-[10px]">Jarak HP ke Sekolah: <strong className="text-white text-xs">{currentDistance} meter</strong></span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] px-2 py-1 rounded font-black border ${
-                      isWithinRadius 
-                        ? 'bg-emerald-950 text-emerald-400 border-emerald-800' 
-                        : 'bg-rose-950 text-rose-400 border-rose-800'
-                    }`}>
-                      {isWithinRadius ? 'DALAM RADIUS GEOFENCE' : 'DI LUAR RADIUS'}
-                    </span>
-
-                    <button
-                      onClick={handleGpsCheckIn}
-                      className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-extrabold rounded-lg transition"
-                    >
-                      Kirim Absen GPS
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Slider Controller to test coords */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+              {/* Kalibrasi / Test Coords Box */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
                 <div className="space-y-2">
                   <p className="font-bold text-slate-700">Uji Kalibrasi Koordinat GPS / Geofence:</p>
                   <div className="flex flex-col gap-1">
@@ -1638,21 +1592,21 @@ export default function Attendance() {
                   </div>
                 </div>
 
-                <div className="bg-white p-3 rounded-lg border border-slate-150 flex flex-col justify-between">
-                  <p className="font-bold text-slate-700">Info Sandbox Simulator:</p>
-                  <p className="text-[10px] text-slate-500 mt-1">Gunakan slider untuk menggeser geolokasi mobile virtual di atas. Ring hijau menunjukkan pin berada di area yang sah untuk mendaftarkan presensi kelas.</p>
+                <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
+                  <p className="font-bold text-slate-700">Info Kalibrasi Lokasi:</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Gunakan slider untuk menguji perubahan koordinat relatif terhadap geofence sekolah.</p>
                   <div className="flex gap-2 mt-2">
                     <button 
                       onClick={() => setEmulatorGps({ lat: -6.20885, lng: 106.84562 })}
                       className="px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-200 text-[10px]"
                     >
-                      Set dalam Geofence
+                      Set Dalam Geofence
                     </button>
                     <button 
                       onClick={() => setEmulatorGps({ lat: -6.2115, lng: 106.8485 })}
                       className="px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-200 text-[10px]"
                     >
-                      Set di luar
+                      Set Di Luar Geofence
                     </button>
                   </div>
                 </div>
@@ -1970,6 +1924,11 @@ export default function Attendance() {
         {/* TAB 6: DYNAMIC ATTENDANCE SETTINGS ENGINE */}
         {isSuperAdmin && activeSubTab === 'RULES' && (
           <EnterpriseAttendanceSettings />
+        )}
+
+        {/* TAB 6.5: ENTERPRISE SCHEDULER & WORKING CALENDAR ENGINE */}
+        {activeSubTab === 'SCHEDULER' && (
+          <AttendanceScheduler />
         )}
 
         {/* TAB 7: REPLACEMENT TEACHER ENGINE */}

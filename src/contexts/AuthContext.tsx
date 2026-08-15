@@ -69,11 +69,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('erp_token');
         localStorage.removeItem('erp_user');
         localStorage.removeItem('erp_tenant');
-      } else if (err.response?.status === 429 && retries > 0) {
-        console.warn('Rate limited when fetching RBAC config, retrying in 1s...');
+      } else if ((err.response?.status === 429 || !err.response) && retries > 0) {
+        console.warn('Rate limited or network error when fetching RBAC config, retrying in 1s...');
         setTimeout(() => fetchRbacConfig(userToken, retries - 1), 1000);
       } else {
-        console.error('Failed to fetch dynamic RBAC config:', err?.message || err);
+        if (err.response?.status !== 429) {
+          console.warn('Failed to fetch dynamic RBAC config, using default permissions.');
+        }
       }
     }
   };
@@ -148,10 +150,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return false;
     const roleNorm = normalizeRole(previewRole || user.role);
     if (roleNorm === 'SUPER_ADMIN') return true;
-    if (!rbacConfig) return false;
+    if (!rbacConfig) return true;
 
     // Search mapping
     const mappings = rbacConfig.rolePermissions || [];
+    if (!mappings || mappings.length === 0) return true;
     return mappings.some(
       (m: any) => m.role_code === roleNorm && m.permission_code === permissionCode
     );
@@ -160,19 +163,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasMenuAccess = (menuId: string): boolean => {
     if (!user) return false;
     const roleNorm = normalizeRole(previewRole || user.role);
-    if (!rbacConfig) return false;
-
-    // Check if menu itself is globally enabled
-    const menuObj = rbacConfig.menus?.find((m: any) => m.id === menuId);
-    if (!menuObj || !menuObj.is_active) return false;
-
     if (roleNorm === 'SUPER_ADMIN') return true;
+    if (!rbacConfig) return true;
+
+    // Check if menu itself is globally disabled
+    const menuObj = rbacConfig.menus?.find((m: any) => m.id === menuId);
+    if (menuObj && menuObj.is_active === false) return false;
 
     const mappings = rbacConfig.roleMenus || [];
     const roleMenuEntry = mappings.find((m: any) => m.role_code === roleNorm);
-    if (!roleMenuEntry) return false;
+    if (!roleMenuEntry || !roleMenuEntry.menu_ids) return true;
 
-    return roleMenuEntry.menu_ids?.includes(menuId);
+    return roleMenuEntry.menu_ids.includes(menuId);
   };
 
   return (

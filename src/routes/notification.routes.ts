@@ -110,6 +110,50 @@ notificationRoutes.post('/pushSend', (req, res, next) => {
   controller.handle('pushSend', req, res, tenantId, authUser, username, role);
 });
 
+const authMiddleware = (req: any, res: any, next: any) => {
+  const token = req.headers.authorization?.split(' ')[1] || req.body.token || req.query.token as string;
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Unauthorized: No token provided' });
+  }
+  const decoded = verifyJWT(token);
+  if (!decoded) {
+    return res.status(401).json({ success: false, message: 'Unauthorized: Invalid token' });
+  }
+  req.authUser = decoded;
+  req.tenantId = decoded.tenant_id || 'system';
+  next();
+};
+
+// GET /api/v1/notifications
+notificationRoutes.get('/', authMiddleware, (req, res, next) => {
+  controller.index(req, res, next);
+});
+
+// GET /api/v1/notifications/unread-count
+notificationRoutes.get('/unread-count', authMiddleware, (req, res, next) => {
+  controller.unreadCount(req, res, next);
+});
+
+// GET /api/v1/notifications/:id
+notificationRoutes.get('/:id', authMiddleware, (req, res, next) => {
+  controller.show(req, res, next);
+});
+
+// POST /api/v1/notifications/:id/read
+notificationRoutes.post('/:id/read', authMiddleware, (req, res, next) => {
+  controller.markAsRead(req, res, next);
+});
+
+// POST /api/v1/notifications/read-all
+notificationRoutes.post('/read-all', authMiddleware, (req, res, next) => {
+  controller.markAllAsRead(req, res, next);
+});
+
+// DELETE /api/v1/notifications/:id
+notificationRoutes.delete('/:id', authMiddleware, (req, res, next) => {
+  controller.destroy(req, res, next);
+});
+
 export async function handleNotification(
   action: string,
   req: any,

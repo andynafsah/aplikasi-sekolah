@@ -8,7 +8,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/client';
 import EnterpriseAcademicEngine from '../components/EnterpriseAcademicEngine';
+import EnterpriseCurriculumCommandCenter from '../components/EnterpriseCurriculumCommandCenter';
+import EnterpriseAcademicYearCommandCenter from '../components/EnterpriseAcademicYearCommandCenter';
+import EnterpriseKbmCommandCenter from '../components/EnterpriseKbmCommandCenter';
+import EnterpriseAssessmentAndAutoLegerEngine from '../components/EnterpriseAssessmentAndAutoLegerEngine';
+import EnterpriseRaporAndDocumentEngine from '../components/EnterpriseRaporAndDocumentEngine';
 import { 
+  Award,
   BookOpen, 
   Clock, 
   Bookmark, 
@@ -46,6 +52,11 @@ import {
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 type TabType = 
+  | 'RAPOR_DOCUMENT_ENGINE'
+  | 'ASSESSMENT_COMMAND_CENTER'
+  | 'KBM_COMMAND_CENTER'
+  | 'ACADEMIC_YEAR_COMMAND_CENTER'
+  | 'CURRICULUM_COMMAND_CENTER'
   | 'ENTERPRISE_ENGINE'
   | 'DASHBOARD'
   | 'TAHUN_AJARAN'
@@ -62,7 +73,7 @@ type TabType =
 export default function Akademik() {
   const { tenant, user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<TabType>('ENTERPRISE_ENGINE');
+  const [activeTab, setActiveTab] = useState<TabType>('KBM_COMMAND_CENTER');
   
   // Role Normalization
   const rawRole = user?.role || '';
@@ -74,7 +85,7 @@ export default function Akademik() {
   const activeRole = normalizeRole(rawRole);
   const isSuperAdmin = activeRole === 'SUPER_ADMIN' || !activeRole;
   const [searchQuery, setSearchQuery] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   
   // Modal states
   const [showModal, setShowModal] = useState<string | null>(null); // e.g. 'AY', 'SEM', 'CUR', 'MJ', 'CL', 'RB', 'RM', 'SUB', 'SCH', 'AC', 'AG', 'TL'
@@ -472,7 +483,12 @@ export default function Akademik() {
           <div className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-1.5">
             <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">Academic Control Menu</p>
             {[
-              { id: 'ENTERPRISE_ENGINE', label: 'Leger & Rapor Enterprise', icon: Star },
+              { id: 'RAPOR_DOCUMENT_ENGINE', label: '★ Rapor & Document Engine', icon: FileCheck2 },
+              { id: 'ASSESSMENT_COMMAND_CENTER', label: '★ Assessment & Auto Leger', icon: Award },
+              { id: 'KBM_COMMAND_CENTER', label: '★ KBM Command Center', icon: BookOpen },
+              { id: 'ACADEMIC_YEAR_COMMAND_CENTER', label: 'Academic Year Center', icon: CalendarDays },
+              { id: 'CURRICULUM_COMMAND_CENTER', label: 'Curriculum Command Center', icon: Star },
+              { id: 'ENTERPRISE_ENGINE', label: 'Leger & Rapor Enterprise', icon: FileCheck2 },
               { id: 'DASHBOARD', label: 'Dashboard Akademik', icon: LayoutDashboard },
               { id: 'TAHUN_AJARAN', label: 'Tahun Ajaran & Sem', icon: CalendarDays },
               { id: 'KURIKULUM', label: 'Master Kurikulum', icon: Bookmark },
@@ -511,7 +527,32 @@ export default function Akademik() {
         {/* Right Active Panel */}
         <div className={`${sidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'} space-y-6 transition-all duration-300`}>
           
-          {/* 0. ENTERPRISE ENGINE */}
+          {/* 00000. RAPOR & DOCUMENT ENGINE */}
+          {activeTab === 'RAPOR_DOCUMENT_ENGINE' && (
+            <EnterpriseRaporAndDocumentEngine />
+          )}
+
+          {/* 0000. ASSESSMENT & AUTO LEGER COMMAND CENTER */}
+          {activeTab === 'ASSESSMENT_COMMAND_CENTER' && (
+            <EnterpriseAssessmentAndAutoLegerEngine />
+          )}
+
+          {/* 000. KBM COMMAND CENTER */}
+          {activeTab === 'KBM_COMMAND_CENTER' && (
+            <EnterpriseKbmCommandCenter />
+          )}
+
+          {/* 00. ACADEMIC YEAR COMMAND CENTER */}
+          {activeTab === 'ACADEMIC_YEAR_COMMAND_CENTER' && (
+            <EnterpriseAcademicYearCommandCenter />
+          )}
+
+          {/* 0. CURRICULUM COMMAND CENTER */}
+          {activeTab === 'CURRICULUM_COMMAND_CENTER' && (
+            <EnterpriseCurriculumCommandCenter />
+          )}
+
+          {/* 1. ENTERPRISE ENGINE */}
           {activeTab === 'ENTERPRISE_ENGINE' && (
             <EnterpriseAcademicEngine />
           )}
@@ -1434,7 +1475,7 @@ export default function Akademik() {
                       className="flex-1 flex items-center justify-center gap-1.5 bg-slate-900 text-white p-2 rounded-lg text-xs font-semibold hover:bg-slate-800"
                     >
                       <Upload className="h-4 w-4" />
-                      <span>Impor Demo Data</span>
+                      <span>Impor Master Data</span>
                     </button>
                   </div>
                 </div>
@@ -1459,7 +1500,7 @@ export default function Akademik() {
                       className="flex-1 flex items-center justify-center gap-1.5 bg-slate-900 text-white p-2 rounded-lg text-xs font-semibold hover:bg-slate-800"
                     >
                       <Upload className="h-4 w-4" />
-                      <span>Impor Demo Data</span>
+                      <span>Impor Master Data</span>
                     </button>
                   </div>
                 </div>

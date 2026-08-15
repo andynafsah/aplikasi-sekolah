@@ -676,14 +676,21 @@ model Document {
 }
 
 model Notification {
-  id         String    @id @default(uuid())
-  recipient  String
-  type       String    // "WHATSAPP", "EMAIL", "SYSTEM"
-  title      String
-  message    String
-  status     String    @default("PENDING") // "SENT", "PENDING", "FAILED"
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  recipient    String?   // existing recipient or phone/email
+  recipient_id String?   // target user_id or recipient identifier
+  type         String    // "WHATSAPP", "EMAIL", "SYSTEM", "IN_APP", "PUSH", "CORRECTION", "QR", "GPS", "SECURITY"
+  title        String
+  message      String
+  entity_type  String?
+  entity_id    String?
+  data         String?   @db.Text // JSON metadata
+  read_at      DateTime?
+  expires_at   DateTime?
+  status       String    @default("PENDING") // "SENT", "PENDING", "FAILED", "UNREAD", "READ"
+  tenant_id    String?   @default("system")
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
 }
 
 model AuditLog {
@@ -1866,6 +1873,19 @@ model KopSuratConfig {
   updated_at   DateTime @updatedAt
 
   @@map("kop_surat_configs")
+}
+
+model Device {
+  id            String   @id @default(uuid())
+  tenant_id     String   @default("system")
+  user_id       String
+  device_token  String   @unique
+  platform      String   // "android", "ios", "web"
+  last_active   DateTime @default(now())
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("devices")
 }
 
 

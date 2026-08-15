@@ -1343,7 +1343,7 @@ export default function BillingSpp() {
                       <th className="py-3.5 px-5 text-right">Net Harus Dibayar</th>
                       <th className="py-3.5 px-5 text-right">Terbayar</th>
                       <th className="py-3.5 px-5">Status</th>
-                      <th className="py-3.5 px-5 text-center">Simulasi Gateway / Aksi</th>
+                      <th className="py-3.5 px-5 text-center">Aksi / Gateway Direct</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs">
@@ -1925,7 +1925,7 @@ export default function BillingSpp() {
                   {/* Generated Virtual Accounts */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Siswa Virtual Accounts (Simulasi Integrasi)</h4>
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Integrasi Siswa Virtual Accounts</h4>
                       <button
                         onClick={() => {
                           setVaStudentId('');

@@ -34,9 +34,11 @@ import apiClient from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 
 import EnterpriseReportPrintEngine from '../components/EnterpriseReportPrintEngine';
+import VisualDocumentDesigner from '../components/tu/VisualDocumentDesigner';
 
 // Designers Tabs Enum
 type DesignerTab = 
+  | 'visual_designer'
   | 'reports'
   | 'template' 
   | 'idcard' 
@@ -176,17 +178,108 @@ export default function StudioDokumen() {
   });
 
   // ----------------------------------------------------
-  // 4. STATE - SURAT DESIGNER
+  // 4. STATE - SURAT & OFFICIAL DOCUMENT ENGINE
   // ----------------------------------------------------
   const [suratConfig, setSuratConfig] = useState({
-    docType: 'SK' as 'SK' | 'PENGANTAR' | 'UNDANGAN' | 'MUTASI',
-    marginSize: 25,
+    unitScope: 'SMP' as 'SMP' | 'SMA' | 'PONPES' | 'YAYASAN',
+    docType: 'SK' as string,
+    paperSize: 'A4' as 'A4' | 'F4' | 'LEGAL' | 'LETTER' | 'A5' | 'CUSTOM',
+    paperWidth: 210,
+    paperHeight: 297,
+    marginTop: 25,
+    marginBottom: 20,
+    marginLeft: 25,
+    marginRight: 20,
     showKopSurat: true,
+    fontFamily: 'Times New Roman' as 'Times New Roman' | 'Arial' | 'Calibri' | 'Cambria' | 'Georgia' | 'Tahoma',
+    fontSize: 11,
+    lineHeight: 1.35,
+    nomorSurat: 'B-104/SMP/SK/VII/2026',
+    lampiran: '1 (Satu) Berkas',
+    perihal: 'Surat Keterangan Aktif Santri & Izin Dinas',
+    tanggalSurat: '12 Juli 2026',
+    tujuanSurat: 'Kepada Yth.\nBapak / Ibu Orang Tua / Wali Santri\ndi Tempat',
+    salamPembuka: 'Assalamu\'alaikum Warahmatullahi Wabarakatuh,',
+    isiSurat: 'Dengan ini Kepala Sekolah SMP Islam Terpadu Al-Azhar menerangkan dengan sebenarnya bahwa:\n\nNama Lengkap: {{nama_siswa}}\nNIS / NISN: {{nis}} / {{nisn}}\nKelas / Rombel: {{kelas}}\nAlamat Lengkap: {{alamat}}\n\nAdalah benar-benar terdaftar sebagai santri / siswa aktif pada {{nama_lembaga}} Tahun Ajaran 2026/2027 dan senantiasa berkelakuan baik.',
+    salamPenutup: 'Demikian surat keterangan resmi ini diterbitkan untuk dipergunakan sebagaimana mestinya.\n\nWassalamu\'alaikum Warahmatullahi Wabarakatuh.',
+    penandatanganNama: 'Ust. H. Abdullah Faqih, M.Pd.',
+    penandatanganJabatan: 'Kepala Sekolah SMP IT',
+    penandatanganNip: 'NIY. 19850412 201001 1 002',
     showReferenceCode: true,
     footerAddress: true,
     digitalSignVerify: true,
-    stampCap: 'ORIGINAL' as 'NONE' | 'ORIGINAL' | 'DRAFT'
+    verificationCode: 'VER-SK-2026-8801',
+    stampCap: 'ORIGINAL' as 'NONE' | 'ORIGINAL' | 'DRAFT',
+    templateTitle: 'Surat Keterangan Santri Aktif Standard'
   });
+
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<any>(null);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [bulkGenCount, setBulkGenCount] = useState<number>(25);
+  const [bulkGenStatus, setBulkGenStatus] = useState<string | null>(null);
+
+  const handleVerifyDocumentCode = async (codeToVerify?: string) => {
+    setIsVerifyingCode(true);
+    setVerificationResult(null);
+    setVerificationModalOpen(true);
+    const code = codeToVerify || suratConfig.verificationCode;
+    addLog(`Memulai verifikasi digital QR code [${code}]...`);
+
+    try {
+      const res = await apiClient.post('/api/action?action=officialDocumentVerify', {
+        verification_code: code
+      });
+      if (res.data.success) {
+        setVerificationResult(res.data.data);
+        addLog(`✓ Dokumen Terverifikasi: Status ${res.data.data.status} untuk ${res.data.data.title}`);
+      }
+    } catch (err: any) {
+      setVerificationResult({ valid: false, error: err.message });
+      addLog(`❌ Verifikasi Gagal: ${err.message}`);
+    } finally {
+      setIsVerifyingCode(false);
+    }
+  };
+
+  const handleExportDocxOfficial = async () => {
+    addLog(`Mengeksport dokumen [${suratConfig.nomorSurat}] ke format Microsoft Word (.docx)...`);
+    try {
+      const res = await apiClient.post('/api/action?action=officialDocumentExportDocx', {
+        doc_type: suratConfig.docType,
+        document_number: suratConfig.nomorSurat,
+        unit_code: suratConfig.unitScope,
+        template_title: suratConfig.templateTitle,
+        recipient_name: 'Ahmad Hilmy Alfarabi',
+        signatory_name: suratConfig.penandatanganNama
+      });
+      if (res.data.success) {
+        addLog(`✓ Berhasil mengeksport dokumen Word: ${res.data.data.filename}`);
+        alert(`Dokumen Word (.docx) berhasil dibuat!\nFile: ${res.data.data.filename}\nUkuran: ${(res.data.data.size / 1024).toFixed(1)} KB`);
+      }
+    } catch (err: any) {
+      addLog(`❌ Gagal export DOCX: ${err.message}`);
+    }
+  };
+
+  const handleBulkGenerateOfficial = async () => {
+    setBulkGenStatus(`Sedang memproses pembuatan ${bulkGenCount} dokumen masal...`);
+    addLog(`Memulai bulk generation ${bulkGenCount} dokumen...`);
+    try {
+      const res = await apiClient.post('/api/action?action=officialDocumentGenerate', {
+        unit_code: suratConfig.unitScope,
+        doc_type: suratConfig.docType,
+        bulk_recipients_count: bulkGenCount,
+        template_name: suratConfig.templateTitle
+      });
+      if (res.data.success) {
+        setBulkGenStatus(`✓ Selesai! ${res.data.data.generated_count} dokumen diterbitkan dalam ZIP: ${res.data.data.zip_file}`);
+        addLog(`✓ Bulk Generation Selesai: ${res.data.data.zip_file}`);
+      }
+    } catch (err: any) {
+      setBulkGenStatus(`❌ Gagal bulk generate: ${err.message}`);
+    }
+  };
 
   // ----------------------------------------------------
   // 5. STATE - SLIP & INVOICE DESIGNER
@@ -284,7 +377,14 @@ export default function StudioDokumen() {
       if (savedLeger) setLegerConfig(JSON.parse(savedLeger));
 
       const savedSurat = localStorage.getItem('erp_studio_surat');
-      if (savedSurat) setSuratConfig(JSON.parse(savedSurat));
+      if (savedSurat) {
+        try {
+          const parsedSurat = JSON.parse(savedSurat);
+          setSuratConfig(prev => ({ ...prev, ...parsedSurat }));
+        } catch (e) {
+          console.error('Failed to parse erp_studio_surat', e);
+        }
+      }
 
       const savedSlip = localStorage.getItem('erp_studio_slip');
       if (savedSlip) setSlipConfig(JSON.parse(savedSlip));
@@ -479,6 +579,14 @@ export default function StudioDokumen() {
           </div>
 
           <button
+            onClick={() => setActiveTab('visual_designer')}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${activeTab === 'visual_designer' ? 'bg-indigo-50 text-indigo-700 font-extrabold shadow-xs' : 'text-slate-600 hover:bg-slate-50'}`}
+          >
+            <Palette className="h-4 w-4 text-indigo-600" />
+            <span>★ Visual Drag &amp; Drop Designer</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('reports')}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${activeTab === 'reports' ? 'bg-emerald-50 text-emerald-700 font-extrabold shadow-xs' : 'text-slate-600 hover:bg-slate-50'}`}
           >
@@ -601,7 +709,11 @@ export default function StudioDokumen() {
         </div>
 
         {/* Center/Right Columns: Interactive Settings & Live Previews */}
-        {activeTab === 'reports' ? (
+        {activeTab === 'visual_designer' ? (
+          <div className="lg:col-span-9">
+            <VisualDocumentDesigner />
+          </div>
+        ) : activeTab === 'reports' ? (
           <div className="lg:col-span-9">
             <EnterpriseReportPrintEngine />
           </div>
@@ -993,53 +1105,263 @@ export default function StudioDokumen() {
 
             {activeTab === 'surat' && (
               <div className="space-y-4 text-xs">
+                {/* Unit & Scope */}
                 <div className="space-y-1.5">
-                  <label className="block text-slate-600 font-bold">Template Jenis Surat Resmi</label>
+                  <label className="block text-slate-700 font-bold flex items-center justify-between">
+                    <span>Unit Pendidikan / Scope</span>
+                    <span className="text-[10px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded font-mono">DB Auto</span>
+                  </label>
+                  <select 
+                    value={suratConfig.unitScope}
+                    onChange={(e) => setSuratConfig({
+                      ...suratConfig, 
+                      unitScope: e.target.value as any,
+                      nomorSurat: `B-${Math.floor(100 + Math.random() * 900)}/${e.target.value}/${suratConfig.docType}/VII/2026`
+                    })}
+                    className="w-full bg-slate-50 border border-slate-300 text-xs rounded-xl p-2 font-bold text-slate-900"
+                  >
+                    <option value="SMP">SMP Islam Terpadu Al-Azhar</option>
+                    <option value="SMA">SMA Tahfidz Al-Qur'an Al-Azhar</option>
+                    <option value="PONPES">Pondok Pesantren Modern Darul Hadits</option>
+                    <option value="YAYASAN">Sekretariat Pusat Yayasan</option>
+                  </select>
+                </div>
+
+                {/* Jenis Surat */}
+                <div className="space-y-1.5">
+                  <label className="block text-slate-700 font-bold">Jenis / Format Surat Resmi</label>
                   <select 
                     value={suratConfig.docType}
-                    onChange={(e) => setSuratConfig({...suratConfig, docType: e.target.value as any})}
-                    className="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl p-2 outline-none font-semibold"
+                    onChange={(e) => setSuratConfig({
+                      ...suratConfig, 
+                      docType: e.target.value,
+                      nomorSurat: `B-${Math.floor(100 + Math.random() * 900)}/${suratConfig.unitScope}/${e.target.value}/VII/2026`
+                    })}
+                    className="w-full bg-slate-50 border border-slate-300 text-xs rounded-xl p-2 font-bold text-indigo-900"
                   >
-                    <option value="SK">SK Yayasan / Kepala Sekolah</option>
-                    <option value="PENGANTAR">Surat Pengantar Dinas</option>
-                    <option value="UNDANGAN">Surat Undangan Rapat Ortu</option>
-                    <option value="MUTASI">Surat Keterangan Pindah</option>
+                    <option value="SK">Surat Keputusan (SK) Resmi</option>
+                    <option value="SURAT_KET">Surat Keterangan Santri / Siswa Aktif</option>
+                    <option value="PENGANTAR">Surat Pengantar Dinas / Lembaga</option>
+                    <option value="UNDANGAN">Surat Undangan Rapat / Wali Santri</option>
+                    <option value="MUTASI">Surat Keterangan Pindah / Mutasi</option>
+                    <option value="SURAT_TUGAS">Surat Tugas & Perjalanan Dinas</option>
+                    <option value="IZIN_SANTRI">Surat Izin Pulang / Mahram Santri</option>
+                    <option value="REKOMENDASI">Surat Rekomendasi Beasiswa / Lanjutan</option>
+                    <option value="LEGALISIR">Surat Pengesahan & Legalisir Rapor</option>
                   </select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-slate-600 font-bold">Ukuran Batas Margin Halaman</label>
-                  <select 
-                    value={suratConfig.marginSize}
-                    onChange={(e) => setSuratConfig({...suratConfig, marginSize: Number(e.target.value)})}
-                    className="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl p-2 outline-none font-semibold"
-                  >
-                    <option value="20">Sempit (2.0 cm)</option>
-                    <option value="25">Standar (2.5 cm)</option>
-                    <option value="30">Lebar (3.0 cm)</option>
-                  </select>
+                {/* Paper Size & Margins */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                  <div className="font-bold text-slate-800 flex items-center justify-between">
+                    <span>Pengaturan Kertas & Layout</span>
+                    <span className="text-[10px] text-slate-500">{suratConfig.paperWidth} x {suratConfig.paperHeight} mm</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-slate-600 font-bold block mb-0.5">Ukuran Kertas</label>
+                      <select
+                        value={suratConfig.paperSize}
+                        onChange={(e) => {
+                          const sz = e.target.value;
+                          let w = 210, h = 297;
+                          if (sz === 'F4') { w = 215; h = 330; }
+                          if (sz === 'LEGAL') { w = 216; h = 356; }
+                          if (sz === 'LETTER') { w = 216; h = 279; }
+                          if (sz === 'A5') { w = 148; h = 210; }
+                          setSuratConfig({ ...suratConfig, paperSize: sz as any, paperWidth: w, paperHeight: h });
+                        }}
+                        className="w-full border border-slate-300 rounded-lg p-1.5 font-bold text-[11px]"
+                      >
+                        <option value="A4">A4 (210 x 297 mm)</option>
+                        <option value="F4">F4 / Folio (215 x 330 mm)</option>
+                        <option value="LEGAL">Legal (216 x 356 mm)</option>
+                        <option value="LETTER">Letter (216 x 279 mm)</option>
+                        <option value="A5">A5 (148 x 210 mm)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-600 font-bold block mb-0.5">Font Style</label>
+                      <select
+                        value={suratConfig.fontFamily}
+                        onChange={(e) => setSuratConfig({ ...suratConfig, fontFamily: e.target.value as any })}
+                        className="w-full border border-slate-300 rounded-lg p-1.5 font-bold text-[11px]"
+                      >
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Cambria">Cambria</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Tahoma">Tahoma</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Margins */}
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    <div>
+                      <label className="text-[9px] text-slate-500 font-bold block">Top (mm)</label>
+                      <input
+                        type="number"
+                        value={suratConfig.marginTop}
+                        onChange={(e) => setSuratConfig({ ...suratConfig, marginTop: Number(e.target.value) })}
+                        className="w-full border border-slate-300 rounded p-1 text-center font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] text-slate-500 font-bold block">Btm (mm)</label>
+                      <input
+                        type="number"
+                        value={suratConfig.marginBottom}
+                        onChange={(e) => setSuratConfig({ ...suratConfig, marginBottom: Number(e.target.value) })}
+                        className="w-full border border-slate-300 rounded p-1 text-center font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] text-slate-500 font-bold block">Left (mm)</label>
+                      <input
+                        type="number"
+                        value={suratConfig.marginLeft}
+                        onChange={(e) => setSuratConfig({ ...suratConfig, marginLeft: Number(e.target.value) })}
+                        className="w-full border border-slate-300 rounded p-1 text-center font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] text-slate-500 font-bold block">Right (mm)</label>
+                      <input
+                        type="number"
+                        value={suratConfig.marginRight}
+                        onChange={(e) => setSuratConfig({ ...suratConfig, marginRight: Number(e.target.value) })}
+                        className="w-full border border-slate-300 rounded p-1 text-center font-bold"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
+                {/* Surat Attributes */}
+                <div className="space-y-2">
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-0.5">Nomor Surat Auto-Format</label>
+                    <input 
+                      type="text" 
+                      value={suratConfig.nomorSurat}
+                      onChange={(e) => setSuratConfig({...suratConfig, nomorSurat: e.target.value})}
+                      className="w-full border border-slate-300 font-mono text-[11px] font-bold rounded-lg p-1.5"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-0.5">Perihal</label>
+                      <input 
+                        type="text" 
+                        value={suratConfig.perihal}
+                        onChange={(e) => setSuratConfig({...suratConfig, perihal: e.target.value})}
+                        className="w-full border border-slate-300 text-[11px] rounded-lg p-1.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-0.5">Lampiran</label>
+                      <input 
+                        type="text" 
+                        value={suratConfig.lampiran}
+                        onChange={(e) => setSuratConfig({...suratConfig, lampiran: e.target.value})}
+                        className="w-full border border-slate-300 text-[11px] rounded-lg p-1.5"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-0.5">Penandatangan & Jabatan</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input 
+                        type="text" 
+                        value={suratConfig.penandatanganNama}
+                        onChange={(e) => setSuratConfig({...suratConfig, penandatanganNama: e.target.value})}
+                        className="w-full border border-slate-300 font-bold text-[11px] rounded-lg p-1.5"
+                        placeholder="Nama TTD"
+                      />
+                      <input 
+                        type="text" 
+                        value={suratConfig.penandatanganJabatan}
+                        onChange={(e) => setSuratConfig({...suratConfig, penandatanganJabatan: e.target.value})}
+                        className="w-full border border-slate-300 text-[11px] rounded-lg p-1.5"
+                        placeholder="Jabatan TTD"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Toggles */}
+                <div className="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
                     <input 
                       type="checkbox" 
                       checked={suratConfig.showKopSurat}
                       onChange={(e) => setSuratConfig({...suratConfig, showKopSurat: e.target.checked})}
-                      className="h-4 w-4 text-blue-600 rounded"
+                      className="h-4 w-4 text-indigo-600 rounded"
                     />
                     <span>Sertakan Kop Surat Terintegrasi</span>
                   </label>
-                  <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
+                  <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
                     <input 
                       type="checkbox" 
                       checked={suratConfig.digitalSignVerify}
                       onChange={(e) => setSuratConfig({...suratConfig, digitalSignVerify: e.target.checked})}
-                      className="h-4 w-4 text-blue-600 rounded"
+                      className="h-4 w-4 text-indigo-600 rounded"
                     />
-                    <span>QR Code Link Verifikasi TTD</span>
+                    <span>QR Code Link Verifikasi Dokumen</span>
                   </label>
                 </div>
+
+                {/* Action Buttons Toolbar */}
+                <div className="pt-2 border-t border-slate-200 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={handleExportDocxOfficial}
+                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Export Word
+                    </button>
+                    <button
+                      onClick={() => handleVerifyDocumentCode()}
+                      className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5" /> Cek Keaslian
+                    </button>
+                  </div>
+
+                  <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl space-y-2">
+                    <div className="font-bold text-indigo-900 text-[11px] flex items-center justify-between">
+                      <span>Penerbitan Dokumen Masal (Bulk)</span>
+                      <span className="font-mono text-[10px]">{bulkGenCount} Rekaman</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={500}
+                        value={bulkGenCount}
+                        onChange={(e) => setBulkGenCount(Number(e.target.value))}
+                        className="w-20 bg-white border border-slate-300 rounded-lg p-1 text-center font-bold text-xs"
+                      />
+                      <button
+                        onClick={handleBulkGenerateOfficial}
+                        className="flex-1 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <RefreshCw className="h-3 w-3" /> Generate Bulk
+                      </button>
+                    </div>
+                    {bulkGenStatus && (
+                      <div className="text-[10px] font-semibold text-indigo-900 leading-tight">
+                        {bulkGenStatus}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
               </div>
             )}
 
@@ -1685,41 +2007,129 @@ export default function StudioDokumen() {
                 </div>
               )}
 
-              {/* RENDER 5: SURAT DESIGNER */}
+              {/* RENDER 5: SURAT & OFFICIAL DOCUMENT DESIGNER (LIVE WYSIWYG A4 PREVIEW) */}
               {activeTab === 'surat' && (
-                <div className="bg-white text-slate-900 border border-slate-300 rounded-sm shadow-xl p-5 w-full max-w-sm flex flex-col justify-between" style={{ minHeight: '360px' }}>
+                <div 
+                  className="bg-white text-slate-900 border border-slate-300 shadow-2xl p-6 w-full max-w-lg flex flex-col justify-between font-serif relative"
+                  style={{ 
+                    minHeight: '520px', 
+                    fontFamily: suratConfig.fontFamily,
+                    fontSize: `${suratConfig.fontSize}pt`,
+                    lineHeight: suratConfig.lineHeight,
+                    paddingTop: `${Math.max(12, suratConfig.marginTop * 0.6)}px`,
+                    paddingBottom: `${Math.max(12, suratConfig.marginBottom * 0.6)}px`,
+                    paddingLeft: `${Math.max(12, suratConfig.marginLeft * 0.6)}px`,
+                    paddingRight: `${Math.max(12, suratConfig.marginRight * 0.6)}px`
+                  }}
+                >
+                  {/* Dynamic Kop Header */}
                   {suratConfig.showKopSurat && (
-                    <div className="border-b border-slate-900 pb-2 text-center leading-tight shrink-0">
-                      <h4 className="text-[9px] font-bold uppercase m-0">KOP RESMI DARUL HADITS</h4>
-                      <p className="text-[6px] text-slate-500 m-0">Jl. Raya Payakumbuh Km 7 Sumatera Barat</p>
+                    <div className="border-b-4 border-double border-slate-900 pb-2 text-center leading-tight shrink-0 mb-3 space-y-0.5">
+                      <h4 className="text-[11px] font-black uppercase text-slate-900 tracking-tight">
+                        {suratConfig.unitScope === 'YAYASAN' ? 'YAYASAN PENDIDIKAN ISLAM AL-AZHAR' :
+                         suratConfig.unitScope === 'SMP' ? 'YAYASAN PENDIDIKAN ISLAM AL-AZHAR' :
+                         suratConfig.unitScope === 'SMA' ? 'YAYASAN PENDIDIKAN ISLAM AL-AZHAR' : 'YAYASAN PENDIDIKAN ISLAM AL-AZHAR'}
+                      </h4>
+                      <h5 className="text-[10px] font-extrabold text-indigo-900 uppercase">
+                        {suratConfig.unitScope === 'SMP' ? 'SEKOLAH MENENGAH PERTAMA (SMP IT AL-AZHAR)' :
+                         suratConfig.unitScope === 'SMA' ? 'SEKOLAH MENENGAH ATAS TAHFIDZ (SMA UNGGULAN)' :
+                         suratConfig.unitScope === 'PONPES' ? 'PONDOK PESANTREN MODERN DARUL HADITS' : 'SEKRETARIAT TATA USAHA PUSAT YAYASAN'}
+                      </h5>
+                      <p className="text-[8px] text-slate-600 font-sans">
+                        Jl. Pendidikan No. 45, Depok, Jawa Barat | Telp: (021) 8877-6655 | Web: www.alazhar-terpadu.sch.id
+                      </p>
                     </div>
                   )}
 
-                  <div className="my-4 flex-grow text-[8px] space-y-3 leading-relaxed">
-                    <div className="text-center font-bold">
-                      <p className="m-0 underline">SURAT KETERANGAN RESMI</p>
-                      {suratConfig.showReferenceCode && <p className="m-0 font-mono text-[6px] text-slate-500">No: B-029/SK-DIR/VII/2026</p>}
+                  {/* Header Details: Nomor, Lampiran, Perihal, Tanggal */}
+                  <div className="text-[9px] space-y-2 mb-3">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-0.5">
+                        <div className="flex gap-2">
+                          <span className="w-16 font-bold text-slate-600">Nomor</span>
+                          <span>: <strong className="font-mono text-slate-900">{suratConfig.nomorSurat}</strong></span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="w-16 font-bold text-slate-600">Lampiran</span>
+                          <span>: {suratConfig.lampiran}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="w-16 font-bold text-slate-600">Perihal</span>
+                          <span>: <strong className="underline">{suratConfig.perihal}</strong></span>
+                        </div>
+                      </div>
+
+                      <div className="text-right text-slate-700 font-medium">
+                        Depok, {suratConfig.tanggalSurat}
+                      </div>
                     </div>
 
-                    <p>Menerangkan dengan sesungguhnya bahwa yang bersangkutan di bawah ini merupakan sivitas aktif di bawah naungan Pondok Pesantren Terpadu.</p>
-                    
-                    <div className="pl-4 font-semibold">
-                      <div>Nama: Muhammad Faiz Alfarabi</div>
-                      <div>Jabatan: Guru Tahfidz Al-Qur'an</div>
+                    <div className="pt-2 whitespace-pre-line text-slate-800 font-semibold">
+                      {suratConfig.tujuanSurat}
                     </div>
-
-                    <p>Demikian surat ini dibuat untuk dipergunakan sebagaimana mestinya dengan penuh tanggung jawab.</p>
                   </div>
 
-                  <div className="mt-4 flex justify-end shrink-0">
-                    <div className="text-center text-[7px] w-28">
-                      <div>Payakumbuh, {new Date().toLocaleDateString('id-ID')}</div>
-                      <div className="font-bold my-1">Direktur Pesantren</div>
+                  {/* Body Text */}
+                  <div className="my-2 flex-grow text-[9.5px] space-y-2 leading-relaxed text-slate-900">
+                    <p className="font-bold">{suratConfig.salamPembuka || 'Assalamu\'alaikum Warahmatullahi Wabarakatuh,'}</p>
+                    
+                    <p className="whitespace-pre-line">
+                      {(suratConfig.isiSurat || 'Dengan ini Kepala Sekolah menerangkan bahwa {{nama_siswa}} adalah siswa/santri aktif.')
+                        .replace('{{nama_siswa}}', 'Ahmad Hilmy Alfarabi')
+                        .replace('{{nis}}', '202610091')
+                        .replace('{{nisn}}', '0089123412')
+                        .replace('{{kelas}}', '8-A Tahfidz')
+                        .replace('{{alamat}}', 'Jl. Pesantren No. 12, Depok')
+                        .replace('{{nama_lembaga}}', 'SMP IT Al-Azhar')
+                      }
+                    </p>
+
+                    <p className="whitespace-pre-line pt-2">{suratConfig.salamPenutup || 'Demikian surat keterangan resmi ini diterbitkan untuk dipergunakan sebagaimana mestinya.'}</p>
+                  </div>
+
+                  {/* Signatures & Stamp Area */}
+                  <div className="mt-4 flex justify-between items-end shrink-0 pt-3 border-t border-slate-100">
+                    {/* Stamp Watermark & Verification QR */}
+                    <div className="flex items-center gap-3">
                       {suratConfig.digitalSignVerify && (
-                        <QrCode className="h-6 w-6 mx-auto my-1 text-blue-600 bg-slate-50 p-0.5 border" />
+                        <div 
+                          onClick={() => handleVerifyDocumentCode()}
+                          className="border border-indigo-200 bg-indigo-50/60 p-1.5 rounded-lg text-center cursor-pointer hover:bg-indigo-100 transition shadow-xs"
+                        >
+                          <QrCode className="h-8 w-8 mx-auto text-indigo-700" />
+                          <span className="text-[6px] font-mono font-bold block mt-0.5 text-indigo-900">
+                            {suratConfig.verificationCode}
+                          </span>
+                        </div>
                       )}
-                      <div className="font-bold underline">( Ust. Rizqi, Lc )</div>
+
+                      <div className="h-16 w-16 border-2 border-emerald-600 rounded-full flex flex-col items-center justify-center text-center p-1 text-emerald-700 font-extrabold uppercase text-[7px] leading-tight rotate-[-10deg] bg-emerald-50/30">
+                        <span>★ VERIFIED ★</span>
+                        <span className="text-[6px] font-mono text-emerald-900">TATA USAHA</span>
+                      </div>
                     </div>
+
+                    <div className="text-center text-[9px] w-48 space-y-8">
+                      <div>
+                        <div className="font-bold text-slate-800">{suratConfig.penandatanganJabatan}</div>
+                        <div className="text-[8px] text-slate-500">Unit {suratConfig.unitScope}</div>
+                      </div>
+
+                      <div>
+                        <div className="font-extrabold underline text-slate-900">
+                          {suratConfig.penandatanganNama}
+                        </div>
+                        <div className="text-[7.5px] font-mono text-slate-600">
+                          {suratConfig.penandatanganNip}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Bar */}
+                  <div className="mt-3 pt-1 border-t border-slate-200 text-[7px] text-slate-400 flex justify-between font-mono">
+                    <span>Dokumen Resmi Terverifikasi Sistem Enterprise TU</span>
+                    <span>Halaman 1 / 1</span>
                   </div>
                 </div>
               )}
@@ -2051,6 +2461,86 @@ export default function StudioDokumen() {
         )}
 
       </div>
+
+      {/* VERIFICATION MODAL */}
+      {verificationModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-emerald-600" />
+                Verifikasi Keaslian Dokumen Digital
+              </h3>
+              <button 
+                onClick={() => setVerificationModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            {isVerifyingCode ? (
+              <div className="py-8 text-center space-y-2">
+                <RefreshCw className="h-8 w-8 text-indigo-600 animate-spin mx-auto" />
+                <p className="text-xs font-bold text-slate-600">Memeriksa tanda tangan digital & hash keaslian...</p>
+              </div>
+            ) : verificationResult?.valid ? (
+              <div className="space-y-3 text-xs">
+                <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-emerald-800 space-y-1">
+                  <div className="font-black text-sm flex items-center gap-1.5">
+                    <CheckCircle className="h-4 w-4 text-emerald-600" />
+                    DOKUMEN RESMI TERVERIFIKASI
+                  </div>
+                  <p className="text-[11px] font-medium">Tanda tangan digital resmi dan belum pernah diubah/dimanipulasi.</p>
+                </div>
+
+                <div className="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200 font-mono text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Kode Verifikasi:</span>
+                    <span className="font-bold text-slate-900">{verificationResult.verification_code}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Judul Dokumen:</span>
+                    <span className="font-bold text-slate-900">{verificationResult.title}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Unit Penerbit:</span>
+                    <span className="font-bold text-slate-900">{verificationResult.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Nama Subjek:</span>
+                    <span className="font-bold text-slate-900">{verificationResult.recipient}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Penandatangan:</span>
+                    <span className="font-bold text-slate-900">{verificationResult.signatory}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Status Keabsahan:</span>
+                    <span className="font-bold text-emerald-600 uppercase">{verificationResult.status}</span>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-400 italic text-center">
+                  * Verifikasi ini diterbitkan oleh Public Verifier Engine Tata Usaha Terpadu.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-800 text-xs space-y-1">
+                <div className="font-bold">Kode Verifikasi Tidak Ditemukan</div>
+                <p>{verificationResult?.error || 'Pastikan kode QR atau kode verifikasi sesuai dengan yang tertera di surat resmi.'}</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setVerificationModalOpen(false)}
+              className="w-full py-2 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition"
+            >
+              Tutup Modal Verifikasi
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,9 +5,209 @@ import { PrismaEngine } from '../backend/database/prisma';
 
 export class NotificationController extends BaseController {
 
+  private getAuthUser(req: any): any {
+    if (req.authUser) return req.authUser;
+    const token = req.headers.authorization?.split(' ')[1] || req.body.token || req.query.token;
+    if (token) {
+      try {
+        return verifyJWT(token);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   public async index(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      return this.success(res, [], 'Index method');
+      const user = this.getAuthUser(req);
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      const { filter, page = '1', limit = '10' } = req.query;
+      const pNum = parseInt(page as string, 10) || 1;
+      const lNum = parseInt(limit as string, 10) || 10;
+      const skip = (pNum - 1) * lNum;
+
+      const whereClause: any = {
+        recipient_id: user.id,
+        status: { not: 'DELETED' }
+      };
+
+      if (filter && filter !== 'all') {
+        if (filter === 'unread') {
+          whereClause.status = 'UNREAD';
+        } else if (filter === 'attendance') {
+          whereClause.type = { in: ['student_attendance_created', 'employee_attendance_created', 'late_attendance', 'absent_detected', 'checkout_missing'] };
+        } else if (filter === 'qr') {
+          whereClause.type = { in: ['qr_scan_success', 'qr_invalid', 'qr_duplicate', 'qr_revoked'] };
+        } else if (filter === 'gps') {
+          whereClause.type = { in: ['gps_outside_radius', 'gps_accuracy_failure', 'gps_location_invalid'] };
+        } else if (filter === 'correction') {
+          whereClause.type = { in: ['correction_created', 'correction_pending', 'correction_approved', 'correction_rejected', 'correction_expired'] };
+        } else if (filter === 'security') {
+          whereClause.type = { in: ['security_alert', 'invalid_qr_burst', 'suspicious_attendance'] };
+        } else if (filter === 'system') {
+          whereClause.type = 'system_notice';
+        }
+      }
+
+      const list = await PrismaEngine.notification.findMany({
+        where: whereClause,
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: lNum
+      });
+
+      const total = await PrismaEngine.notification.count({
+        where: whereClause
+      });
+
+      return res.json({
+        success: true,
+        data: list,
+        pagination: {
+          page: pNum,
+          limit: lNum,
+          total,
+          pages: Math.ceil(total / lNum)
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async unreadCount(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const user = this.getAuthUser(req);
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      const count = await PrismaEngine.notification.count({
+        where: {
+          recipient_id: user.id,
+          status: 'UNREAD'
+        }
+      });
+      return res.json({ success: true, count });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async markAsRead(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const user = this.getAuthUser(req);
+      const { id } = req.params;
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      const notif = await PrismaEngine.notification.findFirst({
+        where: { id, recipient_id: user.id }
+      });
+
+      if (!notif) {
+        return res.status(404).json({ success: false, message: 'Notification not found' });
+      }
+
+      await PrismaEngine.notification.update({
+        where: { id },
+        data: {
+          status: 'READ',
+          read_at: new Date()
+        }
+      });
+
+      return res.json({ success: true, message: 'Notification marked as read' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async markAllAsRead(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const user = this.getAuthUser(req);
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      await PrismaEngine.notification.updateMany({
+        where: {
+          recipient_id: user.id,
+          status: 'UNREAD'
+        },
+        data: {
+          status: 'READ',
+          read_at: new Date()
+        }
+      });
+
+      return res.json({ success: true, message: 'All notifications marked as read' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async registerDevice(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const user = this.getAuthUser(req);
+      const { device_token, platform } = req.body;
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+      if (!device_token) return res.status(400).json({ success: false, message: 'device_token is required' });
+
+      const existing = await PrismaEngine.device.findFirst({
+        where: { device_token }
+      });
+
+      let device;
+      if (existing) {
+        device = await PrismaEngine.device.update({
+          where: { id: existing.id },
+          data: {
+            user_id: user.id,
+            platform: platform || existing.platform,
+            last_active: new Date()
+          }
+        });
+      } else {
+        device = await PrismaEngine.device.create({
+          data: {
+            id: `dev-${Date.now()}`,
+            user_id: user.id,
+            device_token,
+            platform: platform || 'web',
+            tenant_id: user.tenant_id || 'system',
+            last_active: new Date()
+          }
+        });
+      }
+
+      return res.json({ success: true, message: 'Device registered successfully', data: device });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async unregisterDevice(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const user = this.getAuthUser(req);
+      const { id } = req.params;
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      const device = await PrismaEngine.device.findFirst({
+        where: {
+          OR: [
+            { id, user_id: user.id },
+            { device_token: id, user_id: user.id }
+          ]
+        }
+      });
+
+      if (!device) {
+        return res.status(404).json({ success: false, message: 'Device not found' });
+      }
+
+      await PrismaEngine.device.delete({
+        where: { id: device.id }
+      });
+
+      return res.json({ success: true, message: 'Device unregistered successfully' });
     } catch (error) {
       next(error);
     }
@@ -15,7 +215,19 @@ export class NotificationController extends BaseController {
 
   public async show(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      return this.success(res, null, 'Show method');
+      const user = this.getAuthUser(req);
+      const { id } = req.params;
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      const notif = await PrismaEngine.notification.findFirst({
+        where: { id, recipient_id: user.id }
+      });
+
+      if (!notif) {
+        return res.status(404).json({ success: false, message: 'Notification not found' });
+      }
+
+      return this.success(res, notif, 'Show method');
     } catch (error) {
       next(error);
     }
@@ -39,7 +251,24 @@ export class NotificationController extends BaseController {
 
   public async destroy(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      return this.deleted(res, 'Destroy method');
+      const user = this.getAuthUser(req);
+      const { id } = req.params;
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      const notif = await PrismaEngine.notification.findFirst({
+        where: { id, recipient_id: user.id }
+      });
+
+      if (!notif) {
+        return res.status(404).json({ success: false, message: 'Notification not found' });
+      }
+
+      await PrismaEngine.notification.update({
+        where: { id },
+        data: { status: 'DELETED' }
+      });
+
+      return res.json({ success: true, message: 'Notification deleted successfully' });
     } catch (error) {
       next(error);
     }

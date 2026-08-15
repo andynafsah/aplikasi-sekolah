@@ -19,11 +19,11 @@ export class TeacherController extends BaseController {
           nuptk: '9081230491023',
           nomor_pegawai: 'PEG-0012',
           gender: 'L',
-          specialization: 'Sains',
+          specialization: 'Fisika & Sains',
           status: 'AKTIF',
           email: 'ahmad.mudzakir@pondok.id',
           phone: '081234567891',
-          unit_kerja: 'MA / SMA',
+          unit_kerja: 'SMA',
           jabatan_struktural: 'Kepala Sekolah',
           golongan: 'IV/a',
           status_kepegawaian: 'PNS Diperbantukan',
@@ -55,6 +55,212 @@ export class TeacherController extends BaseController {
           institusi_pendidikan: 'Institut Teknologi Bandung',
           status_dapodik: 'AKTIF',
           status_emis: 'AKTIF',
+          created_at: '2026-07-01',
+          deleted_at: null
+        },
+        {
+          id: 'tch-seed-3',
+          tenant_id: tenantId,
+          name: 'Ustadz Muhammad Fauzi, Lc.',
+          nip: '199105152018011005',
+          niy: 'NIY.89012303',
+          nuptk: '3412098765123',
+          nomor_pegawai: 'PEG-0055',
+          gender: 'L',
+          specialization: 'Tahfidz & Bahasa Arab',
+          status: 'AKTIF',
+          email: 'fauzi.lc@sekolah.id',
+          phone: '081388776655',
+          unit_kerja: 'SMP',
+          jabatan_struktural: 'Koordinator Tahfidz',
+          golongan: 'III/a',
+          status_kepegawaian: 'GTY',
+          pendidikan_terakhir: 'S1 - Bahasa & Sastra Arab Al-Azhar',
+          institusi_pendidikan: 'Universitas Al-Azhar Kairo',
+          status_dapodik: 'AKTIF',
+          status_emis: 'AKTIF',
+          created_at: '2026-07-01',
+          deleted_at: null
+        },
+        {
+          id: 'tch-seed-4',
+          tenant_id: tenantId,
+          name: 'Ustadzah Nurul Hidayah, S.Pd.',
+          nip: '199311022020012010',
+          niy: 'NIY.89012304',
+          nuptk: '7765123409812',
+          nomor_pegawai: 'PEG-0062',
+          gender: 'P',
+          specialization: 'Bahasa Inggris',
+          status: 'AKTIF',
+          email: 'nurul.hidayah@sekolah.id',
+          phone: '081577665544',
+          unit_kerja: 'SMP',
+          jabatan_struktural: 'Guru Wali Kelas',
+          golongan: 'III/a',
+          status_kepegawaian: 'GTY',
+          pendidikan_terakhir: 'S1 - Pendidikan Bahasa Inggris',
+          institusi_pendidikan: 'Universitas Negeri Jakarta',
+          status_dapodik: 'AKTIF',
+          status_emis: 'AKTIF',
+          created_at: '2026-07-01',
+          deleted_at: null
+        }
+      ];
+    }
+  }
+
+  private ensureTeacherAssignments(tenantId: string) {
+    this.ensureTeachers(tenantId);
+    if (!DB.teacherAssignments) {
+      DB.teacherAssignments = [];
+    }
+    if (DB.teacherAssignments.length === 0) {
+      DB.teacherAssignments = [
+        {
+          id: 'ta-seed-1',
+          teacher_id: 'tch-seed-1',
+          teacher_name: 'Ustadz Ahmad Mudzakir, M.Pd.',
+          teacher_nip: '198204122010031002',
+          unit_id: 'SMA',
+          academic_year_id: 'ay-current',
+          academic_year_name: '2025/2026',
+          semester_id: 'sem-current',
+          semester_name: 'Ganjil',
+          class_id: 'cl-1',
+          class_name: 'X MIPA 1',
+          subject_id: 'sub-1',
+          subject_name: 'Fisika Dasar',
+          assignment_type: 'SUBJECT_TEACHER',
+          is_homeroom: false,
+          hours_per_week: 4,
+          status: 'ACTIVE',
+          created_at: '2026-07-01',
+          deleted_at: null
+        },
+        {
+          id: 'ta-seed-2',
+          teacher_id: 'tch-seed-1',
+          teacher_name: 'Ustadz Ahmad Mudzakir, M.Pd.',
+          teacher_nip: '198204122010031002',
+          unit_id: 'SMA',
+          academic_year_id: 'ay-current',
+          academic_year_name: '2025/2026',
+          semester_id: 'sem-current',
+          semester_name: 'Ganjil',
+          class_id: 'cl-1',
+          class_name: 'X MIPA 1',
+          subject_id: null,
+          subject_name: 'Wali Kelas X MIPA 1',
+          assignment_type: 'HOMEROOM',
+          is_homeroom: true,
+          hours_per_week: 2,
+          status: 'ACTIVE',
+          created_at: '2026-07-01',
+          deleted_at: null
+        },
+        {
+          id: 'ta-seed-3',
+          teacher_id: 'tch-seed-2',
+          teacher_name: 'Ibu Ratna Sari, S.Si.',
+          teacher_nip: '198908242015022003',
+          unit_id: 'SMA',
+          academic_year_id: 'ay-current',
+          academic_year_name: '2025/2026',
+          semester_id: 'sem-current',
+          semester_name: 'Ganjil',
+          class_id: 'cl-2',
+          class_name: 'XI MIPA 2',
+          subject_id: 'sub-2',
+          subject_name: 'Matematika Peminatan',
+          assignment_type: 'SUBJECT_TEACHER',
+          is_homeroom: false,
+          hours_per_week: 5,
+          status: 'ACTIVE',
+          created_at: '2026-07-01',
+          deleted_at: null
+        },
+        {
+          id: 'ta-seed-4',
+          teacher_id: 'tch-seed-2',
+          teacher_name: 'Ibu Ratna Sari, S.Si.',
+          teacher_nip: '198908242015022003',
+          unit_id: 'SMA',
+          academic_year_id: 'ay-current',
+          academic_year_name: '2025/2026',
+          semester_id: 'sem-current',
+          semester_name: 'Ganjil',
+          class_id: 'cl-2',
+          class_name: 'XI MIPA 2',
+          subject_id: null,
+          subject_name: 'Wali Kelas XI MIPA 2',
+          assignment_type: 'HOMEROOM',
+          is_homeroom: true,
+          hours_per_week: 2,
+          status: 'ACTIVE',
+          created_at: '2026-07-01',
+          deleted_at: null
+        },
+        {
+          id: 'ta-seed-5',
+          teacher_id: 'tch-seed-3',
+          teacher_name: 'Ustadz Muhammad Fauzi, Lc.',
+          teacher_nip: '199105152018011005',
+          unit_id: 'SMP',
+          academic_year_id: 'ay-current',
+          academic_year_name: '2025/2026',
+          semester_id: 'sem-current',
+          semester_name: 'Ganjil',
+          class_id: 'cl-3',
+          class_name: 'VIII Tahfidz',
+          subject_id: 'sub-3',
+          subject_name: 'Tahfidz Al-Qur\'an 30 Juz',
+          assignment_type: 'TAHFIDZ',
+          is_homeroom: false,
+          hours_per_week: 8,
+          status: 'ACTIVE',
+          created_at: '2026-07-01',
+          deleted_at: null
+        },
+        {
+          id: 'ta-seed-6',
+          teacher_id: 'tch-seed-4',
+          teacher_name: 'Ustadzah Nurul Hidayah, S.Pd.',
+          teacher_nip: '199311022020012010',
+          unit_id: 'SMP',
+          academic_year_id: 'ay-current',
+          academic_year_name: '2025/2026',
+          semester_id: 'sem-current',
+          semester_name: 'Ganjil',
+          class_id: 'cl-4',
+          class_name: 'VII A',
+          subject_id: 'sub-4',
+          subject_name: 'Bahasa Inggris',
+          assignment_type: 'SUBJECT_TEACHER',
+          is_homeroom: false,
+          hours_per_week: 4,
+          status: 'ACTIVE',
+          created_at: '2026-07-01',
+          deleted_at: null
+        },
+        {
+          id: 'ta-seed-7',
+          teacher_id: 'tch-seed-4',
+          teacher_name: 'Ustadzah Nurul Hidayah, S.Pd.',
+          teacher_nip: '199311022020012010',
+          unit_id: 'SMP',
+          academic_year_id: 'ay-current',
+          academic_year_name: '2025/2026',
+          semester_id: 'sem-current',
+          semester_name: 'Ganjil',
+          class_id: 'cl-4',
+          class_name: 'VII A',
+          subject_id: null,
+          subject_name: 'Wali Kelas VII A',
+          assignment_type: 'HOMEROOM',
+          is_homeroom: true,
+          hours_per_week: 2,
+          status: 'ACTIVE',
           created_at: '2026-07-01',
           deleted_at: null
         }
@@ -170,6 +376,7 @@ export class TeacherController extends BaseController {
       // =========================================================================
 
       case 'getTeacherAssignments': {
+        this.ensureTeacherAssignments(tenantId);
         let list: any[] = [];
         let teachers: any[] = [];
         let classes: any[] = [];
@@ -197,7 +404,7 @@ export class TeacherController extends BaseController {
           semesters = DB.semesters || [];
         }
 
-        // Map names to assignments
+        // Map names to assignments safely
         const mappedList = list.map(item => {
           const teacherObj = teachers.find(t => t.id === item.teacher_id);
           const classObj = classes.find(c => c.id === item.class_id);
@@ -207,12 +414,12 @@ export class TeacherController extends BaseController {
 
           return {
             ...item,
-            teacher_name: teacherObj ? teacherObj.name : 'Guru Tidak Diketahui',
-            teacher_nip: teacherObj ? teacherObj.nip : '-',
-            class_name: classObj ? classObj.name : 'Kelas Tidak Diketahui',
-            subject_name: subjectObj ? subjectObj.name : 'Semua Mapel / Wali Kelas',
-            academic_year_name: ayObj ? ayObj.name : 'Tahun Tidak Diketahui',
-            semester_name: semObj ? semObj.name : 'Semester Tidak Diketahui'
+            teacher_name: teacherObj ? teacherObj.name : (item.teacher_name || 'Guru Tidak Diketahui'),
+            teacher_nip: teacherObj ? teacherObj.nip : (item.teacher_nip || '-'),
+            class_name: classObj ? classObj.name : (item.class_name || 'Kelas Tidak Diketahui'),
+            subject_name: subjectObj ? subjectObj.name : (item.subject_name || (item.is_homeroom || item.assignment_type === 'HOMEROOM' ? 'Wali Kelas Utama' : 'Mata Pelajaran Umum')),
+            academic_year_name: ayObj ? ayObj.name : (item.academic_year_name || '2025/2026'),
+            semester_name: semObj ? semObj.name : (item.semester_name || 'Ganjil')
           };
         });
 

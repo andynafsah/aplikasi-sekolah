@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "DATABASE_URL=\"mysql://root@localhost:3306/school_erp\" prisma generate && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && mkdir -p build && cp -r dist/* build/",
+    "build": "(npx prisma generate || true) && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "postinstall": "prisma generate || true",
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
@@ -25,6 +26,7 @@
     "@types/node": "^22.14.0",
     "@types/qrcode": "^1.5.6",
     "@types/react-window": "^2.0.0",
+    "@vis.gl/react-google-maps": "^1.9.0",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "axios": "^1.18.1",

@@ -46,6 +46,11 @@ const prismaRaw = new PrismaClient({
 // In-Memory Database Fallback cache to support fully offline simulation
 export const inMemoryDb: Record<string, any[]> = {
   teacherAssignment: [],
+  attendanceSchedule: [],
+  scheduleAssignment: [],
+  workingCalendar: [],
+  calendarHoliday: [],
+  scheduleOverride: [],
   subjectCategory: [
     { id: 'cat-umum', name: 'Umum', color: '#3b82f6', icon: 'Book', order: 1, status: 'ACTIVE' },
     { id: 'cat-diniyah', name: 'Diniyah', color: '#10b981', icon: 'Library', order: 2, status: 'ACTIVE' },

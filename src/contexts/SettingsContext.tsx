@@ -423,12 +423,28 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const fetchSettings = async () => {
     setLoading(true);
     try {
+      const cached = localStorage.getItem('erp_settings_cache');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setSettings(prev => ({ ...prev, ...parsed }));
+        } catch (e) {}
+      }
+
       const res = await apiClient.post('/api/action', { action: 'getSettings' });
       if (res.data?.success && res.data?.data) {
-        setSettings(prev => ({ ...prev, ...res.data.data }));
+        setSettings(prev => {
+          const merged = { ...prev, ...res.data.data };
+          localStorage.setItem('erp_settings_cache', JSON.stringify(merged));
+          return merged;
+        });
       }
-    } catch (err) {
-      console.error('Failed to load dynamic configurations from database:', err);
+    } catch (err: any) {
+      if (err?.response?.status === 429 || !err?.response) {
+        console.warn('Network or rate limit (429) fetching settings, using cached/default settings.');
+      } else {
+        console.warn('Failed to load dynamic configurations from database, using defaults.');
+      }
     } finally {
       setLoading(false);
     }

@@ -362,3 +362,6 @@ export class QrSecurityService {
     return R * c;
   }
 }
+
+export const qrSecurityService = new QrSecurityService();
+

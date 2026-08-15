@@ -54,10 +54,11 @@ import SmartOcrScannerView from '../components/tu/SmartOcrScannerView';
 import DigitalBulletinView from '../components/tu/DigitalBulletinView';
 import TemplateManagementView from '../components/tu/TemplateManagementView';
 import AiLetterGeneratorView from '../components/tu/AiLetterGeneratorView';
+import AcademicAdministrationPipelineView from '../components/tu/AcademicAdministrationPipelineView';
 
 export default function TataUsaha() {
   const queryClient = useQueryClient();
-  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'incoming' | 'outgoing' | 'disposition' | 'approval' | 'signature' | 'archive' | 'template' | 'number_format' | 'history' | 'mail_merge' | 'self_service' | 'kop_builder' | 'wa_gateway' | 'disposition_matrix' | 'guestbook' | 'ocr_scan' | 'digital_bulletin' | 'ai_letter_generator'>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'incoming' | 'outgoing' | 'disposition' | 'approval' | 'signature' | 'archive' | 'template' | 'number_format' | 'history' | 'mail_merge' | 'self_service' | 'kop_builder' | 'wa_gateway' | 'disposition_matrix' | 'guestbook' | 'ocr_scan' | 'digital_bulletin' | 'ai_letter_generator' | 'academic_pipeline'>('dashboard');
   const [simulatedRole, setSimulatedRole] = useState<string>('TU');
 
   // Search & Filter state
@@ -484,6 +485,7 @@ export default function TataUsaha() {
           { id: 'digital_bulletin', label: '7. Papan Pengumuman Digital', icon: Megaphone },
           { id: 'template', label: '8. Manajer Template Surat', icon: Settings },
           { id: 'ai_letter_generator', label: '9. Pembuat Surat AI (Data Terhubung)', icon: Sparkles },
+          { id: 'academic_pipeline', label: '10. Academic Administration Pipeline & Checklist', icon: Layers },
           { id: 'disposition', label: 'Disposisi', icon: CheckSquare },
           { id: 'approval', label: 'Persetujuan', icon: FileCheck },
           { id: 'signature', label: 'Tanda Tangan Digital', icon: Sparkles },
@@ -1621,6 +1623,14 @@ export default function TataUsaha() {
       {/* 9. PEMBUAT SURAT AI OTOMATIS BERBASIS DATA APLIKASI */}
       {activeSubTab === 'ai_letter_generator' && (
         <AiLetterGeneratorView />
+      )}
+
+      {/* 10. ACADEMIC ADMINISTRATION PIPELINE, CHECKLIST & VALIDATION CENTER */}
+      {activeSubTab === 'academic_pipeline' && (
+        <AcademicAdministrationPipelineView 
+          getAuthHeaders={getAuthHeaders}
+          simulatedRole={simulatedRole}
+        />
       )}
 
       {/* Ekspor Rekap Laporan Kearsipan (PDF / Excel) Modal */}

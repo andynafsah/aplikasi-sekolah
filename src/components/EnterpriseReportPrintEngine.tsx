@@ -453,19 +453,31 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
             {/* 1. STUDENT REPORT */}
             {activeModule === 'student' && (
               <div className="space-y-8">
-                {reportData.data?.map((st: any, idx: number) => (
-                  <div key={st.dataInduk.id || idx} className="border border-slate-200 rounded-lg p-6 space-y-6">
+                {reportData.data?.map((st: any, idx: number) => {
+                  const induk = st?.dataInduk || {};
+                  const ortu = st?.dataOrangTua || {};
+                  const ayah = ortu?.ayah || {};
+                  const ibu = ortu?.ibu || {};
+                  const wali = st?.dataWali || {};
+                  const pend = st?.riwayatPendidikan || {};
+                  const tahfidz = st?.riwayatTahfidz || {};
+                  const abs = st?.riwayatAbsensi?.rekap || {};
+                  const prestasi = st?.riwayatPrestasi || [];
+                  const pelanggaran = st?.riwayatPelanggaran || [];
+
+                  return (
+                  <div key={induk.id || idx} className="border border-slate-200 rounded-lg p-6 space-y-6">
                     
                     {/* Header Item */}
                     <div className="flex items-center justify-between bg-slate-50 p-4 rounded-lg border border-slate-200">
                       <div>
                         <span className="text-xs font-semibold text-emerald-600 uppercase">Siswa #{idx + 1}</span>
-                        <h2 className="text-lg font-bold text-slate-900">{st.dataInduk.namaLengkap}</h2>
-                        <p className="text-xs text-slate-500">NIS: {st.dataInduk.nis} | NISN: {st.dataInduk.nisn} | Status: <strong className="text-emerald-700">{st.dataInduk.status}</strong></p>
+                        <h2 className="text-lg font-bold text-slate-900">{induk.namaLengkap || 'Siswa Tanpa Nama'}</h2>
+                        <p className="text-xs text-slate-500">NIS: {induk.nis || '-'} | NISN: {induk.nisn || '-'} | Status: <strong className="text-emerald-700">{induk.status || 'AKTIF'}</strong></p>
                       </div>
                       <div className="text-right">
                         <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-medium text-xs rounded-full">
-                          {st.dataInduk.jenisKelamin}
+                          {induk.jenisKelamin || '-'}
                         </span>
                       </div>
                     </div>
@@ -478,11 +490,11 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                           Biodata Lengkap Siswa
                         </h3>
                         <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Tempat, Tgl Lahir:</span> <span className="font-semibold">{st.dataInduk.tempatLahir}, {st.dataInduk.tanggalLahir}</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Agama:</span> <span className="font-semibold">{st.dataInduk.agama}</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Golongan Darah:</span> <span className="font-semibold">{st.dataInduk.golonganDarah}</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Hobi & Cita-cita:</span> <span className="font-semibold">{st.dataInduk.hobi} / {st.dataInduk.citaCita}</span></div>
-                          <div className="flex justify-between pt-1"><span className="text-slate-500">Alamat Tempat Tinggal:</span> <span className="font-semibold text-right max-w-[200px]">{st.dataInduk.alamat}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Tempat, Tgl Lahir:</span> <span className="font-semibold">{induk.tempatLahir || '-'}, {induk.tanggalLahir || '-'}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Agama:</span> <span className="font-semibold">{induk.agama || '-'}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Golongan Darah:</span> <span className="font-semibold">{induk.golonganDarah || '-'}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Hobi & Cita-cita:</span> <span className="font-semibold">{induk.hobi || '-'} / {induk.citaCita || '-'}</span></div>
+                          <div className="flex justify-between pt-1"><span className="text-slate-500">Alamat Tempat Tinggal:</span> <span className="font-semibold text-right max-w-[200px]">{induk.alamat || '-'}</span></div>
                         </div>
                       </div>
 
@@ -492,11 +504,11 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                           Data Orang Tua & Wali
                         </h3>
                         <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Nama Ayah:</span> <span className="font-semibold">{st.dataOrangTua.ayah.nama} ({st.dataOrangTua.ayah.pekerjaan})</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Kontak Ayah:</span> <span className="font-semibold">{st.dataOrangTua.ayah.telepon}</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Nama Ibu:</span> <span className="font-semibold">{st.dataOrangTua.ibu.nama} ({st.dataOrangTua.ibu.pekerjaan})</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Kontak Ibu:</span> <span className="font-semibold">{st.dataOrangTua.ibu.telepon}</span></div>
-                          <div className="flex justify-between pt-1"><span className="text-slate-500">Data Wali (Jika ada):</span> <span className="font-semibold">{st.dataWali.nama} ({st.dataWali.hubungan})</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Nama Ayah:</span> <span className="font-semibold">{ayah.nama || '-'} ({ayah.pekerjaan || '-'})</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Kontak Ayah:</span> <span className="font-semibold">{ayah.telepon || '-'}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Nama Ibu:</span> <span className="font-semibold">{ibu.nama || '-'} ({ibu.pekerjaan || '-'})</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Kontak Ibu:</span> <span className="font-semibold">{ibu.telepon || '-'}</span></div>
+                          <div className="flex justify-between pt-1"><span className="text-slate-500">Data Wali (Jika ada):</span> <span className="font-semibold">{wali.nama || '-'} ({wali.hubungan || '-'})</span></div>
                         </div>
                       </div>
                     </div>
@@ -505,22 +517,22 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Riwayat Pendidikan</span>
-                        <p className="text-xs font-semibold text-slate-800 mt-1">{st.riwayatPendidikan.asalSekolah}</p>
-                        <p className="text-[11px] text-slate-500">No. Ijazah: {st.riwayatPendidikan.noIjazah}</p>
+                        <p className="text-xs font-semibold text-slate-800 mt-1">{pend.asalSekolah || '-'}</p>
+                        <p className="text-[11px] text-slate-500">No. Ijazah: {pend.noIjazah || '-'}</p>
                       </div>
 
                       <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                         <span className="text-[10px] font-bold text-emerald-800 uppercase">Capaian Tahfidz Quran</span>
-                        <p className="text-xs font-bold text-emerald-900 mt-1">{st.riwayatTahfidz.totalJuz} Juz (Surah {st.riwayatTahfidz.surahTerakhir})</p>
-                        <p className="text-[11px] text-emerald-700">Fashohah: {st.riwayatTahfidz.fashohahScore} | Tajwid: {st.riwayatTahfidz.tajwidScore}</p>
+                        <p className="text-xs font-bold text-emerald-900 mt-1">{tahfidz.totalJuz || 0} Juz (Surah {tahfidz.surahTerakhir || '-'})</p>
+                        <p className="text-[11px] text-emerald-700">Fashohah: {tahfidz.fashohahScore || '-'} | Tajwid: {tahfidz.tajwidScore || '-'}</p>
                       </div>
 
                       <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <span className="text-[10px] font-bold text-blue-800 uppercase">Rekap Presensi Siswa</span>
                         <p className="text-xs font-bold text-blue-900 mt-1">
-                          Hadir: {st.riwayatAbsensi.rekap.hadir} | Izin: {st.riwayatAbsensi.rekap.izin} | Sakit: {st.riwayatAbsensi.rekap.sakit}
+                          Hadir: {abs.hadir || 0} | Izin: {abs.izin || 0} | Sakit: {abs.sakit || 0}
                         </p>
-                        <p className="text-[11px] text-blue-700">Alpha: {st.riwayatAbsensi.rekap.alfa} | Terlambat: {st.riwayatAbsensi.rekap.terlambat}</p>
+                        <p className="text-[11px] text-blue-700">Alpha: {abs.alfa || 0} | Terlambat: {abs.terlambat || 0}</p>
                       </div>
                     </div>
 
@@ -540,13 +552,17 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                             </tr>
                           </thead>
                           <tbody>
-                            {st.riwayatPrestasi?.map((pr: any, pidx: number) => (
-                              <tr key={pidx} className="border-b last:border-0">
-                                <td className="p-2 font-medium">{pr.judul}</td>
-                                <td className="p-2 text-slate-600">{pr.tingkat}</td>
-                                <td className="p-2 text-slate-600">{pr.penyelenggara}</td>
-                              </tr>
-                            ))}
+                            {prestasi.length === 0 ? (
+                              <tr><td colSpan={3} className="p-3 text-center text-slate-400">Tidak ada catatan prestasi</td></tr>
+                            ) : (
+                              prestasi.map((pr: any, pidx: number) => (
+                                <tr key={pidx} className="border-b last:border-0">
+                                  <td className="p-2 font-medium">{pr.judul || '-'}</td>
+                                  <td className="p-2 text-slate-600">{pr.tingkat || '-'}</td>
+                                  <td className="p-2 text-slate-600">{pr.penyelenggara || '-'}</td>
+                                </tr>
+                              ))
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -565,38 +581,49 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                             </tr>
                           </thead>
                           <tbody>
-                            {st.riwayatPelanggaran?.map((vl: any, vidx: number) => (
-                              <tr key={vidx} className="border-b last:border-0">
-                                <td className="p-2 font-medium">{vl.deskripsi}</td>
-                                <td className="p-2 text-rose-600 font-semibold">{vl.keparahan}</td>
-                                <td className="p-2 text-slate-800 font-mono">+{vl.poin}</td>
-                              </tr>
-                            ))}
+                            {pelanggaran.length === 0 ? (
+                              <tr><td colSpan={3} className="p-3 text-center text-slate-400">Tidak ada catatan pelanggaran</td></tr>
+                            ) : (
+                              pelanggaran.map((vl: any, vidx: number) => (
+                                <tr key={vidx} className="border-b last:border-0">
+                                  <td className="p-2 font-medium">{vl.deskripsi || '-'}</td>
+                                  <td className="p-2 text-rose-600 font-semibold">{vl.keparahan || '-'}</td>
+                                  <td className="p-2 text-slate-800 font-mono">+{vl.poin || 0}</td>
+                                </tr>
+                              ))
+                            )}
                           </tbody>
                         </table>
                       </div>
                     </div>
 
                   </div>
-                ))}
+                );
+                })}
               </div>
             )}
 
             {/* 2. EMPLOYEE REPORT */}
             {activeModule === 'employee' && (
               <div className="space-y-8">
-                {reportData.data?.map((emp: any, idx: number) => (
-                  <div key={emp.dataInduk.id || idx} className="border border-slate-200 rounded-lg p-6 space-y-6">
+                {reportData.data?.map((emp: any, idx: number) => {
+                  const induk = emp?.dataInduk || {};
+                  const jab = emp?.jabatan || {};
+                  const plotting = emp?.plottingKelas || [];
+                  const mengajar = emp?.riwayatMengajar || [];
+
+                  return (
+                  <div key={induk.id || idx} className="border border-slate-200 rounded-lg p-6 space-y-6">
                     
                     <div className="flex items-center justify-between bg-slate-50 p-4 rounded-lg border border-slate-200">
                       <div>
                         <span className="text-xs font-semibold text-emerald-600 uppercase">Pegawai / Guru #{idx + 1}</span>
-                        <h2 className="text-lg font-bold text-slate-900">{emp.dataInduk.namaLengkap}</h2>
-                        <p className="text-xs text-slate-500">NIP: {emp.dataInduk.nip} | NUPTK: {emp.dataInduk.nuptk} | Status: <strong className="text-emerald-700">{emp.dataInduk.statusKepegawaian}</strong></p>
+                        <h2 className="text-lg font-bold text-slate-900">{induk.namaLengkap || 'Pegawai Tanpa Nama'}</h2>
+                        <p className="text-xs text-slate-500">NIP: {induk.nip || '-'} | NUPTK: {induk.nuptk || '-'} | Status: <strong className="text-emerald-700">{induk.statusKepegawaian || 'AKTIF'}</strong></p>
                       </div>
                       <div className="text-right">
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 font-semibold text-xs rounded-lg">
-                          {emp.jabatan.struktural}
+                          {jab.struktural || 'Staf'}
                         </span>
                       </div>
                     </div>
@@ -608,11 +635,11 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                           Biodata & Kontak Pegawai
                         </h3>
                         <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Pendidikan Terakhir:</span> <span className="font-semibold">{emp.dataInduk.pendidikanTerakhir}</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">TTL & Gender:</span> <span className="font-semibold">{emp.dataInduk.tempatLahir}, {emp.dataInduk.tanggalLahir} ({emp.dataInduk.jenisKelamin})</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Email Resmi:</span> <span className="font-semibold">{emp.dataInduk.email}</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Nomor Telepon:</span> <span className="font-semibold">{emp.dataInduk.telepon}</span></div>
-                          <div className="flex justify-between pt-1"><span className="text-slate-500">Alamat Domisili:</span> <span className="font-semibold text-right max-w-[200px]">{emp.dataInduk.alamat}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Pendidikan Terakhir:</span> <span className="font-semibold">{induk.pendidikanTerakhir || '-'}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">TTL & Gender:</span> <span className="font-semibold">{induk.tempatLahir || '-'}, {induk.tanggalLahir || '-'} ({induk.jenisKelamin || '-'})</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Email Resmi:</span> <span className="font-semibold">{induk.email || '-'}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Nomor Telepon:</span> <span className="font-semibold">{induk.telepon || '-'}</span></div>
+                          <div className="flex justify-between pt-1"><span className="text-slate-500">Alamat Domisili:</span> <span className="font-semibold text-right max-w-[200px]">{induk.alamat || '-'}</span></div>
                         </div>
                       </div>
 
@@ -622,10 +649,10 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                           Jabatan, Unit, & Plotting Tugas
                         </h3>
                         <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Unit Kerja Utama:</span> <span className="font-semibold">{emp.jabatan.unitKerja}</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Golongan / Masa Kerja:</span> <span className="font-semibold">{emp.jabatan.golongan} ({emp.jabatan.masaKerja})</span></div>
-                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Role Sistem RBAC:</span> <span className="font-semibold">{emp.role}</span></div>
-                          <div className="flex justify-between pt-1"><span className="text-slate-500">Plotting Wali Kelas:</span> <span className="font-semibold text-emerald-700">{emp.plottingKelas[0]?.kelas || 'Tidak Memegang Wali Kelas'}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Unit Kerja Utama:</span> <span className="font-semibold">{jab.unitKerja || '-'}</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Golongan / Masa Kerja:</span> <span className="font-semibold">{jab.golongan || '-'} ({jab.masaKerja || '-'})</span></div>
+                          <div className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-500">Role Sistem RBAC:</span> <span className="font-semibold">{emp.role || '-'}</span></div>
+                          <div className="flex justify-between pt-1"><span className="text-slate-500">Plotting Wali Kelas:</span> <span className="font-semibold text-emerald-700">{plotting[0]?.kelas || 'Tidak Memegang Wali Kelas'}</span></div>
                         </div>
                       </div>
                     </div>
@@ -645,20 +672,25 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                           </tr>
                         </thead>
                         <tbody>
-                          {emp.riwayatMengajar?.map((rm: any, ridx: number) => (
-                            <tr key={ridx} className="border-b last:border-0">
-                              <td className="p-2 font-medium">{rm.tahunAjaran} {rm.semester}</td>
-                              <td className="p-2 font-semibold text-emerald-800">{rm.mataPelajaran}</td>
-                              <td className="p-2 text-slate-600">{rm.kelas}</td>
-                              <td className="p-2 text-slate-800 font-mono">{rm.jamPerMinggu} Jam</td>
-                            </tr>
-                          ))}
+                          {mengajar.length === 0 ? (
+                            <tr><td colSpan={4} className="p-3 text-center text-slate-400">Tidak ada riwayat mengajar</td></tr>
+                          ) : (
+                            mengajar.map((rm: any, ridx: number) => (
+                              <tr key={ridx} className="border-b last:border-0">
+                                <td className="p-2 font-medium">{rm.tahunAjaran || '-'} {rm.semester || ''}</td>
+                                <td className="p-2 font-semibold text-emerald-800">{rm.mataPelajaran || '-'}</td>
+                                <td className="p-2 text-slate-600">{rm.kelas || '-'}</td>
+                                <td className="p-2 text-slate-800 font-mono">{rm.jamPerMinggu || 0} Jam</td>
+                              </tr>
+                            ))
+                          )}
                         </tbody>
                       </table>
                     </div>
 
                   </div>
-                ))}
+                );
+                })}
               </div>
             )}
 

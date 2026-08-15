@@ -167,7 +167,7 @@ export default function ParentPortal() {
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-emerald-100 font-bold font-mono uppercase tracking-wider">Mode Simulasi Wali Murid Aktif</p>
+              <p className="text-xs text-emerald-100 font-bold font-mono uppercase tracking-wider">Sesi Wali Murid Aktif</p>
               <h3 className="text-sm font-extrabold">{portalData.parent.name} ({portalData.parent.email})</h3>
             </div>
           </div>
@@ -304,14 +304,14 @@ export default function ParentPortal() {
                       {inv.status === 'UNPAID' ? (
                         <button
                           onClick={() => {
-                            if (confirm('Simulasikan pembayaran instan via Virtual Account Sekolah?')) {
+                            if (confirm('Konfirmasi pembayaran tagihan via Payment Gateway / Virtual Account Sekolah?')) {
                               payInvoiceMutation.mutate(inv.id);
                             }
                           }}
                           disabled={payInvoiceMutation.isPending}
                           className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-[11px] rounded-lg shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <CreditCard className="h-3.5 w-3.5" /> {payInvoiceMutation.isPending ? 'Memproses...' : 'Bayar Sekarang (Simulasi Gateway)'}
+                          <CreditCard className="h-3.5 w-3.5" /> {payInvoiceMutation.isPending ? 'Memproses...' : 'Bayar Tagihan Sekarang'}
                         </button>
                       ) : (
                         <div className="p-2 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded text-center flex items-center justify-center gap-1">

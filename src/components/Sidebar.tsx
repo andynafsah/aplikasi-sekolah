@@ -101,8 +101,8 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
     database: 'setting_sistem',
     'studio-dokumen': 'setting_sistem',
     'ploting-guru': 'setting_sistem',
-    'subject-management': 'kbm',
     'auto-leger': 'kbm',
+    'curriculum-command-center': 'kbm',
     dapodik: 'dapodik'
   };
 
@@ -146,9 +146,9 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
     {
       title: 'Akademik',
       items: [
-        { id: 'akademik', name: 'KBM & Absensi', icon: BookOpen },
-        { id: 'auto-leger', name: 'ACADEMIC GRADE CENTER (AUTO LEGER)', icon: BookOpen },
-        { id: 'subject-management', name: 'Master Mata Pelajaran', icon: Layers },
+        { id: 'akademik', name: 'Kurikulum & KBM', icon: BookOpen },
+        { id: 'curriculum-command-center', name: 'Curriculum Command Center', icon: Sparkles },
+        { id: 'auto-leger', name: 'Academic Grade Center (Auto Leger)', icon: BookOpen },
         { id: 'teacher-workspace', name: 'KBM Saya (Guru)', icon: Sparkles },
         { id: 'virtual-classroom', name: 'Kelas & Rapat Virtual', icon: Video },
       ]

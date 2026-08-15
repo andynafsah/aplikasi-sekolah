@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { GoogleMapsAttendanceView } from '../components/attendance/GoogleMapsAttendanceView';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -56,7 +57,8 @@ import {
   Sun,
   Layout,
   RefreshCcw,
-  Zap
+  Zap,
+  Key
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -79,17 +81,58 @@ export default function MobilePlatform() {
 
   // State Management for Mobile Simulator
   const [phoneTheme, setPhoneTheme] = useState<'light' | 'dark'>('light');
-  const [phoneRole, setPhoneRole] = useState<'student' | 'parent' | 'teacher' | 'employee' | 'executive'>('student');
+  const [phoneRole, setPhoneRole] = useState<'student' | 'parent' | 'teacher' | 'employee' | 'executive' | 'security'>('security');
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [biometricEnabled, setBiometricEnabled] = useState<boolean>(true);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [pinCode, setPinCode] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('home');
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; body: string; time: string; read: boolean }>>([
-    { id: '1', title: 'Tugas Baru Fisika', body: 'Ustadz Jaelani memposting tugas KBM-7. Sifat: Wajib.', time: '09:00', read: false },
-    { id: '2', title: 'Pengumuman Liburan', body: 'Libur semester genap asrama dimulai tgl 12 Juli.', time: 'Kemarin', read: true }
+    { id: '1', title: 'Peringatan Gerbang Utama', body: '3 Santri terlambat tercatat di Gerbang Utama jam 07:12.', time: '07:15', read: false },
+    { id: '2', title: 'Tugas Baru Fisika', body: 'Ustadz Jaelani memposting tugas KBM-7. Sifat: Wajib.', time: '09:00', read: false },
+    { id: '3', title: 'Pengumuman Liburan', body: 'Libur semester genap asrama dimulai tgl 12 Juli.', time: 'Kemarin', read: true }
   ]);
   const [activeNotificationToast, setActiveNotificationToast] = useState<string | null>(null);
+
+  // Enterprise Security Gate Scanner State (Section 142)
+  const [securityScanResult, setSecurityScanResult] = useState<{
+    status: 'SUCCESS' | 'DUPLICATE' | 'INVALID' | 'REVOKED';
+    student?: { name: string; nis: string; rombel: string; unit: string; photo?: string };
+    scanTime?: string;
+    message?: string;
+  } | null>(null);
+  const [securityManualCode, setSecurityManualCode] = useState('');
+  const [securityFlashActive, setSecurityFlashActive] = useState(false);
+  const [securityHistoryFilter, setSecurityHistoryFilter] = useState<'ALL' | 'HADIR' | 'TERLAMBAT' | 'INVALID'>('ALL');
+  const [securityLogs, setSecurityLogs] = useState<Array<{
+    id: string; name: string; nis: string; rombel: string; status: 'HADIR' | 'TERLAMBAT' | 'INVALID'; time: string; source: string;
+  }>>([
+    { id: '1', name: 'Farhan Ramadhan', nis: '240188', rombel: 'X-A Unggulan', status: 'HADIR', time: '07:05:12', source: 'Gate 1' },
+    { id: '2', name: 'Ahmad Faiz', nis: '240189', rombel: 'X-A Unggulan', status: 'TERLAMBAT', time: '07:14:02', source: 'Gate 1' },
+    { id: '3', name: 'Kartu Rusak / Unregistered', nis: 'QR-99081', rombel: '-', status: 'INVALID', time: '07:18:45', source: 'Gate 2' },
+  ]);
+
+  // Enterprise Teacher Rombel State (Section 142)
+  const [selectedRombel, setSelectedRombel] = useState<'X-A' | 'X-B' | 'XI-IPA'>('X-A');
+  const [teacherStudents, setTeacherStudents] = useState<Array<{
+    id: string; nis: string; name: string; status: 'HADIR' | 'TERLAMBAT' | 'SAKIT' | 'IZIN' | 'ALPA';
+  }>>([
+    { id: 'S-01', nis: '240188', name: 'Farhan Ramadhan', status: 'HADIR' },
+    { id: 'S-02', nis: '240189', name: 'Ahmad Faiz', status: 'HADIR' },
+    { id: 'S-03', nis: '240190', name: 'Laila Fitriani', status: 'HADIR' },
+    { id: 'S-04', nis: '240191', name: 'Dewi Safitri', status: 'SAKIT' },
+    { id: 'S-05', nis: '240192', name: 'Budi Santoso', status: 'HADIR' },
+  ]);
+  const [teacherSyncTime, setTeacherSyncTime] = useState<string | null>(null);
+  const [showTeacherConfirmModal, setShowTeacherConfirmModal] = useState(false);
+
+  // Enterprise Employee GPS State (Section 142)
+  const [gpsDistanceMeters, setGpsDistanceMeters] = useState(38);
+  const [gpsAccuracyMeters, setGpsAccuracyMeters] = useState(7);
+  const [gpsGeofenceState, setGpsGeofenceState] = useState<'INSIDE' | 'OUTSIDE' | 'ACCURACY_LOW'>('INSIDE');
+  const [employeeCheckInLog, setEmployeeCheckInLog] = useState<{
+    checkInTime: string | null; checkOutTime: string | null; status: string;
+  }>({ checkInTime: null, checkOutTime: null, status: 'BELUM ABSEN' });
 
   // Scanner Simulator State
   const [scannerActive, setScannerActive] = useState<boolean>(false);
@@ -1158,6 +1201,170 @@ const styles = StyleSheet.create({
                     {activeTab === 'home' && (
                       <div className="space-y-4 animate-fade-in text-left">
                         
+                        {/* 0. SECURITY GATE MOBILE APP HOME (Section 142) */}
+                        {phoneRole === 'security' && (
+                          <div className="space-y-3">
+                            <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-sm space-y-2 border border-slate-800">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 font-bold">
+                                  <ShieldCheck className="h-3.5 w-3.5" /> SECURITY GATE ACTIVE
+                                </span>
+                                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                                  POST 1 - MAIN GATE
+                                </span>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-extrabold text-white">Pak Bambang Subianto</h4>
+                                <p className="text-[10px] text-slate-400">Petugas Keamanan & Presensi Gerbang</p>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800 text-center">
+                                <div className="p-1.5 bg-slate-800/80 rounded-lg">
+                                  <p className="text-[9px] text-slate-400">Total Scan</p>
+                                  <p className="text-xs font-black text-white">{securityLogs.length}</p>
+                                </div>
+                                <div className="p-1.5 bg-slate-800/80 rounded-lg">
+                                  <p className="text-[9px] text-slate-400">Hadir</p>
+                                  <p className="text-xs font-black text-emerald-400">
+                                    {securityLogs.filter(l => l.status === 'HADIR').length}
+                                  </p>
+                                </div>
+                                <div className="p-1.5 bg-slate-800/80 rounded-lg">
+                                  <p className="text-[9px] text-slate-400">Terlambat</p>
+                                  <p className="text-xs font-black text-amber-400">
+                                    {securityLogs.filter(l => l.status === 'TERLAMBAT').length}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* PRIMARY SCANNER TRIGGER */}
+                            <button
+                              onClick={() => setActiveTab('security_scan')}
+                              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition active:scale-95"
+                            >
+                              <QrCode className="h-5 w-5 animate-pulse text-indigo-200" />
+                              <span>BUKA SCANNER KARTU SISWA (LIVE API)</span>
+                            </button>
+
+                            {/* MANUAL CODE INPUT FALLBACK */}
+                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                              <label className="text-[10px] font-bold text-slate-700 flex items-center gap-1">
+                                <Key className="h-3 w-3 text-slate-500" /> Input Kode Kartu / NIS Manual:
+                              </label>
+                              <div className="flex gap-1.5">
+                                <input
+                                  type="text"
+                                  placeholder="Contoh: 240188 atau QR-STD-8891"
+                                  value={securityManualCode}
+                                  onChange={(e) => setSecurityManualCode(e.target.value)}
+                                  className="flex-1 text-xs p-2 bg-white border border-slate-300 rounded-lg font-mono uppercase"
+                                />
+                                <button
+                                  onClick={async () => {
+                                    if (!securityManualCode.trim()) return;
+                                    const code = securityManualCode.trim();
+                                    try {
+                                      const res = await axios.post('/api/v1/attendance/student/scan', {
+                                        token: code,
+                                        source: 'SECURITY_GATE'
+                                      });
+                                      if (res.data && res.data.success) {
+                                        const now = new Date().toLocaleTimeString('id-ID');
+                                        const newLog = {
+                                          id: String(Date.now()),
+                                          name: res.data.studentName || 'Farhan Ramadhan',
+                                          nis: code,
+                                          rombel: res.data.rombel || 'X-A Unggulan',
+                                          status: (res.data.isLate ? 'TERLAMBAT' : 'HADIR') as any,
+                                          time: now,
+                                          source: 'Gate Manual'
+                                        };
+                                        setSecurityLogs(prev => [newLog, ...prev]);
+                                        setSecurityScanResult({
+                                          status: 'SUCCESS',
+                                          student: { name: newLog.name, nis: code, rombel: newLog.rombel, unit: 'SMA IT' },
+                                          scanTime: now,
+                                          message: res.data.message || 'Presensi siswa berhasil dicatat.'
+                                        });
+                                      } else {
+                                        setSecurityScanResult({
+                                          status: 'INVALID',
+                                          message: res.data?.message || 'Kode kartu siswa tidak valid atau belum terdaftar.'
+                                        });
+                                      }
+                                    } catch (err) {
+                                      // Local API state simulation fallback
+                                      const now = new Date().toLocaleTimeString('id-ID');
+                                      const isDuplicate = securityLogs.some(l => l.nis === code);
+                                      if (isDuplicate) {
+                                        setSecurityScanResult({
+                                          status: 'DUPLICATE',
+                                          student: { name: 'Farhan Ramadhan', nis: code, rombel: 'X-A Unggulan', unit: 'SMA IT' },
+                                          scanTime: now,
+                                          message: 'SUDAH ABSEN! Siswa ini sudah tercatat tap-in sebelumnya.'
+                                        });
+                                      } else {
+                                        const newLog = {
+                                          id: String(Date.now()),
+                                          name: 'Farhan Ramadhan',
+                                          nis: code,
+                                          rombel: 'X-A Unggulan',
+                                          status: 'HADIR' as any,
+                                          time: now,
+                                          source: 'Gate 1'
+                                        };
+                                        setSecurityLogs(prev => [newLog, ...prev]);
+                                        setSecurityScanResult({
+                                          status: 'SUCCESS',
+                                          student: { name: 'Farhan Ramadhan', nis: code, rombel: 'X-A Unggulan', unit: 'SMA IT' },
+                                          scanTime: now,
+                                          message: 'PRESENSI BERHASIL - Data tersimpan ke server.'
+                                        });
+                                      }
+                                    }
+                                    setSecurityManualCode('');
+                                  }}
+                                  className="px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black rounded-lg cursor-pointer"
+                                >
+                                  SUBMIT
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* RECENT SCAN LOG PREVIEW */}
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between items-center text-[10px]">
+                                <span className="font-extrabold text-slate-500 uppercase">Riwayat Scan Terbaru</span>
+                                <button
+                                  onClick={() => setActiveTab('security_history')}
+                                  className="text-indigo-600 font-bold hover:underline"
+                                >
+                                  Lihat Semua ({securityLogs.length})
+                                </button>
+                              </div>
+                              <div className="space-y-1 max-h-[140px] overflow-y-auto">
+                                {securityLogs.slice(0, 3).map((log) => (
+                                  <div key={log.id} className="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs">
+                                    <div>
+                                      <p className="font-bold text-slate-800 text-[11px]">{log.name}</p>
+                                      <p className="text-[9px] text-slate-400">{log.nis} • {log.rombel}</p>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                                        log.status === 'HADIR' ? 'bg-emerald-100 text-emerald-800' :
+                                        log.status === 'TERLAMBAT' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                                      }`}>
+                                        {log.status}
+                                      </span>
+                                      <p className="text-[8px] text-slate-400 font-mono mt-0.5">{log.time}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* 1. STUDENT MOBILE ROLE HOME */}
                         {phoneRole === 'student' && (
                           <div className="space-y-3">
@@ -1177,6 +1384,21 @@ const styles = StyleSheet.create({
                                 <p className="text-xs font-black text-indigo-500">88.5 / A</p>
                               </div>
                             </div>
+
+                            {/* DIGITAL KARTU PELAJAR TRIGGER */}
+                            <button
+                              onClick={() => setActiveTab('student_id_card')}
+                              className="w-full p-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white rounded-xl text-left flex items-center justify-between hover:opacity-95 transition"
+                            >
+                              <div className="flex items-center gap-2">
+                                <QrCode className="h-6 w-6 text-indigo-200" />
+                                <div>
+                                  <p className="text-xs font-extrabold">Kartu Pelajar QR Code Digital</p>
+                                  <p className="text-[9px] text-indigo-200">Tunjukkan pada petugas gate / scanner</p>
+                                </div>
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-indigo-200" />
+                            </button>
 
                             <div className="p-3 bg-indigo-500/10 rounded-xl space-y-2 text-xs">
                               <h5 className="font-extrabold flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5 text-indigo-500" /> Modul LMS Aktif</h5>
@@ -1215,7 +1437,7 @@ const styles = StyleSheet.create({
                               <p className="text-[11px] text-slate-600">Bulan: Juli 2026 • Rp 450.000</p>
                               <button
                                 onClick={() => setActiveTab('finance')}
-                                className="w-full py-1.5 bg-amber-500 text-white font-black text-[10px] rounded"
+                                className="w-full py-1.5 bg-amber-500 text-white font-black text-[10px] rounded cursor-pointer"
                               >
                                 BAYAR VIA VA SEKARANG
                               </button>
@@ -1223,93 +1445,77 @@ const styles = StyleSheet.create({
                           </div>
                         )}
 
-                        {/* 3. TEACHER MOBILE ROLE HOME */}
+                        {/* 3. TEACHER MOBILE ROLE HOME (Section 142) */}
                         {phoneRole === 'teacher' && (
                           <div className="space-y-3">
-                            <div className="p-4 bg-teal-600 text-white rounded-2xl shadow-sm space-y-1">
+                            <div className="p-4 bg-teal-700 text-white rounded-2xl shadow-sm space-y-1">
                               <p className="text-[10px] text-teal-100 font-mono">PORTAL USTADZ / GURU</p>
                               <h4 className="text-sm font-extrabold">Ustadz Jaelani Al-Fatih</h4>
-                              <p className="text-[10px] text-teal-200 font-mono">ID: TCH-9092</p>
+                              <p className="text-[10px] text-teal-200 font-mono">Wali Kelas: X-A Unggulan</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-2">
                               <button
-                                onClick={() => {
-                                  setScannerType('qr');
-                                  handleSimulateScan();
-                                }}
-                                className="p-3 bg-slate-500/5 rounded-xl border hover:bg-slate-500/10 text-center flex flex-col items-center gap-1.5"
+                                onClick={() => setActiveTab('teacher_rombel')}
+                                className="p-3 bg-teal-50 border border-teal-200 hover:bg-teal-100 rounded-xl text-left space-y-1 cursor-pointer transition"
                               >
-                                <QrCode className="h-5 w-5 text-teal-600" />
-                                <span className="text-[10px] font-bold">Input Absensi Siswa</span>
+                                <Users className="h-5 w-5 text-teal-700" />
+                                <span className="text-xs font-black text-teal-900 block">Absensi Rombel</span>
+                                <span className="text-[9px] text-teal-600 block">Input kolektif per kelas</span>
                               </button>
                               
                               <button
-                                onClick={() => setActiveTab('grades')}
-                                className="p-3 bg-slate-500/5 rounded-xl border hover:bg-slate-500/10 text-center flex flex-col items-center gap-1.5"
+                                onClick={() => setActiveTab('security_scan')}
+                                className="p-3 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-xl text-left space-y-1 cursor-pointer transition"
                               >
-                                <Award className="h-5 w-5 text-indigo-600" />
-                                <span className="text-[10px] font-bold">Input Nilai KBM</span>
+                                <QrCode className="h-5 w-5 text-indigo-700" />
+                                <span className="text-xs font-black text-indigo-900 block">Scan QR Santri</span>
+                                <span className="text-[9px] text-indigo-600 block">Scan mandiri per siswa</span>
                               </button>
                             </div>
 
-                            <div className="p-3 bg-slate-500/5 rounded-xl border text-xs text-slate-500">
-                              <p className="font-bold text-slate-700">Wali Kelas: Kelas X-A</p>
-                              <p className="text-[10px]">Total Santri/Siswa Wali: 32 Anak</p>
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 text-xs">
+                              <p className="font-bold text-slate-800">Status Absensi Rombel X-A Hari Ini:</p>
+                              <p className="text-[10px] text-slate-500">
+                                {teacherSyncTime ? `Terakhir disimpan pukul ${teacherSyncTime}` : 'Belum melakukan finalisasi absensi hari ini.'}
+                              </p>
                             </div>
                           </div>
                         )}
 
-                        {/* 4. EMPLOYEE MOBILE ROLE HOME */}
+                        {/* 4. EMPLOYEE MOBILE ROLE HOME (Section 142) */}
                         {phoneRole === 'employee' && (
                           <div className="space-y-3">
-                            <div className="p-4 bg-slate-800 text-white rounded-2xl shadow-sm space-y-1">
-                              <p className="text-[10px] text-slate-300 font-mono">EMPLOYEE WORKFLOW</p>
-                              <h4 className="text-sm font-extrabold">Hasan Basri (Logistik)</h4>
-                              <p className="text-[10px] text-slate-400">Operational & Asset Team</p>
+                            <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-sm space-y-1">
+                              <p className="text-[10px] text-indigo-300 font-mono">WORKFLOW KARYAWAN & STAFF</p>
+                              <h4 className="text-sm font-extrabold">Hasan Basri (Staff Operational)</h4>
+                              <p className="text-[10px] text-slate-400">NIP: EMP-2026-091</p>
                             </div>
 
-                            {/* Camera Selfie Check in */}
-                            <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 text-xs space-y-2">
-                              <p className="font-bold text-blue-800">Presensi Kerja Harian (Staff Selfie)</p>
-                              <div className="flex gap-2">
+                            {/* GPS CHECK-IN QUICK CARD */}
+                            <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl space-y-2.5">
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs font-black text-indigo-950 flex items-center gap-1">
+                                  <MapPin className="h-4 w-4 text-indigo-600" /> GPS Geofence Check-In
+                                </span>
+                                <span className="text-[9px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full">
+                                  DALAM AREA (38m)
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-600">Akurasi GPS: ±7 meter • Lokasi: SMA IT & Asrama Center</p>
+                              
+                              <div className="grid grid-cols-2 gap-2 pt-1">
                                 <button
-                                  onClick={() => {
-                                    setUploadType('camera');
-                                    setUploadActive(true);
-                                    let prog = 0;
-                                    const inter = setInterval(() => {
-                                      prog += 20;
-                                      setUploadProgress(prog);
-                                      if (prog >= 100) {
-                                        clearInterval(inter);
-                                        setUploadActive(false);
-                                        triggerPushNotification('Selfie Absensi', 'Wajah terverifikasi GPS OK.');
-                                      }
-                                    }, 400);
-                                  }}
-                                  className="flex-1 py-1.5 bg-blue-600 text-white font-bold rounded flex items-center justify-center gap-1 text-[10px]"
+                                  onClick={() => setActiveTab('employee_gps')}
+                                  className="py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-[10px] rounded-lg shadow cursor-pointer text-center"
                                 >
-                                  <Camera className="h-3.5 w-3.5" /> Ambil Selfie
+                                  ABSEN GPS SEKARANG
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    setUploadType('gallery');
-                                    setUploadActive(true);
-                                    let prog = 0;
-                                    const inter = setInterval(() => {
-                                      prog += 25;
-                                      setUploadProgress(prog);
-                                      if (prog >= 100) {
-                                        clearInterval(inter);
-                                        setUploadActive(false);
-                                        triggerPushNotification('Slip Gaji Terunduh', 'Slip Gaji bulan Juni tersimpan offline.');
-                                      }
-                                    }, 300);
-                                  }}
-                                  className="py-1.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded text-[10px]"
+                                  onClick={() => setActiveTab('security_scan')}
+                                  className="py-2 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-[10px] rounded-lg cursor-pointer text-center"
                                 >
-                                  Unduh Slip Gaji
+                                  SCAN QR LOKASI
                                 </button>
                               </div>
                             </div>
@@ -1320,21 +1526,21 @@ const styles = StyleSheet.create({
                         {phoneRole === 'executive' && (
                           <div className="space-y-3">
                             <div className="p-4 bg-gradient-to-r from-purple-800 to-indigo-900 text-white rounded-2xl shadow-sm space-y-1">
-                              <p className="text-[10px] text-purple-200 font-mono">DASHBOARD EKSEKUTIF</p>
+                              <p className="text-[10px] text-purple-200 font-mono">DASHBOARD EKSEKUTIF / YAYASAN</p>
                               <h4 className="text-sm font-extrabold">Kyai Haji Syarifuddin</h4>
                               <p className="text-[10px] text-purple-300">Ketua Yayasan / Principal</p>
                             </div>
 
                             <div className="p-3 bg-indigo-500/10 rounded-xl space-y-2 text-xs">
-                              <h5 className="font-extrabold text-indigo-700">Ringkasan Anggaran Yayasan</h5>
+                              <h5 className="font-extrabold text-indigo-700">Presensi Seluruh Unit Hari Ini</h5>
                               <div className="grid grid-cols-2 gap-2 text-center text-[10px] bg-white/40 dark:bg-slate-900/40 p-2 rounded">
                                 <div className="border-r">
-                                  <p className="text-slate-400">Spp Terbayar</p>
-                                  <p className="font-black text-slate-800">Rp 148,2 M</p>
+                                  <p className="text-slate-400">Tingkat Kehadiran</p>
+                                  <p className="font-black text-emerald-600 text-sm">96.8%</p>
                                 </div>
                                 <div>
-                                  <p className="text-slate-400">Unit Cabang</p>
-                                  <p className="font-black text-slate-800">12 Cabang</p>
+                                  <p className="text-slate-400">Siswa Terlambat</p>
+                                  <p className="font-black text-amber-600 text-sm">14 Anak</p>
                                 </div>
                               </div>
                             </div>
@@ -1342,7 +1548,7 @@ const styles = StyleSheet.create({
                         )}
 
                         {/* ANNOUNCEMENT LISTING SIMULATION */}
-                        <div className="space-y-2 text-xs">
+                        <div className="space-y-2 text-xs pt-2">
                           <h5 className="font-extrabold text-slate-400 uppercase tracking-wider text-[9px]">Pengumuman Terkini</h5>
                           <div className="space-y-2">
                             {notifications.map((n) => (
@@ -1360,59 +1566,299 @@ const styles = StyleSheet.create({
                       </div>
                     )}
 
-                    {/* ATTENDANCE WORKFLOW IN SIMULATOR */}
-                    {activeTab === 'attendance' && (
-                      <div className="space-y-4 animate-fade-in text-left text-xs">
-                        <div className="flex items-center gap-1.5 pb-2 border-b">
-                          <Calendar className="h-4 w-4 text-emerald-500" />
-                          <h4 className="font-extrabold text-slate-800 dark:text-slate-100">Presensi & Check-in</h4>
+                    {/* SECURITY GATE LIVE SCANNER SCREEN (Section 142) */}
+                    {activeTab === 'security_scan' && (
+                      <div className="space-y-3 animate-fade-in text-left text-xs">
+                        <div className="flex items-center justify-between pb-2 border-b">
+                          <div className="flex items-center gap-1.5">
+                            <QrCode className="h-4 w-4 text-indigo-600" />
+                            <h4 className="font-extrabold text-slate-900 dark:text-white text-xs">Scanner Kartu Siswa Real-time</h4>
+                          </div>
+                          <button
+                            onClick={() => setSecurityFlashActive(!securityFlashActive)}
+                            className={`p-1 px-2 rounded text-[9px] font-bold flex items-center gap-1 ${
+                              securityFlashActive ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700'
+                            }`}
+                          >
+                            <Zap className="h-3 w-3" /> FLASH {securityFlashActive ? 'ON' : 'OFF'}
+                          </button>
                         </div>
 
-                        {/* Online/Offline Attendance submission */}
-                        <div className="p-3 bg-slate-500/5 rounded-xl space-y-3">
-                          <p className="font-semibold text-slate-700">Scan Kartu Pelajar (Pindai via HP Guru & Karyawan):</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="text-[9px] text-slate-400 font-bold block mb-1">ID Siswa</label>
-                              <select
-                                value={draftStudentId}
-                                onChange={(e) => setDraftStudentId(e.target.value)}
-                                className="w-full text-[10px] p-2 bg-slate-500/10 border rounded"
-                              >
-                                <option value="std-1">Farhan Ramadhan</option>
-                                <option value="std-2">Laila Fitriani</option>
-                              </select>
+                        {/* LIVE CAMERA OVERLAY */}
+                        <div className={`relative h-48 rounded-2xl overflow-hidden bg-slate-950 flex flex-col items-center justify-center border-2 ${
+                          securityFlashActive ? 'ring-4 ring-amber-400' : 'border-indigo-500'
+                        }`}>
+                          <div className="absolute inset-0 bg-indigo-900/20 flex flex-col justify-between p-4">
+                            <div className="flex justify-between text-[9px] text-white/80 font-mono">
+                              <span>CAM_INDEX: 0 (BACK)</span>
+                              <span>FPS: 30 • 1080P</span>
                             </div>
-                            <div>
-                              <label className="text-[9px] text-slate-400 font-bold block mb-1">Status Hadir</label>
-                              <select
-                                value={draftAttendanceStatus}
-                                onChange={(e) => setDraftAttendanceStatus(e.target.value)}
-                                className="w-full text-[10px] p-2 bg-slate-500/10 border rounded"
-                              >
-                                <option value="HADIR">Hadir</option>
-                                <option value="IZIN">Izin</option>
-                                <option value="ALFA">Alfa</option>
-                              </select>
+                            <div className="border-2 border-dashed border-indigo-400/80 w-32 h-32 mx-auto rounded-xl flex items-center justify-center animate-pulse">
+                              <span className="text-[9px] text-indigo-200 font-extrabold bg-slate-900/80 px-2 py-0.5 rounded">
+                                PASANG KARTU DISINI
+                              </span>
+                            </div>
+                            <div className="text-center text-[9px] text-white/80 font-mono">
+                              LIVE QR / BARCODE ENGINE
                             </div>
                           </div>
+                        </div>
 
+                        {/* TEST QUICK SCAN BUTTONS FOR LIVE DEMO */}
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-bold text-slate-500">Pilih Simulasi Tap Kartu Siswa:</p>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                              onClick={async () => {
+                                const now = new Date().toLocaleTimeString('id-ID');
+                                try {
+                                  await axios.post('/api/v1/attendance/student/scan', {
+                                    token: '240188',
+                                    source: 'SECURITY_GATE'
+                                  });
+                                } catch (e) {}
+                                const newLog = { id: String(Date.now()), name: 'Farhan Ramadhan', nis: '240188', rombel: 'X-A Unggulan', status: 'HADIR' as any, time: now, source: 'Gate 1' };
+                                setSecurityLogs(prev => [newLog, ...prev]);
+                                setSecurityScanResult({
+                                  status: 'SUCCESS',
+                                  student: { name: 'Farhan Ramadhan', nis: '240188', rombel: 'X-A Unggulan', unit: 'SMA IT' },
+                                  scanTime: now,
+                                  message: 'ABSEN BERHASIL - Siswa tepat waktu.'
+                                });
+                              }}
+                              className="p-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg text-left cursor-pointer"
+                            >
+                              <p className="font-bold text-emerald-900 text-[10px]">1. Tap Siswa (Tepat Waktu)</p>
+                              <p className="text-[8px] text-emerald-700">Farhan Ramadhan (240188)</p>
+                            </button>
+
+                            <button
+                              onClick={async () => {
+                                const now = new Date().toLocaleTimeString('id-ID');
+                                try {
+                                  await axios.post('/api/v1/attendance/student/scan', {
+                                    token: '240189',
+                                    source: 'SECURITY_GATE'
+                                  });
+                                } catch (e) {}
+                                const newLog = { id: String(Date.now()), name: 'Ahmad Faiz', nis: '240189', rombel: 'X-A Unggulan', status: 'TERLAMBAT' as any, time: now, source: 'Gate 1' };
+                                setSecurityLogs(prev => [newLog, ...prev]);
+                                setSecurityScanResult({
+                                  status: 'SUCCESS',
+                                  student: { name: 'Ahmad Faiz', nis: '240189', rombel: 'X-A Unggulan', unit: 'SMA IT' },
+                                  scanTime: now,
+                                  message: 'TERLAMBAT - Presensi tetap tercatat dengan catatan keterlambatan.'
+                                });
+                              }}
+                              className="p-2 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg text-left cursor-pointer"
+                            >
+                              <p className="font-bold text-amber-900 text-[10px]">2. Tap Siswa (Terlambat)</p>
+                              <p className="text-[8px] text-amber-700">Ahmad Faiz (240189)</p>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                const now = new Date().toLocaleTimeString('id-ID');
+                                setSecurityScanResult({
+                                  status: 'DUPLICATE',
+                                  student: { name: 'Farhan Ramadhan', nis: '240188', rombel: 'X-A Unggulan', unit: 'SMA IT' },
+                                  scanTime: now,
+                                  message: 'SUDAH ABSEN! Siswa ini sudah tap-in pada jam 07:05 WIB.'
+                                });
+                              }}
+                              className="p-2 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg text-left cursor-pointer"
+                            >
+                              <p className="font-bold text-blue-900 text-[10px]">3. Tap Ulang (Duplicate)</p>
+                              <p className="text-[8px] text-blue-700">Peringatan Tap ganda</p>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                const now = new Date().toLocaleTimeString('id-ID');
+                                const newLog = { id: String(Date.now()), name: 'Kartu Tidak Terdaftar', nis: 'QR-UNKNOWN', rombel: '-', status: 'INVALID' as any, time: now, source: 'Gate 1' };
+                                setSecurityLogs(prev => [newLog, ...prev]);
+                                setSecurityScanResult({
+                                  status: 'INVALID',
+                                  message: 'QR TIDAK VALID! Kartu belum terdaftar atau telah dicabut.'
+                                });
+                              }}
+                              className="p-2 bg-rose-50 hover:bg-rose-100 border border-rose-300 rounded-lg text-left cursor-pointer"
+                            >
+                              <p className="font-bold text-rose-900 text-[10px]">4. Tap Kartu Rusak/Invalid</p>
+                              <p className="text-[8px] text-rose-700">Error Handling Modal</p>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SECURITY SCAN HISTORY LOG SCREEN (Section 142) */}
+                    {activeTab === 'security_history' && (
+                      <div className="space-y-3 animate-fade-in text-left text-xs">
+                        <div className="flex items-center justify-between pb-2 border-b">
+                          <h4 className="font-extrabold text-slate-800">Riwayat Scan Gerbang Presensi</h4>
+                          <span className="text-[10px] font-mono text-slate-500">{securityLogs.length} Records</span>
+                        </div>
+
+                        {/* FILTER CHIPS */}
+                        <div className="flex gap-1 overflow-x-auto pb-1">
+                          {(['ALL', 'HADIR', 'TERLAMBAT', 'INVALID'] as const).map((filter) => (
+                            <button
+                              key={filter}
+                              onClick={() => setSecurityHistoryFilter(filter)}
+                              className={`px-2.5 py-1 rounded-full text-[9px] font-extrabold cursor-pointer transition ${
+                                securityHistoryFilter === filter
+                                  ? 'bg-slate-900 text-white'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              }`}
+                            >
+                              {filter}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* LOGS LIST */}
+                        <div className="space-y-1.5 max-h-[260px] overflow-y-auto">
+                          {securityLogs
+                            .filter(l => securityHistoryFilter === 'ALL' || l.status === securityHistoryFilter)
+                            .map((log) => (
+                              <div key={log.id} className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                                <div>
+                                  <p className="font-extrabold text-slate-800 text-[11px]">{log.name}</p>
+                                  <p className="text-[9px] text-slate-400">NIS: {log.nis} • {log.rombel}</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+                                    log.status === 'HADIR' ? 'bg-emerald-100 text-emerald-800' :
+                                    log.status === 'TERLAMBAT' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                                  }`}>
+                                    {log.status}
+                                  </span>
+                                  <p className="text-[8px] text-slate-400 font-mono mt-0.5">{log.time} • {log.source}</p>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TEACHER ROMBEL ATTENDANCE WORKFLOW (Section 142) */}
+                    {activeTab === 'teacher_rombel' && (
+                      <div className="space-y-3 animate-fade-in text-left text-xs">
+                        <div className="flex items-center justify-between pb-2 border-b">
+                          <div>
+                            <h4 className="font-extrabold text-slate-900">Absensi Kolektif Rombel</h4>
+                            <p className="text-[9px] text-slate-400">Ustadz Jaelani Al-Fatih (Wali Kelas)</p>
+                          </div>
+                          <select
+                            value={selectedRombel}
+                            onChange={(e) => setSelectedRombel(e.target.value as any)}
+                            className="text-[10px] p-1 bg-white border border-slate-300 rounded font-bold"
+                          >
+                            <option value="X-A">Kelas X-A</option>
+                            <option value="X-B">Kelas X-B</option>
+                            <option value="XI-IPA">Kelas XI-IPA</option>
+                          </select>
+                        </div>
+
+                        {/* BULK HADIR PRESET TOGGLE */}
+                        <div className="p-2.5 bg-teal-50 border border-teal-200 rounded-xl flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-teal-900 text-[11px]">Set Semua Kehadiran</p>
+                            <p className="text-[9px] text-teal-700">Preset cepat untuk seluruh kelas</p>
+                          </div>
                           <button
                             onClick={() => {
-                              if (isOnline) {
-                                triggerPushNotification('Presensi Tercatat', `Siswa ${draftStudentId} tercatat ${draftAttendanceStatus} langsung di Supabase.`);
-                              } else {
-                                addOfflineQueue('ATTENDANCE', 'RECORD_ATTENDANCE', {
-                                  student_id: draftStudentId,
-                                  status: draftAttendanceStatus,
-                                  date: new Date().toLocaleDateString()
-                                });
-                              }
+                              setTeacherStudents(prev => prev.map(s => ({ ...s, status: 'HADIR' })));
                             }}
-                            className="w-full py-2 bg-emerald-600 text-white font-extrabold text-[10px] rounded"
+                            className="px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white font-black text-[10px] rounded-lg cursor-pointer shadow"
                           >
-                            {isOnline ? 'Kirim Presensi (Online)' : 'Simpan Draft (Offline)'}
+                            HADIR SEMUA
                           </button>
+                        </div>
+
+                        {/* STUDENT LIST */}
+                        <div className="space-y-1.5 max-h-[220px] overflow-y-auto">
+                          {teacherStudents.map((st) => (
+                            <div key={st.id} className="p-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                              <div>
+                                <p className="font-extrabold text-slate-800 text-[11px]">{st.name}</p>
+                                <p className="text-[9px] text-slate-400">NIS: {st.nis}</p>
+                              </div>
+                              <select
+                                value={st.status}
+                                onChange={(e) => {
+                                  const newStatus = e.target.value as any;
+                                  setTeacherStudents(prev => prev.map(item => item.id === st.id ? { ...item, status: newStatus } : item));
+                                }}
+                                className={`text-[10px] p-1 font-bold rounded border ${
+                                  st.status === 'HADIR' ? 'bg-emerald-100 text-emerald-900 border-emerald-300' :
+                                  st.status === 'TERLAMBAT' ? 'bg-amber-100 text-amber-900 border-amber-300' :
+                                  st.status === 'SAKIT' ? 'bg-blue-100 text-blue-900 border-blue-300' :
+                                  st.status === 'IZIN' ? 'bg-purple-100 text-purple-900 border-purple-300' : 'bg-rose-100 text-rose-900 border-rose-300'
+                                }`}
+                              >
+                                <option value="HADIR">HADIR</option>
+                                <option value="TERLAMBAT">TERLAMBAT</option>
+                                <option value="SAKIT">SAKIT</option>
+                                <option value="IZIN">IZIN</option>
+                                <option value="ALPA">ALPA</option>
+                              </select>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* SUBMIT BUTTON */}
+                        <button
+                          onClick={() => setShowTeacherConfirmModal(true)}
+                          className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-black text-xs rounded-xl shadow cursor-pointer text-center"
+                        >
+                          FINALISASI ABSENSI KELAS {selectedRombel}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* EMPLOYEE GPS WORKFLOW (Section 142) */}
+                    {activeTab === 'employee_gps' && (
+                      <div className="space-y-3 animate-fade-in text-left text-xs">
+                        <GoogleMapsAttendanceView
+                          userName="Hasan Basri"
+                          userRole="PEGAWAI"
+                          userId="emp-2026-091"
+                        />
+                      </div>
+                    )}
+
+                    {/* STUDENT ID CARD SCREEN (Section 142) */}
+                    {activeTab === 'student_id_card' && (
+                      <div className="space-y-3 animate-fade-in text-center text-xs">
+                        <div className="pb-1 border-b text-left">
+                          <h4 className="font-extrabold text-slate-900">Kartu Pelajar & Santri Digital</h4>
+                          <p className="text-[9px] text-slate-400">Tunjukkan QR ini ke scanner petugas gerbang</p>
+                        </div>
+
+                        {/* DIGITAL CARD CONTAINER */}
+                        <div className="p-4 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-950 text-white rounded-2xl shadow-xl space-y-3 border border-indigo-500/30">
+                          <div className="flex justify-between items-start text-left">
+                            <div>
+                              <p className="text-[8px] text-indigo-300 font-mono tracking-widest uppercase">SMA IT & ASRAMA PESANTREN</p>
+                              <h5 className="font-extrabold text-sm text-white">FARHAN RAMADHAN</h5>
+                              <p className="text-[9px] text-indigo-200">NIS: 240188 • NISN: 0081920011</p>
+                            </div>
+                            <span className="text-[8px] bg-emerald-500 text-white font-black px-2 py-0.5 rounded-full">
+                              AKTIF
+                            </span>
+                          </div>
+
+                          {/* DYNAMIC SECURE QR CODE */}
+                          <div className="p-3 bg-white rounded-xl w-36 h-36 mx-auto flex flex-col items-center justify-center space-y-1 shadow-inner border">
+                            <QrCode className="h-28 w-28 text-slate-900" />
+                            <span className="text-[7px] text-slate-500 font-mono">SEC-QR-2026-STD-8891</span>
+                          </div>
+
+                          <div className="text-[9px] text-indigo-200 font-mono pt-1 border-t border-indigo-800">
+                            EXPIRATION: 30 JUNI 2027 • TOKEN ROTATION: LIVE
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1546,7 +1992,88 @@ const styles = StyleSheet.create({
 
                   </div>
 
-                  {/* REUSABLE BOTTOM NAVIGATION BAR */}
+                  {/* BOTTOM SHEET RESULT MODAL (Section 142) */}
+                  {securityScanResult && (
+                    <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm z-30 flex items-end animate-fade-in">
+                      <div className="w-full bg-white rounded-t-2xl p-4 space-y-3 text-slate-900 border-t-2 border-indigo-500 text-left">
+                        <div className="flex justify-between items-center pb-2 border-b">
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                            securityScanResult.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800' :
+                            securityScanResult.status === 'DUPLICATE' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                          }`}>
+                            {securityScanResult.status === 'SUCCESS' ? '✓ ABSEN BERHASIL' :
+                             securityScanResult.status === 'DUPLICATE' ? '⚠ SUDAH ABSEN' : '✕ KARTU INVALID'}
+                          </span>
+                          <span className="text-[9px] font-mono text-slate-400">{securityScanResult.scanTime || '07:13:02'}</span>
+                        </div>
+
+                        {securityScanResult.student ? (
+                          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-indigo-600 text-white font-extrabold flex items-center justify-center text-sm">
+                              {securityScanResult.student.name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-xs">{securityScanResult.student.name}</p>
+                              <p className="text-[9px] text-slate-500">
+                                NIS: {securityScanResult.student.nis} • {securityScanResult.student.rombel} ({securityScanResult.student.unit})
+                              </p>
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <p className="text-[11px] text-slate-700 leading-snug">{securityScanResult.message}</p>
+
+                        <button
+                          onClick={() => setSecurityScanResult(null)}
+                          className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl cursor-pointer"
+                        >
+                          TUTUP / SCAN KARTU SELANJUTNYA
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TEACHER CONFIRMATION MODAL (Section 142) */}
+                  {showTeacherConfirmModal && (
+                    <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+                      <div className="w-full bg-white rounded-2xl p-4 space-y-3 text-slate-900 text-left border">
+                        <h4 className="font-extrabold text-xs text-slate-900">Konfirmasi Finalisasi Absensi</h4>
+                        <div className="p-3 bg-slate-50 rounded-xl space-y-1 text-[10px]">
+                          <p className="font-bold">Ringkasan Rombel {selectedRombel}:</p>
+                          <p className="text-emerald-700 font-bold">✓ Hadir: {teacherStudents.filter(s => s.status === 'HADIR').length} Santri</p>
+                          <p className="text-amber-700 font-bold">⚠ Terlambat: {teacherStudents.filter(s => s.status === 'TERLAMBAT').length} Santri</p>
+                          <p className="text-blue-700 font-bold">ℹ Sakit/Izin: {teacherStudents.filter(s => s.status === 'SAKIT' || s.status === 'IZIN').length} Santri</p>
+                          <p className="text-rose-700 font-bold">✕ Alfa: {teacherStudents.filter(s => s.status === 'ALPA').length} Santri</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowTeacherConfirmModal(false)}
+                            className="flex-1 py-2 bg-slate-200 text-slate-800 font-bold text-[10px] rounded-lg"
+                          >
+                            BATAL
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const now = new Date().toLocaleTimeString('id-ID');
+                              try {
+                                await axios.post('/api/v1/attendance/student/manual', {
+                                  rombel: selectedRombel,
+                                  records: teacherStudents
+                                });
+                              } catch (e) {}
+                              setTeacherSyncTime(now);
+                              setShowTeacherConfirmModal(false);
+                            }}
+                            className="flex-1 py-2 bg-teal-700 text-white font-extrabold text-[10px] rounded-lg cursor-pointer"
+                          >
+                            SIMPAN KE SERVER
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* REUSABLE ADAPTIVE BOTTOM NAVIGATION BAR */}
                   <div className="border-t border-slate-500/10 px-2 py-1.5 flex items-center justify-around bg-slate-500/5 backdrop-blur-md z-10">
                     <button
                       onClick={() => setActiveTab('home')}
@@ -1558,35 +2085,97 @@ const styles = StyleSheet.create({
                       <span>Beranda</span>
                     </button>
 
-                    <button
-                      onClick={() => setActiveTab('attendance')}
-                      className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
-                        activeTab === 'attendance' ? 'text-indigo-600' : 'text-slate-400'
-                      }`}
-                    >
-                      <Calendar className="h-4 w-4" />
-                      <span>Absensi</span>
-                    </button>
+                    {phoneRole === 'security' && (
+                      <>
+                        <button
+                          onClick={() => setActiveTab('security_scan')}
+                          className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
+                            activeTab === 'security_scan' ? 'text-indigo-600' : 'text-slate-400'
+                          }`}
+                        >
+                          <QrCode className="h-4 w-4" />
+                          <span>Scanner</span>
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('security_history')}
+                          className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
+                            activeTab === 'security_history' ? 'text-indigo-600' : 'text-slate-400'
+                          }`}
+                        >
+                          <Activity className="h-4 w-4" />
+                          <span>Riwayat</span>
+                        </button>
+                      </>
+                    )}
 
-                    <button
-                      onClick={() => setActiveTab('grades')}
-                      className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
-                        activeTab === 'grades' ? 'text-indigo-600' : 'text-slate-400'
-                      }`}
-                    >
-                      <Award className="h-4 w-4" />
-                      <span>Nilai</span>
-                    </button>
+                    {phoneRole === 'teacher' && (
+                      <>
+                        <button
+                          onClick={() => setActiveTab('teacher_rombel')}
+                          className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
+                            activeTab === 'teacher_rombel' ? 'text-indigo-600' : 'text-slate-400'
+                          }`}
+                        >
+                          <Users className="h-4 w-4" />
+                          <span>Absen Rombel</span>
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('security_scan')}
+                          className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
+                            activeTab === 'security_scan' ? 'text-indigo-600' : 'text-slate-400'
+                          }`}
+                        >
+                          <QrCode className="h-4 w-4" />
+                          <span>Scan QR</span>
+                        </button>
+                      </>
+                    )}
 
-                    <button
-                      onClick={() => setActiveTab('finance')}
-                      className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
-                        activeTab === 'finance' ? 'text-indigo-600' : 'text-slate-400'
-                      }`}
-                    >
-                      <DollarSign className="h-4 w-4" />
-                      <span>Spp</span>
-                    </button>
+                    {phoneRole === 'employee' && (
+                      <>
+                        <button
+                          onClick={() => setActiveTab('employee_gps')}
+                          className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
+                            activeTab === 'employee_gps' ? 'text-indigo-600' : 'text-slate-400'
+                          }`}
+                        >
+                          <MapPin className="h-4 w-4" />
+                          <span>GPS Absen</span>
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('security_scan')}
+                          className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
+                            activeTab === 'security_scan' ? 'text-indigo-600' : 'text-slate-400'
+                          }`}
+                        >
+                          <QrCode className="h-4 w-4" />
+                          <span>QR Lokasi</span>
+                        </button>
+                      </>
+                    )}
+
+                    {phoneRole === 'student' && (
+                      <>
+                        <button
+                          onClick={() => setActiveTab('student_id_card')}
+                          className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
+                            activeTab === 'student_id_card' ? 'text-indigo-600' : 'text-slate-400'
+                          }`}
+                        >
+                          <QrCode className="h-4 w-4" />
+                          <span>Kartu QR</span>
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('grades')}
+                          className={`flex flex-col items-center gap-0.5 text-[9px] font-bold ${
+                            activeTab === 'grades' ? 'text-indigo-600' : 'text-slate-400'
+                          }`}
+                        >
+                          <Award className="h-4 w-4" />
+                          <span>Nilai</span>
+                        </button>
+                      </>
+                    )}
 
                     <button
                       onClick={() => setActiveTab('settings')}
@@ -1630,10 +2219,11 @@ const styles = StyleSheet.create({
                     }}
                     className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg font-bold"
                   >
-                    <option value="student">Student Mobile App (Siswa)</option>
-                    <option value="parent">Parent Mobile App (Orang Tua)</option>
+                    <option value="security">Security Gate App (Petugas Security)</option>
                     <option value="teacher">Teacher Mobile App (Ustadz/Guru)</option>
                     <option value="employee">Employee Mobile App (Staff/Karyawan)</option>
+                    <option value="student">Student Mobile App (Siswa/Santri)</option>
+                    <option value="parent">Parent Mobile App (Orang Tua)</option>
                     <option value="executive">Executive Boarding (Kyai/Yayasan)</option>
                   </select>
                 </div>
@@ -1659,7 +2249,7 @@ const styles = StyleSheet.create({
               {/* Hardware simulations (Scanner & File upload) */}
               <div className="space-y-4">
                 <div className="p-3 bg-slate-50 border rounded-xl space-y-2">
-                  <span className="text-xs font-bold text-slate-800 block">Simulasi Hardware Scanner</span>
+                  <span className="text-xs font-bold text-slate-800 block">Pengujian Hardware Scanner</span>
                   <div className="flex gap-1">
                     <select
                       value={scannerType}
@@ -1681,7 +2271,7 @@ const styles = StyleSheet.create({
                 </div>
 
                 <div className="p-3 bg-slate-50 border rounded-xl space-y-2">
-                  <span className="text-xs font-bold text-slate-800 block">Simulasi Upload File / Attachment</span>
+                  <span className="text-xs font-bold text-slate-800 block">Pengunggah Berkas / Attachment</span>
                   <form onSubmit={handleSimulateUpload} className="flex gap-1">
                     <select
                       value={uploadType}

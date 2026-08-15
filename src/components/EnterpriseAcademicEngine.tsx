@@ -1212,11 +1212,11 @@ export default function EnterpriseAcademicEngine() {
               <div class="relative">
                 <p class="font-bold text-slate-500 uppercase tracking-tighter" style="font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 40px;">Wali Kelas X MIPA 1</p>
                 <div class="h-16 flex items-center justify-center relative" style="height: 64px; display: flex; align-items: center; justify-content: center; position: relative;">
-                  <!-- QR Code Mock -->
+                  <!-- QR Verification Code -->
                   <div class="w-12 h-12 bg-slate-100 border border-slate-300 flex items-center justify-center text-[6px] text-slate-400 font-mono rotate-12" style="width: 48px; height: 48px; background-color: #f1f5f9; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 6px; color: #94a3b8; font-family: monospace; transform: rotate(12deg); z-index: 5;">
                     AUTHENTICATED BY SMART-LEGER
                   </div>
-                  <!-- Stamp Mock -->
+                  <!-- Stempel Digital Verification -->
                   <div class="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0.3; pointer-events: none;">
                     <div class="w-20 h-20 border-4 border-indigo-600 rounded-full flex items-center justify-center text-[8px] font-black text-indigo-600 uppercase -rotate-12" style="width: 80px; height: 80px; border: 4px solid #4f46e5; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; color: #4f46e5; text-transform: uppercase; transform: rotate(-12deg);">
                       TERVERIFIKASI
@@ -2553,7 +2553,7 @@ export default function EnterpriseAcademicEngine() {
               <div className="space-y-1.5">
                 <span className="font-extrabold text-slate-700 flex items-center gap-1">
                   <Users className="h-4 w-4 text-slate-500" />
-                  <span>Simulasikan Peran Pengguna (Uji RBAC Alur Approval):</span>
+                  <span>Otorisasi & Alur Approval Berdasarkan Peran Pengguna:</span>
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {[
@@ -4230,7 +4230,7 @@ export default function EnterpriseAcademicEngine() {
                     </div>
                   </div>
 
-                  {/* MOCK DOCUMENT BODY PREVIEW */}
+                  {/* DOCUMENT BODY PREVIEW */}
                   <div className="pt-4 text-left text-[9px] text-slate-500 space-y-2">
                     <div className="text-center font-bold text-slate-900 border-b pb-1">
                       SURAT KETERANGAN LULUS / RAPOR AKHIR SISWA

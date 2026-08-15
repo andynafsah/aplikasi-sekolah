@@ -46,8 +46,8 @@ import Payroll from './pages/Payroll';
 import BillingSpp from './pages/BillingSpp';
 import Dapodik from './pages/Dapodik';
 import PlotingGuru from './pages/PlotingGuru';
-import SubjectManagement from './pages/SubjectManagement';
 import AutoLeger from './pages/AutoLeger';
+import EnterpriseCurriculumCommandCenter from './components/EnterpriseCurriculumCommandCenter';
 import UserGuide from './pages/UserGuide';
 import { Menu, Sprout, GraduationCap, CalendarDays, LogOut, User, Bell, BookOpen } from 'lucide-react';
 import { PWAInstallerBanner, PWAInstallHeaderButton } from './components/pwa/PWAInstallerBanner';
@@ -120,16 +120,27 @@ function AppContent() {
   const [checkingDb, setCheckingDb] = useState(true);
 
   useEffect(() => {
+    const cachedSchema = localStorage.getItem('erp_schema_initialized');
+    if (cachedSchema === 'true') {
+      setDbSchemaInitialized(true);
+      setCheckingDb(false);
+      return;
+    }
+
     apiClient.post('/api/action', { action: 'getDiagnostics' })
       .then(res => {
         if (res.data?.success) {
-          setDbSchemaInitialized(res.data.data.dbSchemaInitialized);
+          const init = res.data.data.dbSchemaInitialized;
+          setDbSchemaInitialized(init);
+          localStorage.setItem('erp_schema_initialized', String(init));
         } else {
           setDbSchemaInitialized(true);
         }
       })
       .catch(err => {
-        console.error('Error checking diagnostics on App load:', err);
+        if (err?.response?.status === 429) {
+          console.warn('Rate limited (429) checking diagnostics, defaulting to operational.');
+        }
         setDbSchemaInitialized(true);
       })
       .finally(() => {
@@ -206,6 +217,8 @@ function AppContent() {
         return <UserGuide />;
       case 'sivitas':
         return <Sivitas />;
+      case 'curriculum-command-center':
+        return <EnterpriseCurriculumCommandCenter />;
       case 'akademik': {
         const norm = (activeRole || user?.role || '').toUpperCase().replace(/\s+/g, '_');
         const studentParentRoles = ['SANTRI', 'SISWA', 'WALI_SANTRI', 'PARENT', 'ORANG_TUA', 'STUDENT'];
@@ -305,7 +318,7 @@ function AppContent() {
       case 'ploting-guru':
         return <PlotingGuru />;
       case 'subject-management':
-        return <SubjectManagement />;
+        return <EnterpriseCurriculumCommandCenter />;
       default:
         return <Dashboard />;
     }

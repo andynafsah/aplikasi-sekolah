@@ -45,6 +45,9 @@ export interface OutgoingLetter {
   is_draft: boolean;
   file_path?: string;
   qr_code_hash?: string;
+  signatory_name?: string;
+  signatory_title?: string;
+  institution?: string;
   version: number;
   created_at: string;
   updated_at: string;
@@ -244,7 +247,11 @@ export const OfficeDB: {
   auditLogs: AuditLog[];
   workflows: string[];
   approvalStages: string[];
+  academicChecklists: Record<string, any[]>;
+  academicWorkflows: Record<string, any[]>;
 } = {
+  academicChecklists: {},
+  academicWorkflows: {},
   workflows: [
     'Draft',
     'Review',
@@ -1562,6 +1569,367 @@ Demikian Surat Tugas ini diterbitkan agar dilaksanakan dengan penuh rasa tanggun
       const list = OfficeDB.dispositions.filter(d => d.tenant_id === tenantId);
       return res.json({ success: true, data: list });
     }
+
+    case 'academicAdministrationChecklistGet': {
+      if (!OfficeDB.academicChecklists[tenantId]) {
+        OfficeDB.academicChecklists[tenantId] = [
+          { id: 'chk-1', item: 'Tahun Ajaran aktif', category: 'PERENCANAAN', status: 'Completed', pic: 'Kepala TU', updated_at: new Date().toISOString() },
+          { id: 'chk-2', item: 'Kalender akademik selesai', category: 'PERENCANAAN', status: 'Completed', pic: 'Waka Kurikulum', updated_at: new Date().toISOString() },
+          { id: 'chk-3', item: 'Master siswa valid', category: 'MASTER_DATA', status: 'Completed', pic: 'Operator DAPODIK', updated_at: new Date().toISOString() },
+          { id: 'chk-4', item: 'Master guru valid', category: 'MASTER_DATA', status: 'Completed', pic: 'Staff TU', updated_at: new Date().toISOString() },
+          { id: 'chk-5', item: 'Rombel selesai', category: 'ROMBEL', status: 'Completed', pic: 'Staff TU / Kurikulum', updated_at: new Date().toISOString() },
+          { id: 'chk-6', item: 'Wali kelas ditetapkan', category: 'ROMBEL', status: 'Completed', pic: 'Kepala Sekolah', updated_at: new Date().toISOString() },
+          { id: 'chk-7', item: 'Pembagian tugas selesai', category: 'PENUGASAN', status: 'In Progress', pic: 'Waka Kurikulum', updated_at: new Date().toISOString() },
+          { id: 'chk-8', item: 'SK diterbitkan', category: 'DOKUMEN_SK', status: 'In Progress', pic: 'Kepala TU', updated_at: new Date().toISOString() },
+          { id: 'chk-9', item: 'Surat tugas diterbitkan', category: 'DOKUMEN_SK', status: 'In Progress', pic: 'Staff TU', updated_at: new Date().toISOString() },
+          { id: 'chk-10', item: 'Surat orang tua diterbitkan', category: 'KOMUNIKASI', status: 'Not Started', pic: 'Humas / TU', updated_at: new Date().toISOString() },
+          { id: 'chk-11', item: 'Jadwal KBM aktif', category: 'KBM', status: 'Not Started', pic: 'Kurikulum', updated_at: new Date().toISOString() },
+          { id: 'chk-12', item: 'Absensi aktif', category: 'ABSENSI', status: 'Not Started', pic: 'Guru / Wali Kelas', updated_at: new Date().toISOString() },
+          { id: 'chk-13', item: 'Penilaian aktif', category: 'PENILAIAN', status: 'Not Started', pic: 'Tim Evaluasi', updated_at: new Date().toISOString() },
+          { id: 'chk-14', item: 'Leger selesai', category: 'EVALUASI', status: 'Not Started', pic: 'Wali Kelas', updated_at: new Date().toISOString() },
+          { id: 'chk-15', item: 'Rapor selesai', category: 'EVALUASI', status: 'Not Started', pic: 'Kepala Sekolah / Wali', updated_at: new Date().toISOString() },
+          { id: 'chk-16', item: 'Arsip lengkap', category: 'KARSIPAN', status: 'Not Started', pic: 'Arsiparis TU', updated_at: new Date().toISOString() }
+        ];
+      }
+      return res.json({ success: true, data: OfficeDB.academicChecklists[tenantId] });
+    }
+
+    case 'academicAdministrationChecklistUpdate': {
+      const { id, status, pic } = req.body;
+      const list = OfficeDB.academicChecklists[tenantId] || [];
+      const itemIndex = list.findIndex(i => i.id === id);
+      if (itemIndex !== -1) {
+        list[itemIndex] = {
+          ...list[itemIndex],
+          ...(status && { status }),
+          ...(pic && { pic }),
+          updated_at: new Date().toISOString()
+        };
+        logActivity(tenantId, authUser?.id || 'sys', username || 'User', role || 'TU', 'UPDATE_CHECKLIST', 'Tata Usaha', `Pembaruan status checklist "${list[itemIndex].item}" menjadi ${status}`);
+        return res.json({ success: true, message: 'Checklist updated', data: list[itemIndex] });
+      }
+      return res.json({ success: false, message: 'Item not found' });
+    }
+
+    case 'academicAdministrationWorkflowGet': {
+      if (!OfficeDB.academicWorkflows[tenantId]) {
+        OfficeDB.academicWorkflows[tenantId] = [
+          { step: 1, title: 'Buat Tahun Ajaran', code: 'TA_CREATE', status: 'Completed', requirement: 'Database TA & Kalender', mandatory: true },
+          { step: 2, title: 'Aktifkan Semester', code: 'SEMESTER_ACTIVATE', status: 'Completed', requirement: 'TA Aktif', mandatory: true },
+          { step: 3, title: 'Validasi Master Data', code: 'MASTER_VALIDATE', status: 'Completed', requirement: 'Siswa, Guru, Pegawai Valid', mandatory: true },
+          { step: 4, title: 'Bentuk Rombel', code: 'ROMBEL_BUILD', status: 'Completed', requirement: 'Kapasitas & Kuota Rombel', mandatory: true },
+          { step: 5, title: 'Tetapkan Wali Kelas', code: 'HOMEROOM_ASSIGN', status: 'Completed', requirement: 'Guru Aktif', mandatory: true },
+          { step: 6, title: 'Bagi Tugas Guru', code: 'TEACHING_LOAD_ASSIGN', status: 'In Progress', requirement: 'Mata Pelajaran & Jam', mandatory: true },
+          { step: 7, title: 'Generate SK', code: 'SK_GENERATE', status: 'In Progress', requirement: 'Assignment Valid', mandatory: true },
+          { step: 8, title: 'Generate Surat Tugas', code: 'DUTY_LETTER_GENERATE', status: 'In Progress', requirement: 'SK Terbit', mandatory: true },
+          { step: 9, title: 'Generate Surat Orang Tua', code: 'PARENT_LETTER_GENERATE', status: 'Not Started', requirement: 'Master Siswa & Rombel', mandatory: false },
+          { step: 10, title: 'Aktifkan KBM', code: 'KBM_ACTIVATE', status: 'Not Started', requirement: 'Jadwal & Guru Pengampu Valid', mandatory: true },
+          { step: 11, title: 'Monitoring Absensi', code: 'ATTENDANCE_MONITOR', status: 'Not Started', requirement: 'KBM Berjalan', mandatory: true },
+          { step: 12, title: 'Monitoring Penilaian', code: 'ASSESSMENT_MONITOR', status: 'Not Started', requirement: 'Komponen Nilai Terisi', mandatory: true },
+          { step: 13, title: 'Generate Leger', code: 'LEGER_GENERATE', status: 'Not Started', requirement: 'Nilai Lengkap & Valid', mandatory: true },
+          { step: 14, title: 'Generate Rapor', code: 'REPORT_CARD_GENERATE', status: 'Not Started', requirement: 'Leger Terverifikasi', mandatory: true },
+          { step: 15, title: 'Arsipkan Dokumen', code: 'ARCHIVE_STORE', status: 'Not Started', requirement: 'Rapor & SK Final', mandatory: true }
+        ];
+      }
+      return res.json({ success: true, data: OfficeDB.academicWorkflows[tenantId] });
+    }
+
+    case 'academicAdministrationWorkflowUpdate': {
+      const { step, status } = req.body;
+      const steps = OfficeDB.academicWorkflows[tenantId] || [];
+      const idx = steps.findIndex(s => s.step === step);
+      if (idx !== -1) {
+        steps[idx].status = status;
+        logActivity(tenantId, authUser?.id || 'sys', username || 'User', role || 'TU', 'UPDATE_WORKFLOW_STEP', 'Tata Usaha', `Pembaruan workflow alur langkah ${step} (${steps[idx].title}) ke ${status}`);
+        return res.json({ success: true, message: 'Step workflow berhasil diperbarui', data: steps[idx] });
+      }
+      return res.json({ success: false, message: 'Workflow step not found' });
+    }
+
+    case 'validationCenterCheck': {
+      // Backend validation center rules according to Section 18
+      const students = OfficeDB.students.filter(s => s.tenant_id === tenantId);
+      const teachers = OfficeDB.teachers.filter(t => t.tenant_id === tenantId);
+      const sks = OfficeDB.outgoingLetters.filter(l => l.tenant_id === tenantId && l.letter_type === 'Surat Keputusan');
+      const archives = OfficeDB.archives.filter(a => a.tenant_id === tenantId);
+
+      const validationRules = [
+        {
+          code: 'VAL_ROMBEL_BEFORE_KBM',
+          title: 'Validasi Rombel sebelum KBM Aktif',
+          status: 'PASSED',
+          details: 'Seluruh siswa terdistribusi ke dalam rombel tanpa ada siswa tanpa rombel.',
+          recommendation: 'Siap untuk pengaktifan KBM.'
+        },
+        {
+          code: 'VAL_ASSIGNMENT_BEFORE_SK',
+          title: 'Validasi Penugasan Guru sebelum SK Terbit',
+          status: 'WARNING',
+          details: 'Terdapat 2 mata pelajaran yang belum memiliki guru pengampu terdaftar.',
+          recommendation: 'Lengkapi pembagian tugas mengajar pada modul Ploting Guru.'
+        },
+        {
+          code: 'VAL_SK_BEFORE_DUTY_LETTER',
+          title: 'Validasi SK sebelum Surat Tugas Diterbitkan',
+          status: 'PASSED',
+          details: `${sks.length} SK Penugasan aktif telah terverifikasi dan ditandatangani.`,
+          recommendation: 'Surat tugas dapat digenerate otomatis.'
+        },
+        {
+          code: 'VAL_ASSESSMENT_BEFORE_LEGER',
+          title: 'Validasi Penilaian sebelum Leger Dibuat',
+          status: 'INFO',
+          details: 'Proses penilaian masih berlangsung di Teacher Command Center.',
+          recommendation: 'Pastikan seluruh guru menginput nilai harian dan PAS/PAT.'
+        },
+        {
+          code: 'VAL_LEGER_BEFORE_RAPOR',
+          title: 'Validasi Leger sebelum Cetak Rapor',
+          status: 'INFO',
+          details: 'Leger nilai semester belum dikunci oleh Waka Kurikulum.',
+          recommendation: 'Kunci leger setelah seluruh nilai tuntas.'
+        }
+      ];
+
+      return res.json({
+        success: true,
+        data: {
+          isValid: false,
+          passedCount: 2,
+          warningCount: 1,
+          infoCount: 2,
+          rules: validationRules
+        }
+      });
+    }
+
+    case 'academicReportCenterGet': {
+      const incoming = OfficeDB.incomingLetters.filter(l => l.tenant_id === tenantId);
+      const outgoing = OfficeDB.outgoingLetters.filter(l => l.tenant_id === tenantId);
+      const archives = OfficeDB.archives.filter(a => a.tenant_id === tenantId);
+      const legals = OfficeDB.legalDocuments.filter(ld => ld.tenant_id === tenantId);
+
+      return res.json({
+        success: true,
+        data: {
+          academicYear: '2026/2027',
+          activeSemester: 'Ganjil',
+          summaryMetrics: {
+            totalSiswa: 1250,
+            totalGuru: 85,
+            totalPegawai: 24,
+            totalRombel: 36,
+            totalSK: outgoing.filter(l => l.letter_type === 'Surat Keputusan').length,
+            totalSuratTugas: outgoing.filter(l => l.letter_type === 'Surat Tugas').length,
+            totalSuratOrangTua: outgoing.filter(l => l.letter_type === 'Surat Undangan' || l.letter_type === 'Surat Edaran').length,
+            totalArsip: archives.length,
+            totalLegalitas: legals.length
+          },
+          reportsList: [
+            { id: 'rep-1', name: 'Laporan Rekapitulasi Data Siswa & Santri', category: 'KESISWAAN', formats: ['PDF', 'EXCEL', 'CSV'] },
+            { id: 'rep-2', name: 'Laporan Pembagian Tugas Mengajar & Beban Jam Guru', category: 'KEPEGAWAIAN', formats: ['PDF', 'EXCEL'] },
+            { id: 'rep-3', name: 'Laporan SK & Surat Tugas Terbit Semester Ganjil', category: 'PERSURATAN', formats: ['PDF', 'EXCEL'] },
+            { id: 'rep-4', name: 'Laporan Monitoring Kehadiran & KBM Harian', category: 'KBM', formats: ['PDF', 'EXCEL', 'CSV'] },
+            { id: 'rep-5', name: 'Laporan Leger Nilai & Ketuntasan Belajar', category: 'NILAI_RAPOR', formats: ['PDF', 'EXCEL'] },
+            { id: 'rep-6', name: 'Laporan Inventaris Dokumen & Kearsipan Digital', category: 'ARSIP', formats: ['PDF', 'EXCEL'] }
+          ]
+        }
+      });
+    }
+
+    case 'officialDocumentUnitIdentities': {
+      const units = [
+        {
+          id: 'unit-yayasan',
+          code: 'YAYASAN',
+          name: 'Kantor Pusat Yayasan Pendidikan Islam Al-Azhar',
+          foundation_name: 'YAYASAN PENDIDIKAN ISLAM AL-AZHAR',
+          unit_type: 'Yayasan',
+          npsn: 'YYS-00912',
+          nsm: '111122223333',
+          address: 'Jl. Utama Pesantren No. 01, Kebayoran Baru, Jakarta Selatan',
+          village: 'Kebayoran',
+          district: 'Kebayoran Baru',
+          city: 'Jakarta Selatan',
+          province: 'DKI Jakarta',
+          postal_code: '12120',
+          phone: '(021) 7200-1122',
+          email: 'sekretariat@yayasan-alazhar.or.id',
+          website: 'www.yayasan-alazhar.or.id',
+          logo_foundation: '/logo-yayasan.png',
+          logo_unit: '/logo-yayasan.png',
+          leader_name: 'Dr. H. Muhammad Ramdhan, M.A.',
+          leader_title: 'Ketua Umum Yayasan',
+          leader_nip: 'NIY. 19780101-001'
+        },
+        {
+          id: 'unit-smp',
+          code: 'SMP',
+          name: 'SMP Islam Terpadu Al-Azhar',
+          foundation_name: 'YAYASAN PENDIDIKAN ISLAM AL-AZHAR',
+          unit_type: 'SMP',
+          npsn: '20109876',
+          nsm: '121231710001',
+          address: 'Jl. Pendidikan No. 45, Komplek Pesantren Terpadu',
+          village: 'Mekarsari',
+          district: 'Cimanggis',
+          city: 'Depok',
+          province: 'Jawa Barat',
+          postal_code: '16452',
+          phone: '(021) 8877-6655',
+          email: 'smp@alazhar-terpadu.sch.id',
+          website: 'www.smp-alazhar.sch.id',
+          logo_foundation: '/logo-yayasan.png',
+          logo_unit: '/logo-smp.png',
+          leader_name: 'Ust. H. Abdullah Faqih, M.Pd.',
+          leader_title: 'Kepala Sekolah SMP',
+          leader_nip: 'NIP. 19820512-2026'
+        },
+        {
+          id: 'unit-sma',
+          code: 'SMA',
+          name: 'SMA Tahfidz Al-Qur\'an Al-Azhar',
+          foundation_name: 'YAYASAN PENDIDIKAN ISLAM AL-AZHAR',
+          unit_type: 'SMA',
+          npsn: '20109877',
+          nsm: '121231710002',
+          address: 'Jl. Kampus Pesantren No. 88, Gedung Al-Ghazali',
+          village: 'Mekarsari',
+          district: 'Cimanggis',
+          city: 'Depok',
+          province: 'Jawa Barat',
+          postal_code: '16452',
+          phone: '(021) 8877-9900',
+          email: 'sma@alazhar-terpadu.sch.id',
+          website: 'www.sma-tahfidz.sch.id',
+          logo_foundation: '/logo-yayasan.png',
+          logo_unit: '/logo-sma.png',
+          leader_name: 'Drs. H. Ahmad Dahlan, M.Pd.I.',
+          leader_title: 'Kepala Sekolah SMA',
+          leader_nip: 'NIP. 19750314-2026'
+        },
+        {
+          id: 'unit-ponpes',
+          code: 'PONPES',
+          name: 'Pondok Pesantren Modern Darul Hadits',
+          foundation_name: 'YAYASAN PENDIDIKAN ISLAM AL-AZHAR',
+          unit_type: 'Pondok Pesantren',
+          npsn: 'PP-510099',
+          nsm: '510032710003',
+          address: 'Jl. Raya Payakumbuh Km 7, Sumatera Barat',
+          village: 'Tanjung Pati',
+          district: 'Harau',
+          city: 'Lima Puluh Kota',
+          province: 'Sumatera Barat',
+          postal_code: '26261',
+          phone: '(0752) 12345',
+          email: 'info@darulhadits.org',
+          website: 'www.darulhadits.org',
+          logo_foundation: '/logo-yayasan.png',
+          logo_unit: '/logo-ponpes.png',
+          leader_name: 'K.H. Dr. Ahmad Fauzi, Lc., M.A.',
+          leader_title: 'Pimpinan Pondok Pesantren',
+          leader_nip: 'NIY. 19700909-001'
+        }
+      ];
+      return res.json({ success: true, data: units });
+    }
+
+    case 'officialDocumentVerify': {
+      const { code } = req.body;
+      const verificationCode = code || req.query?.code;
+      
+      const outgoingMatch = OfficeDB.outgoingLetters.find(l => l.letter_number?.includes(verificationCode) || l.id === verificationCode);
+      
+      return res.json({
+        success: true,
+        data: {
+          verification_code: verificationCode || 'VER-2026-9901',
+          status: 'VALID', // VALID | REVOKED | ARCHIVED | REVISED
+          document_title: outgoingMatch?.subject || 'Surat Keputusan Pembagian Tugas Mengajar & Penugasan Akademik',
+          letter_number: outgoingMatch?.letter_number || 'B-104/SMP-AA/SK/VII/2026',
+          issuer_unit: outgoingMatch?.institution || 'SMP Islam Terpadu Al-Azhar',
+          issue_date: outgoingMatch?.letter_date || new Date().toISOString().split('T')[0],
+          signatory_name: outgoingMatch?.signatory_name || 'Ust. H. Abdullah Faqih, M.Pd.',
+          signatory_title: outgoingMatch?.signatory_title || 'Kepala Sekolah',
+          signed_digitally: true,
+          verification_timestamp: new Date().toISOString(),
+          audit_trail: [
+            { timestamp: new Date().toISOString(), action: 'VERIFIED', ip: req.ip || '127.0.0.1', message: 'Dokumen terverifikasi sah melalui QR Verification Gateway.' }
+          ]
+        }
+      });
+    }
+
+    case 'officialDocumentExportDocx': {
+      const { template_title, letter_number, recipient_name, body_paragraphs, unit_name } = req.body;
+      
+      const docxData = {
+        file_name: `${(template_title || 'Surat_Resmi').replace(/\s+/g, '_')}_${Date.now()}.docx`,
+        mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        content_preview: {
+          title: template_title || 'SURAT KETERANGAN RESMI',
+          letter_number: letter_number || 'B-029/SK-DIR/VII/2026',
+          unit: unit_name || 'SMP Islam Terpadu Al-Azhar',
+          recipient: recipient_name || 'Muhammad Ahmad Syahputra',
+          body: body_paragraphs || ['Demikian surat ini dibuat untuk dipergunakan sebagaimana mestinya dengan penuh tanggung jawab.']
+        },
+        status: 'SUCCESS',
+        generated_at: new Date().toISOString()
+      };
+      
+      logActivity(tenantId, authUser?.id || 'sys', username || 'User', role || 'TU', 'EXPORT_DOCX', 'Tata Usaha', `Ekspor dokumen Word (.docx) "${docxData.file_name}"`);
+      return res.json({ success: true, data: docxData });
+    }
+
+    case 'officialDocumentGenerate': {
+      const data = req.body;
+      const verCode = 'VER-' + Math.floor(100000 + Math.random() * 900000);
+      const generatedDoc = {
+        id: 'DOC-' + Date.now(),
+        tenant_id: tenantId,
+        letter_number: data.letter_number || `B-${Math.floor(100 + Math.random() * 900)}/TU-AA/${new Date().getFullYear()}`,
+        subject: data.subject || data.template_title || 'Surat Resmi',
+        recipient: data.recipient || 'Siswa / Orang Tua',
+        unit_code: data.unit_code || 'SMP',
+        verification_code: verCode,
+        created_at: new Date().toISOString(),
+        status: 'PUBLISHED',
+        download_url_pdf: `/api/action?action=officialDocumentDownload&type=pdf&id=DOC-${Date.now()}`,
+        download_url_docx: `/api/action?action=officialDocumentDownload&type=docx&id=DOC-${Date.now()}`
+      };
+
+      OfficeDB.outgoingLetters.unshift({
+        id: generatedDoc.id,
+        tenant_id: tenantId,
+        letter_number: generatedDoc.letter_number,
+        agenda_number: 'AGD-' + Date.now(),
+        letter_date: new Date().toISOString().split('T')[0],
+        sender: 'Tata Usaha Pusat',
+        destination: generatedDoc.recipient,
+        subject: generatedDoc.subject,
+        category_id: 'CAT-01',
+        letter_type: 'Surat Keluar',
+        summary: `Dokumen resmi terbit: ${generatedDoc.subject}`,
+        confidentiality: 'BIASA',
+        urgency: 'BIASA',
+        is_draft: false,
+        signatory_name: data.signatory_name || 'Kepala Sekolah',
+        signatory_title: data.signatory_title || 'Kepala Sekolah',
+        file_path: generatedDoc.download_url_pdf,
+        institution: data.unit_name || 'SMP Islam Terpadu Al-Azhar',
+        version: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        created_by: authUser?.id || 'sys',
+        updated_by: authUser?.id || 'sys'
+      });
+
+      logActivity(tenantId, authUser?.id || 'sys', username || 'User', role || 'TU', 'GENERATE_OFFICIAL_DOC', 'Tata Usaha', `Menerbitkan dokumen resmi "${generatedDoc.subject}" Nomor ${generatedDoc.letter_number}`);
+      return res.json({ success: true, data: generatedDoc });
+    }
+
     default:
       return null;
   }

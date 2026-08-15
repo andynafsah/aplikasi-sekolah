@@ -1,6 +1,6 @@
 {
   "name": "SIMAS Pro - Enterprise School & Pesantren Management",
-  "description": "Robust enterprise single-tenant School and Pesantren ERP management platform with complete academic, financial SPP billing, attendance, library, asset, AI copilot, and document studio modules.",
+  "description": "Comprehensive School & Pesantren Management System with Smart Attendance (Security Gate QR, Teacher Scope Attendance, Employee GPS Geofencing, ID Card Designer, Correction Workflow, and Real-time Auditing).",
   "requestFramePermissions": ["camera", "microphone", "geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

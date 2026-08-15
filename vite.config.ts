@@ -7,6 +7,9 @@ export default defineConfig(() => {
   return {
     base: '/',
     plugins: [react(), tailwindcss()],
+    define: {
+      'process.env.GOOGLE_MAPS_PLATFORM_KEY': JSON.stringify(process.env.GOOGLE_MAPS_PLATFORM_KEY || '')
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -16,7 +19,17 @@ export default defineConfig(() => {
       dedupe: ['react', 'react-dom'],
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', '@tanstack/react-query', 'lucide-react', 'axios', 'recharts', 'motion'],
+      include: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        '@tanstack/react-query',
+        'lucide-react',
+        'axios',
+        'recharts',
+        'motion',
+        'motion/react'
+      ],
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
@@ -25,23 +38,19 @@ export default defineConfig(() => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
-      sourcemap: true,
+      sourcemap: false,
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              if (id.includes('lucide-react')) {
-                return 'vendor-icons';
-              }
-              if (id.includes('recharts') || id.includes('d3')) {
-                return 'vendor-charts';
-              }
-              return 'vendor-vendor';
+              if (id.includes('recharts')) return 'vendor-charts';
+              if (id.includes('lucide-react')) return 'vendor-lucide';
+              if (id.includes('motion')) return 'vendor-motion';
             }
-          }
-        }
-      }
+          },
+        },
+      },
     },
   };
 });

@@ -365,6 +365,9 @@ export default function Sistem() {
   // Save updated settings to backend
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (['monitoring', 'integration-gateway', 'production-qa'].includes(activeTab)) {
+      return;
+    }
     setSaving(true);
     setSuccessMsg(null);
     setErrorMsg(null);
@@ -2206,16 +2209,18 @@ export default function Sistem() {
 
               </div>
 
-              <div className="mt-12 pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-6 py-3 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 rounded-xl shadow-md hover:shadow-lg transition duration-200 flex items-center gap-2 cursor-pointer"
-                >
-                  {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
-                </button>
-              </div>
+              {!['monitoring', 'integration-gateway', 'production-qa'].includes(activeTab) && (
+                <div className="mt-12 pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-6 py-3 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 rounded-xl shadow-md hover:shadow-lg transition duration-200 flex items-center gap-2 cursor-pointer"
+                  >
+                    {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                  </button>
+                </div>
+              )}
 
             </form>
           </div>

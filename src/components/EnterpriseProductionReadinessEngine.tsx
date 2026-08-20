@@ -288,23 +288,26 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
+              type="button"
               onClick={handleRunComprehensiveAudit}
               disabled={runningAudit}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${runningAudit ? 'animate-spin' : ''}`} />
               <span>{runningAudit ? 'Sedang Mengaudit...' : 'Audit 180 Checklist'}</span>
             </button>
             <button
+              type="button"
               onClick={handleRunRegression}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
+              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer"
             >
               <Zap className="w-4 h-4 text-amber-400" />
               <span>Run Regresi</span>
             </button>
             <button
+              type="button"
               onClick={handleVerifyPrintPdfs}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
+              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer"
             >
               <Printer className="w-4 h-4 text-cyan-400" />
               <span>Verifikasi Cetak</span>
@@ -365,8 +368,9 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
       {/* Tabs Navigation */}
       <div className="flex border-b border-slate-200 bg-white px-4 rounded-xl shadow-sm overflow-x-auto">
         <button
+          type="button"
           onClick={() => setActiveTab('gate')}
-          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors ${
+          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer ${
             activeTab === 'gate'
               ? 'border-emerald-600 text-emerald-700'
               : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -376,8 +380,9 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
           <span>Overview & Release Gate</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('audits')}
-          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors ${
+          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer ${
             activeTab === 'audits'
               ? 'border-emerald-600 text-emerald-700'
               : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -387,8 +392,9 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
           <span>180-Point System Audits ({auditScores.reduce((acc, c) => acc + c.passed_checks, 0)}/{auditScores.reduce((acc, c) => acc + c.total_checks, 0)})</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('bugs')}
-          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors ${
+          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer ${
             activeTab === 'bugs'
               ? 'border-emerald-600 text-emerald-700'
               : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -398,8 +404,9 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
           <span>Bug Matrix & Regresi ({bugMatrix.length})</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('print_lab')}
-          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors ${
+          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer ${
             activeTab === 'print_lab'
               ? 'border-emerald-600 text-emerald-700'
               : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -409,8 +416,9 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
           <span>Print Center & PDF QA</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('uat')}
-          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors ${
+          className={`py-3.5 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer ${
             activeTab === 'uat'
               ? 'border-emerald-600 text-emerald-700'
               : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -539,9 +547,10 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={handleRunComprehensiveAudit}
                 disabled={runningAudit}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${runningAudit ? 'animate-spin' : ''}`} />
                 <span>Re-Audit Seluruh Sistem</span>
@@ -604,8 +613,9 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowAddBugModal(true)}
-                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Catat Temuan QA</span>
@@ -678,8 +688,9 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={handleRunRegression}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Jalankan Semua</span>
@@ -774,8 +785,9 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={handleVerifyPrintPdfs}
-                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold transition-all shrink-0"
+                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer"
               >
                 Jalankan Test Cetak
               </button>
@@ -822,11 +834,12 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
                       </span>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => {
                           setSigningRole(sign.role);
                           setUatFeedbackInput(sign.feedback || '');
                         }}
-                        className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shrink-0"
+                        className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shrink-0 cursor-pointer"
                       >
                         Sign-Off
                       </button>
@@ -933,14 +946,16 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <button
+                type="button"
                 onClick={() => setShowAddBugModal(false)}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50"
+                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 cursor-pointer"
               >
                 Batal
               </button>
               <button
+                type="button"
                 onClick={handleSaveBug}
-                className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800"
+                className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 cursor-pointer"
               >
                 Simpan
               </button>
@@ -974,14 +989,16 @@ export const EnterpriseProductionReadinessEngine: React.FC = () => {
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <button
+                type="button"
                 onClick={() => setSigningRole(null)}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50"
+                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 cursor-pointer"
               >
                 Batal
               </button>
               <button
+                type="button"
                 onClick={() => handleSignUat(signingRole)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 flex items-center gap-1.5"
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 flex items-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Tandatangani UAT</span>

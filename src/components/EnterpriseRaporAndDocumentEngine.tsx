@@ -338,9 +338,110 @@ export default function EnterpriseRaporAndDocumentEngine() {
     window.print();
   };
 
-  // Export DOCX Simulation
+  // Real Export DOC / Word Document
   const handleExportDocx = () => {
-    alert(`Mengekspor Rapor Digital [${selectedRapor?.studentName}] ke format DOCX Word (Preserved Margins & Fonts)...`);
+    if (!selectedRapor) return;
+    const kopTitle = kopSuratData?.namaYayasan || 'YAYASAN DARUL HIJRAH INDONESIA';
+    const unitTitle = kopSuratData?.unitSMA?.nama || 'SMA ISLAM TERPADU DARUL HIJRAH';
+    const address = kopSuratData?.unitSMA?.alamat || 'Jl. Raya Pendidikan No. 45A, Jakarta';
+
+    const content = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Rapor Digital - ${selectedRapor.studentName}</title>
+        <style>
+          body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #111; margin: 20mm; }
+          .header-box { text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
+          .yayasan-name { font-size: 11pt; font-weight: bold; text-transform: uppercase; }
+          .school-name { font-size: 15pt; font-weight: 900; text-transform: uppercase; margin: 4px 0; }
+          .meta-text { font-size: 9pt; color: #555; }
+          .doc-title { font-size: 13pt; font-weight: bold; text-align: center; text-transform: uppercase; margin: 15px 0 5px 0; text-decoration: underline; }
+          .doc-subtitle { font-size: 10pt; font-weight: bold; text-align: center; color: #444; margin-bottom: 15px; }
+          table.meta-table { width: 100%; margin-bottom: 15px; border-collapse: collapse; }
+          table.meta-table td { padding: 4px 8px; font-size: 10pt; border: none; }
+          table.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; }
+          table.data-table th { border: 1px solid #333; padding: 6px 8px; font-size: 10pt; background-color: #f1f5f9; text-align: center; }
+          table.data-table td { border: 1px solid #333; padding: 6px 8px; font-size: 10pt; }
+          .text-center { text-align: center; }
+          .text-bold { font-weight: bold; }
+          .note-box { border: 1px solid #999; padding: 10px; margin-top: 15px; font-size: 10pt; }
+        </style>
+      </head>
+      <body>
+        <div class="header-box">
+          <div class="yayasan-name">${kopTitle}</div>
+          <div class="school-name">${unitTitle}</div>
+          <div class="meta-text">${address}</div>
+        </div>
+
+        <div class="doc-title">LAPORAN HASIL BELAJAR (RAPOR SISWA)</div>
+        <div class="doc-subtitle">Tahun Ajaran ${selectedRapor.tahunAjaran} - Semester ${selectedRapor.semester}</div>
+
+        <table class="meta-table">
+          <tr>
+            <td width="20%"><b>Nama Siswa</b></td>
+            <td width="30%">: ${selectedRapor.studentName}</td>
+            <td width="20%"><b>Kelas / Rombel</b></td>
+            <td width="30%">: ${selectedRapor.rombel} (${selectedRapor.fase})</td>
+          </tr>
+          <tr>
+            <td><b>NIS / NISN</b></td>
+            <td>: ${selectedRapor.nis} / ${selectedRapor.nisn}</td>
+            <td><b>Kurikulum</b></td>
+            <td>: ${selectedRapor.curriculum}</td>
+          </tr>
+          <tr>
+            <td><b>Status Kenaikan</b></td>
+            <td>: ${selectedRapor.promotionStatus}</td>
+            <td><b>Kode QR Verifikasi</b></td>
+            <td>: ${selectedRapor.verificationCode}</td>
+          </tr>
+        </table>
+
+        <div style="font-weight: bold; font-size: 11pt; margin-top: 15px; margin-bottom: 5px;">A. CAPAIAN NILAI MATA PELAJARAN</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th width="5%">No</th>
+              <th width="35%">Mata Pelajaran</th>
+              <th width="10%">KKM</th>
+              <th width="10%">Nilai</th>
+              <th width="10%">Predikat</th>
+              <th width="30%">Capaian Kompetensi / Deskripsi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(selectedRapor.subjects || []).map((s: any, idx: number) => `
+              <tr>
+                <td class="text-center">${idx + 1}</td>
+                <td>${s.name}</td>
+                <td class="text-center">${s.kkm}</td>
+                <td class="text-center text-bold">${s.score}</td>
+                <td class="text-center">${s.grade}</td>
+                <td>${s.description || 'Menunjukkan penguasaan kompetensi yang sangat baik.'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="note-box">
+          <b>Catatan Perkembangan &amp; Karakter:</b><br/>
+          ${selectedRapor.catatanWaliKelas || 'Ananda menunjukkan peningkatan prestasi belajar dan kedisiplinan yang sangat positif.'}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Rapor_${selectedRapor.studentName.replace(/\s+/g, '_')}_${selectedRapor.semester}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Rapor Status Badge Renderer
@@ -1129,7 +1230,7 @@ export default function EnterpriseRaporAndDocumentEngine() {
             </div>
 
             {/* Modal Scrollable Content (Printable Document Sheet) */}
-            <div className="p-8 overflow-y-auto space-y-6 text-slate-900 font-sans" ref={printRef}>
+            <div id="printable-rapor-sheet" className="p-8 overflow-y-auto space-y-6 text-slate-900 font-sans" ref={printRef}>
               
               {/* KOP RAPOR */}
               <div className="border-b-4 border-double border-slate-950 pb-4 flex items-center gap-6">

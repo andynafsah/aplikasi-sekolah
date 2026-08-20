@@ -18,7 +18,7 @@ export function roleMiddleware(allowedRoles: string[]) {
     const normalizedUserRole = rbacService.normalizeRole(user.role);
     const normalizedAllowedRoles = allowedRoles.map(r => rbacService.normalizeRole(r));
 
-    if (normalizedUserRole === 'Super Admin' || normalizedAllowedRoles.includes(normalizedUserRole)) {
+    if (normalizedUserRole === 'SUPER_ADMIN' || normalizedAllowedRoles.includes(normalizedUserRole)) {
       return next();
     }
 

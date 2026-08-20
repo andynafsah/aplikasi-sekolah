@@ -99,7 +99,7 @@ export class FastifyApplication {
     logger.debug(`API Gateway: Routing request [${httpMethod}] to ${route}`, { clientIp });
 
     try {
-      // Route Matchers
+      // Public Auth Route Matchers
       if (route === '/api/v1/auth/login' && httpMethod === 'POST') {
         const response = await this.auth.handleLogin(payload, clientIp, headers['user-agent']);
         return { ...response, headers: securityHeaders };
@@ -115,35 +115,46 @@ export class FastifyApplication {
         return { ...response, headers: securityHeaders };
       }
 
+      // Enforce JWT for all protected /api/v1/* routes
+      const authHeader = headers['authorization'] || headers['Authorization'] || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : (payload?.token || '');
+      const jwtService = new JwtService();
+      const authUser = token ? jwtService.verifyAccessToken(token) : null;
+
+      if (!authUser) {
+        return {
+          success: false,
+          statusCode: 401,
+          message: 'Sesi telah kedaluwarsa atau token tidak valid. Otorisasi diperlukan.',
+          headers: securityHeaders
+        };
+      }
+
+      const requestorUserId = authUser.id;
+      const tenantId = authUser.tenant_id || 'tenant-main';
+
       if (route.startsWith('/api/v1/users/') && httpMethod === 'GET') {
         const userId = route.split('/').pop() || '';
-        const requestorUserId = headers['x-user-id'] || 'user-admin-1';
-        
         const response = await this.user.handleGetProfile(userId, requestorUserId);
         return { ...response, headers: securityHeaders };
       }
 
       if (route === '/api/v1/users' && httpMethod === 'POST') {
-        const requestorUserId = headers['x-user-id'] || 'user-admin-1';
-
         const response = await this.user.handleCreateUser(requestorUserId, payload);
         return { ...response, headers: securityHeaders };
       }
 
       if (route === '/api/v1/akademik/piket' && httpMethod === 'GET') {
-        const tenantId = headers['x-tenant-id'] || 'tenant-1';
         const response = await this.piket.handleGetPikets(tenantId);
         return { ...response, headers: securityHeaders };
       }
 
       if (route === '/api/v1/akademik/piket' && httpMethod === 'POST') {
-        const tenantId = headers['x-tenant-id'] || 'tenant-1';
         const response = await this.piket.handleCreatePiket(tenantId, payload);
         return { ...response, headers: securityHeaders };
       }
       
       if (route === '/api/v1/akademik/piket' && httpMethod === 'PUT') {
-        const tenantId = headers['x-tenant-id'] || 'tenant-1';
         const response = await this.piket.handleUpdatePiket(tenantId, payload);
         return { ...response, headers: securityHeaders };
       }
@@ -396,27 +407,9 @@ export class FastifyApplication {
       // TASK 143: ENTERPRISE SMART ATTENDANCE REST API CONTRACT SPECIFICATION
       // =========================================================================
 
-      // Auth context helper
-      const authHeader = headers['authorization'] || headers['Authorization'] || '';
-      let tokenStr = '';
-      if (typeof authHeader === 'string') {
-        if (authHeader.startsWith('Bearer ')) {
-          tokenStr = authHeader.substring(7).trim();
-        } else {
-          tokenStr = authHeader.trim();
-        }
-      }
-      if (!tokenStr && payload) {
-        tokenStr = payload.token || payload.access_token || '';
-      }
-
-      const jwtService = new JwtService();
-      const authUser = tokenStr ? jwtService.verifyAccessToken(tokenStr) : null;
-
-      const tenantId = headers['x-tenant-id'] || (authUser ? authUser.tenant_id : (payload?.tenantId || payload?.tenant_id || 'school-main'));
-      const userId = authUser ? authUser.id : (headers['x-user-id'] || payload?.employeeId || payload?.studentId || payload?.user_id || 'USR-01');
-      const username = authUser ? (authUser.name || authUser.username) : (headers['x-user-name'] || payload?.employeeName || payload?.scannedBy || 'Pengguna');
-      const role = authUser ? authUser.role : (headers['x-user-role'] || payload?.role || 'PEGAWAI');
+      const userId = authUser.id;
+      const username = authUser.name || authUser.username || 'Pengguna';
+      const role = authUser.role || 'PEGAWAI';
 
       // 1. Student Scan: POST /api/v1/attendance/students/scan & /student/scan
       if ((route === '/api/v1/attendance/students/scan' || route === '/api/v1/attendance/student/scan') && httpMethod === 'POST') {

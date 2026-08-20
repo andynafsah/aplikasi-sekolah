@@ -114,7 +114,25 @@ export default function TeacherFinalReports({ gradesList }: TeacherFinalReportsP
             </div>
             <button
               onClick={() => {
-                setSuccessMsg('Berkas Leger Nilai Kelas format Microsoft Excel (.xlsx) berhasil di-ekspor!');
+                const headers = ['Rank', 'Nama Siswa', 'Rata Formatif', 'PTS', 'PAS', 'Sikap', 'Nilai Rapor'];
+                const rows = ledgerData.map(item => [
+                  item.rank,
+                  `"${item.name}"`,
+                  Math.round((item.formative1 + item.formative2) / 2),
+                  item.pts,
+                  item.pas,
+                  `"${item.sikap_spiritual}"`,
+                  item.finalScore
+                ]);
+                const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `Leger_Nilai_Kelas_X_MIPA_1_${Date.now()}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setSuccessMsg('Berkas Leger Nilai Kelas format spreadsheet (.csv) berhasil diunduh!');
                 setTimeout(() => setSuccessMsg(''), 4000);
               }}
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"

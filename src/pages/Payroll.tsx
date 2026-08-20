@@ -1456,7 +1456,30 @@ export default function Payroll() {
                 <span className="text-xs font-bold block text-slate-700">Ekspor Excel / CSV</span>
                 <p className="text-[10px] text-slate-400">Unduh data payroll periodik lengkap dengan rincian per akun bank.</p>
                 <button
-                  onClick={() => showAlert('Mengekspor laporan payroll ke format Microsoft Excel .xlsx...')}
+                  onClick={() => {
+                    const headers = ['NIP', 'Nama Pegawai', 'Jabatan/Unit', 'Gaji Pokok', 'Total Tunjangan', 'Total Potongan', 'Gaji Bersih', 'Status', 'Nomor Rekening', 'Bank'];
+                    const rows = (runs || []).map((r: any) => [
+                      `"${r.nip || ''}"`,
+                      `"${r.employeeName || ''}"`,
+                      `"${r.position || ''}"`,
+                      r.earnings?.baseSalary || 0,
+                      r.totals?.totalEarnings ? (r.totals.totalEarnings - (r.earnings?.baseSalary || 0)) : 0,
+                      r.totals?.totalDeductions || 0,
+                      r.totals?.netSalary || 0,
+                      `"${r.status || 'PAID'}"`,
+                      `"${r.bankDetails?.accountNumber || '-'}"`,
+                      `"${r.bankDetails?.bankName || '-'}"`
+                    ]);
+                    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', encodedUri);
+                    link.setAttribute('download', `Rekap_Payroll_Gaji_${period}_${Date.now()}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showAlert('Rekapitulasi penggajian (.csv) berhasil diunduh!');
+                  }}
                   className="px-2.5 py-1 bg-white border hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded cursor-pointer"
                 >
                   Download Excel
@@ -1468,10 +1491,12 @@ export default function Payroll() {
                 <span className="text-xs font-bold block text-slate-700">Ekspor Laporan PDF</span>
                 <p className="text-[10px] text-slate-400">Unduh rekapitulasi penggajian bulanan resmi bertanda tangan digital.</p>
                 <button
-                  onClick={() => showAlert('Mengekspor rekapitulasi gaji bulanan instansi ke file PDF...')}
+                  onClick={() => {
+                    window.print();
+                  }}
                   className="px-2.5 py-1 bg-white border hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded cursor-pointer"
                 >
-                  Download PDF
+                  Download PDF / Cetak
                 </button>
               </div>
 

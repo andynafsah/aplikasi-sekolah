@@ -1,1 +1,158 @@
 @import "tailwindcss";
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print,
+  nav,
+  aside,
+  header,
+  footer,
+  button:not(.force-print),
+  .no-print-bar {
+    display: none !important;
+  }
+
+  /* Isolate printable report area */
+  body:has(#printable-report-area) * {
+    visibility: hidden;
+  }
+  body:has(#printable-report-area) #printable-report-area,
+  body:has(#printable-report-area) #printable-report-area * {
+    visibility: visible;
+  }
+  body:has(#printable-report-area) #printable-report-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Isolate printable rapor sheet */
+  body:has(#printable-rapor-sheet) * {
+    visibility: hidden;
+  }
+  body:has(#printable-rapor-sheet) #printable-rapor-sheet,
+  body:has(#printable-rapor-sheet) #printable-rapor-sheet * {
+    visibility: visible;
+  }
+  body:has(#printable-rapor-sheet) #printable-rapor-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Isolate student card print area */
+  body:has(#student-card-print-area) * {
+    visibility: hidden;
+  }
+  body:has(#student-card-print-area) #student-card-print-area,
+  body:has(#student-card-print-area) #student-card-print-area * {
+    visibility: visible;
+  }
+  body:has(#student-card-print-area) #student-card-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 15mm !important;
+    justify-content: center !important;
+  }
+
+  /* Isolate printable archive report */
+  body:has(#printable-archive-report) * {
+    visibility: hidden;
+  }
+  body:has(#printable-archive-report) #printable-archive-report,
+  body:has(#printable-archive-report) #printable-archive-report * {
+    visibility: visible;
+  }
+  body:has(#printable-archive-report) #printable-archive-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Isolate printable receipt */
+  body:has(#printable-receipt) * {
+    visibility: hidden;
+  }
+  body:has(#printable-receipt) #printable-receipt,
+  body:has(#printable-receipt) #printable-receipt * {
+    visibility: visible;
+  }
+  body:has(#printable-receipt) #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Isolate barcode/inventory label print area */
+  body:has(#print-label-area) * {
+    visibility: hidden;
+  }
+  body:has(#print-label-area) #print-label-area,
+  body:has(#print-label-area) #print-label-area * {
+    visibility: visible;
+  }
+  body:has(#print-label-area) #print-label-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    padding: 5mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Isolate printable ledger/academic sheet */
+  body:has(#printable-ledger-area) * {
+    visibility: hidden;
+  }
+  body:has(#printable-ledger-area) #printable-ledger-area,
+  body:has(#printable-ledger-area) #printable-ledger-area * {
+    visibility: visible;
+  }
+  body:has(#printable-ledger-area) #printable-ledger-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+

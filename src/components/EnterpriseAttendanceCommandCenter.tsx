@@ -620,7 +620,29 @@ export default function EnterpriseAttendanceCommandCenter() {
             <span>Print Report</span>
           </button>
           <button
-            onClick={() => alert('Rekapitulasi Command Center diekspor ke Excel (.xlsx)')}
+            onClick={() => {
+              const headers = ['Personel', 'Role', 'NIP/NIS', 'Unit', 'Jabatan/Kelas', 'Waktu Masuk', 'Shift', 'Status', 'Metode', 'Lokasi'];
+              const rows = filteredRecords.map((rec: any) => [
+                `"${rec.name}"`,
+                `"${rec.role}"`,
+                `"${rec.nipNis}"`,
+                `"${rec.unit}"`,
+                `"${rec.classOrPosition}"`,
+                `"${rec.checkInTime || '-'}"`,
+                `"${rec.shift || '-'}"`,
+                `"${rec.status}"`,
+                `"${rec.method || '-'}"`,
+                `"${rec.locationName || '-'}"`
+              ]);
+              const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement('a');
+              link.setAttribute('href', encodedUri);
+              link.setAttribute('download', `Rekap_Command_Center_Presensi_${selectedDate}_${Date.now()}.csv`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
             className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" />

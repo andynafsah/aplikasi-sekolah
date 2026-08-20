@@ -1259,29 +1259,267 @@ app.all('/api/action', async (req, res) => {
 
   // --- ENTERPRISE RBAC PERMISSION & DATA SCOPING SHIELD ---
   const rbacServiceObj = new RbacService();
+  const roleNormalized = rbacServiceObj.normalizeRole(role);
+
   const ACTION_PERMISSION_MAP: Record<string, string> = {
+    // Student Actions
     getStudents: 'student.view',
     getStudent: 'student.view',
+    searchStudents: 'student.view',
+    getStudentHistories: 'student.view',
+    getStudentDocuments: 'student.view',
+    getMutationsList: 'student.view',
     createStudent: 'student.create',
+    uploadStudentDocument: 'student.create',
+    processMutation: 'student.create',
     updateStudent: 'student.update',
+    replaceStudentDocument: 'student.update',
+    saveAutoNumberConfig: 'student.update',
     deleteStudent: 'student.delete',
     exportStudents: 'student.export',
     importStudents: 'student.import',
-    searchStudents: 'student.view',
+
+    // Teacher & Staff Actions
     getTeachers: 'teacher.view',
     getTeacher: 'teacher.view',
+    getEmployees: 'teacher.view',
+    getEmployee: 'teacher.view',
+
+    // Finance Actions
     getFeeInvoices: 'finance.view',
     getFeePayments: 'finance.view',
+    getCashTransactions: 'finance.view',
+    getLedgerEntries: 'finance.view',
+    getCOAs: 'finance.view',
+    getBankAccounts: 'finance.view',
+    getAccountingTransactions: 'finance.view',
+    getJournalVouchers: 'finance.view',
+    getBudgetRealizations: 'finance.view',
+    getReconciliations: 'finance.view',
+    getAccountingClosings: 'finance.view',
+    getAccountingApprovals: 'finance.view',
     createFeeInvoice: 'finance.create',
     createFeePayment: 'finance.create',
+    createCashTransaction: 'finance.create',
+    createAccountingTransaction: 'finance.create',
+    createJournalVoucher: 'finance.create',
+    saveCOA: 'finance.create',
+    saveBankAccount: 'finance.create',
+    transferBetweenAccounts: 'finance.create',
+    createReconciliation: 'finance.create',
+    autoMatchReconciliation: 'finance.create',
+    submitAccountingApproval: 'finance.create',
+    paymentLink: 'finance.create',
     approveFeePayment: 'payment.approve',
+    performClosing: 'payment.approve',
+
+    // Attendance Actions
+    getAttendances: 'attendance.view',
+    getSummaryReport: 'attendance.view',
+    getStudentReport: 'attendance.view',
+    getEmployeeReport: 'attendance.view',
+    getTeacherReport: 'attendance.view',
+    getLateReport: 'attendance.view',
+    getAbsenceReport: 'attendance.view',
+    getGateReport: 'attendance.view',
+    getQrReport: 'attendance.view',
+    getGpsReport: 'attendance.view',
+    getManualReport: 'attendance.view',
+    getCorrectionReport: 'attendance.view',
+    getAuditReport: 'attendance.view',
+    getSecurityAlerts: 'attendance.view',
+    getAttendanceHistory: 'attendance.view',
+    getQrHistory: 'attendance.view',
+    getGeofences: 'attendance.view',
+    getLeavePermissions: 'attendance.view',
+    studentScan: 'attendance.scan',
+    studentManual: 'attendance.scan',
+    employeeGps: 'attendance.scan',
+    employeeQr: 'attendance.scan',
+    scanAttendanceQr: 'attendance.scan',
+    verifyAttendanceQr: 'attendance.scan',
+    getAttendanceQr: 'attendance.scan',
+    getQr: 'attendance.scan',
+    requestCorrection: 'attendance.correction',
+    submitCorrection: 'attendance.correction',
+    reviewCorrection: 'attendance.correction',
+    approveCorrection: 'attendance.correction',
+    rejectCorrection: 'attendance.correction',
+    cancelCorrection: 'attendance.correction',
+    updateLeavePermission: 'attendance.correction',
+    saveGeofence: 'attendance.settings',
+    saveQrSettings: 'attendance.settings',
+    exportReport: 'attendance.export',
+    getExportJobDetail: 'attendance.export',
+    getExportHistory: 'attendance.export',
+
+    // Office & TU Actions
+    officeDashboard: 'tu.view',
+    incomingLetterList: 'tu.view',
+    outgoingLetterList: 'tu.view',
+    letterTemplateList: 'tu.view',
+    archiveList: 'tu.view',
+    guestBook: 'tu.view',
+    expeditionBook: 'tu.view',
+    legalDocument: 'tu.view',
+    documentReminder: 'tu.view',
+    documentAnalytics: 'tu.view',
+    academicAdministrationChecklistGet: 'tu.view',
+    academicAdministrationWorkflowGet: 'tu.view',
+    academicReportCenterGet: 'tu.view',
+    officialDocumentUnitIdentities: 'tu.view',
+    officialDocumentTemplateList: 'tu.view',
+    kopConfigGet: 'tu.view',
+    incomingLetterCreate: 'tu.manage',
+    incomingLetterUpdate: 'tu.manage',
+    incomingLetterDelete: 'tu.manage',
+    outgoingLetterCreate: 'tu.manage',
+    outgoingLetterUpdate: 'tu.manage',
+    letterNumberGenerate: 'tu.manage',
+    letterTemplateSave: 'tu.manage',
+    dispositionCreate: 'tu.manage',
+    dispositionUpdate: 'tu.manage',
+    archiveStore: 'tu.manage',
+    academicAdministrationChecklistUpdate: 'tu.manage',
+    academicAdministrationWorkflowUpdate: 'tu.manage',
+    officialDocumentTemplateSave: 'tu.manage',
+    officialDocumentTemplateDelete: 'tu.manage',
+    officialDocumentGenerate: 'tu.manage',
+    kopConfigUpdate: 'tu.manage',
+
+    // Audit Actions
     getAuditLogs: 'audit.view',
+    auditDashboard: 'audit.view',
+    auditEventList: 'audit.view',
+    auditLogList: 'audit.view',
+    auditHistory: 'audit.view',
+    auditSession: 'audit.view',
+    auditApiLog: 'audit.view',
+    auditReport: 'audit.view',
+    complianceFramework: 'audit.view',
+    complianceChecklist: 'audit.view',
+    complianceAssessment: 'audit.view',
+    riskManagement: 'audit.view',
+    correctiveAction: 'audit.view',
+    followupStatus: 'audit.view',
+    accreditationPeriod: 'audit.view',
+    accreditationAssessment: 'audit.view',
+    governmentReport: 'audit.view',
+    executiveAudit: 'audit.view',
+    auditExceptionList: 'audit.view',
+    auditExceptions: 'audit.view',
+    auditExceptionCreate: 'audit.view',
+    auditExceptionResolve: 'audit.view',
+    internalControl: 'audit.view',
+    verifyHashChain: 'audit.view',
+    retentionPolicy: 'audit.view',
+    securityEvents: 'audit.view',
+    auditExport: 'audit.export',
+    runRetentionJob: 'audit.export',
+
+    // Settings & RBAC Actions
+    saveSettings: 'settings.update',
+    systemDashboard: 'settings.update',
+    generalSettings: 'settings.update',
+    tenantSettings: 'settings.update',
+    brandingSettings: 'settings.update',
+    featureFlag: 'settings.update',
+    environmentProfile: 'settings.update',
+    storageProvider: 'settings.update',
+    paymentProvider: 'settings.update',
+    notificationProvider: 'settings.update',
+    aiProvider: 'settings.update',
+    securityPolicy: 'settings.update',
+    licenseManager: 'settings.update',
+    maintenanceMode: 'settings.update',
+    configurationBackup: 'settings.update',
+    configurationRestore: 'settings.update',
+    exportConfig: 'settings.update',
+    importConfig: 'settings.update',
     saveRole: 'settings.update',
     savePermission: 'settings.update',
     saveMenu: 'settings.update',
     saveRolePermissions: 'settings.update',
-    saveRoleMenus: 'settings.update'
+    saveRoleMenus: 'settings.update',
+
+    // Database Actions
+    databaseDashboard: 'database.manage',
+    databaseProvider: 'database.manage',
+    databaseConnection: 'database.manage',
+    connectionTest: 'database.manage',
+    connectionStatus: 'database.manage',
+    migrationList: 'database.manage',
+    migrationRun: 'database.manage',
+    migrationRollback: 'database.manage',
+    seederRun: 'database.manage',
+    backupCreate: 'database.manage',
+    backupRestore: 'database.manage',
+    backupSchedule: 'database.manage',
+    databaseImport: 'database.manage',
+    databaseExport: 'database.manage',
+    queryRunner: 'database.manage',
+    queryHistory: 'database.manage',
+    databaseStatistic: 'database.manage',
+    databaseAlert: 'database.manage',
+    runDatabaseTests: 'database.manage',
+
+    // Inventory Actions
+    getInventoryItems: 'inventory.update',
+    createInventoryItem: 'inventory.update',
+    updateInventoryItem: 'inventory.update',
+    deleteInventoryItem: 'inventory.update'
   };
+
+  // Specific Security / Satpam Role Operational Boundary Check
+  if (roleNormalized === 'SECURITY') {
+    const allowedSecurityActions = [
+      'getDiagnostics',
+      'getStudents',
+      'searchStudents',
+      'getStudent',
+      'getAttendances',
+      'getSummaryReport',
+      'getStudentReport',
+      'getEmployeeReport',
+      'getTeacherReport',
+      'getLateReport',
+      'getAbsenceReport',
+      'getGateReport',
+      'getQrReport',
+      'getGpsReport',
+      'getManualReport',
+      'getSecurityAlerts',
+      'getAttendanceHistory',
+      'getQrHistory',
+      'getGeofences',
+      'studentScan',
+      'studentManual',
+      'employeeGps',
+      'employeeQr',
+      'scanAttendanceQr',
+      'verifyAttendanceQr',
+      'getAttendanceQr',
+      'getQr',
+      'getDashboardSummary',
+      'getRbacConfig',
+      'getSettings'
+    ];
+    if (!allowedSecurityActions.includes(action as string)) {
+      logActivity(
+        tenantId,
+        authUser.id,
+        username,
+        role,
+        'ACCESS_DENIED',
+        'Security Gate Guard Restriction',
+        `Peran SECURITY / Satpam dibatasi hanya untuk modul absensi gerbang. Percobaan akses ke "${action}" ditolak.`
+      );
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Peran Security / Satpam hanya memiliki kewenangan pada fungsi absensi & presensi gerbang.'
+      });
+    }
+  }
 
   const requiredPermission = ACTION_PERMISSION_MAP[action as string];
   if (requiredPermission) {
@@ -1303,13 +1541,42 @@ app.all('/api/action', async (req, res) => {
     }
   }
 
-  // Intercept response json to enforce strict dynamic Data-Level Access Controls
+  // Intercept response json to enforce strict dynamic Data-Level Access Controls (IDOR Prevention)
   const originalJson = res.json;
   res.json = function(body: any) {
     if (body && body.success && body.data) {
-      const roleNormalized = rbacServiceObj.normalizeRole(role);
-
-      if (roleNormalized === 'GURU' || roleNormalized === 'WALI_KELAS') {
+      // 1. SECURITY Role Data Sanitization (Only gate-relevant fields)
+      if (roleNormalized === 'SECURITY') {
+        if (action === 'getStudents' || action === 'searchStudents' || action === 'listStudents') {
+          const students = Array.isArray(body.data) ? body.data : [body.data];
+          body.data = students.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            nis: s.nis,
+            nisn: s.nisn,
+            classroom_id: s.classroom_id || s.class_id,
+            class_name: s.class_name || s.classroom_name,
+            gender: s.gender,
+            status: s.status,
+            photo: s.photo || s.avatar_url
+          }));
+        } else if (action === 'getStudent') {
+          const s = body.data;
+          if (s) {
+            body.data = {
+              id: s.id,
+              name: s.name,
+              nis: s.nis,
+              nisn: s.nisn,
+              classroom_id: s.classroom_id || s.class_id,
+              class_name: s.class_name || s.classroom_name,
+              gender: s.gender,
+              status: s.status,
+              photo: s.photo || s.avatar_url
+            };
+          }
+        }
+      } else if (roleNormalized === 'GURU' || roleNormalized === 'WALI_KELAS') {
         const teacherObj = DB.teachers.find((t: any) => t.name === authUser?.name || t.email === authUser?.email);
         if (teacherObj) {
           const teacherId = teacherObj.id;
@@ -1318,19 +1585,19 @@ app.all('/api/action', async (req, res) => {
           const allowedClassrooms = assignments.map((a: any) => a.class_id);
           const allowedSubjects = assignments.map((a: any) => a.subject_id).filter((id: any) => id !== null);
 
-          // 1. Filter students
+          // Filter students
           if (action === 'getStudents' || action === 'searchStudents' || action === 'listStudents') {
             const students = Array.isArray(body.data) ? body.data : [body.data];
             body.data = students.filter((s: any) => allowedClassrooms.includes(s.classroom_id || s.class_id));
           }
 
-          // 2. Filter classes
+          // Filter classes
           if (action === 'getClassrooms' || action === 'getClasses' || action === 'listClassrooms' || action === 'listClasses') {
             const classes = Array.isArray(body.data) ? body.data : [body.data];
             body.data = classes.filter((c: any) => allowedClassrooms.includes(c.id));
           }
 
-          // 3. Filter courses/subjects
+          // Filter courses/subjects
           if (action === 'getCourses' || action === 'getSubjects' || action === 'listCourses' || action === 'listSubjects') {
             const subjects = Array.isArray(body.data) ? body.data : [body.data];
             body.data = subjects.filter((s: any) => allowedSubjects.includes(s.id));
@@ -1355,7 +1622,8 @@ app.all('/api/action', async (req, res) => {
         }
       }
 
-      if (action === 'getFeeInvoices' || action === 'getFeePayments') {
+      // Finance IDOR protection: Teachers and Security get zero financial records
+      if (action === 'getFeeInvoices' || action === 'getFeePayments' || action === 'getCashTransactions' || action === 'getAccountingTransactions') {
         const finances = Array.isArray(body.data) ? body.data : [body.data];
 
         if (roleNormalized === 'SANTRI') {
@@ -1366,7 +1634,7 @@ app.all('/api/action', async (req, res) => {
             .filter((s: any) => s.name.includes('Farhan') || s.name.includes('Laila'))
             .map((s: any) => s.id);
           body.data = finances.filter((f: any) => allowedStudentIds.includes(f.student_id));
-        } else if (roleNormalized === 'GURU' || roleNormalized === 'WALI_KELAS') {
+        } else if (roleNormalized === 'GURU' || roleNormalized === 'WALI_KELAS' || roleNormalized === 'SECURITY') {
           body.data = [];
         }
       }

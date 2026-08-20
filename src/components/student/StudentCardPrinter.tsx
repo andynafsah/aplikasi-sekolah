@@ -220,119 +220,63 @@ export function StudentCardPrinter({ students, tenantName, subTab }: StudentCard
 
   // Helper function to handle window printing
   const handlePrintCard = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const isHoriz = orientation === 'horizontal';
-    const cardW = isHoriz ? '85.6mm' : '54mm';
-    const cardH = isHoriz ? '54mm' : '85.6mm';
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Cetak Kartu Pelajar - ${studentName}</title>
-          <style>
-            @page {
-              size: A4 portrait;
-              margin: 10mm;
-            }
-            body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              background-color: #fff;
-              margin: 0;
-              padding: 20px;
-            }
-            .print-container {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 20px;
-              justify-content: center;
-            }
-            .card-wrapper {
-              width: ${cardW};
-              height: ${cardH};
-              border: ${borderWidth}px ${borderStyle} ${borderColor};
-              border-radius: ${borderRadius}px;
-              background: ${bgType === 'solid' ? bgColor1 : `linear-gradient(135deg, ${bgColor1}, ${bgColor2})`};
-              color: ${bodyTextColor};
-              box-sizing: border-box;
-              overflow: hidden;
-              position: relative;
-              page-break-inside: avoid;
-            }
-            .header-bar {
-              background-color: ${headerBgColor};
-              color: ${headerTextColor};
-              padding: 8px 12px;
-              text-align: center;
-            }
-            .header-title {
-              font-size: 8px;
-              font-weight: 800;
-              letter-spacing: 1px;
-            }
-            .inst-title {
-              font-size: 10px;
-              font-weight: 900;
-            }
-            .body-content {
-              padding: 10px;
-              display: flex;
-              gap: 10px;
-              align-items: center;
-            }
-            .student-photo {
-              width: ${isHoriz ? '50px' : '65px'};
-              height: ${isHoriz ? '60px' : '75px'};
-              border: 2px solid ${photoBorderColor};
-              border-radius: ${photoShape === 'circle' ? '50%' : photoShape === 'rounded' ? '8px' : '0'};
-              object-fit: cover;
-            }
-            .info-label {
-              font-size: 7px;
-              opacity: 0.8;
-              text-transform: uppercase;
-            }
-            .info-value {
-              font-size: 9px;
-              font-weight: bold;
-              color: ${accentColor};
-            }
-            @media print {
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="no-print" style="margin-bottom: 20px; text-align: center;">
-            <button onclick="window.print()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-              🖨️ Cetak Sekarang
-            </button>
-          </div>
-          <div class="print-container">
-            <div class="card-wrapper">
-              <div class="header-bar">
-                <div class="header-title">${headerTitle}</div>
-                <div class="inst-title">${institutionName}</div>
-              </div>
-              <div class="body-content">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120" class="student-photo" />
-                <div>
-                  <div class="info-label">${labelName}</div>
-                  <div class="info-value">${studentName}</div>
-                  <div class="info-label" style="margin-top: 4px;">${labelNis}</div>
-                  <div style="font-size: 9px; font-weight: bold;">${studentNis}</div>
-                  <div class="info-label" style="margin-top: 4px;">${labelClass}</div>
-                  <div style="font-size: 9px;">${studentClass}</div>
+    // Primary: direct in-page print targeting #student-card-print-area
+    try {
+      window.print();
+    } catch {
+      // Fallback: popup window if available
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        const isHoriz = orientation === 'horizontal';
+        const cardW = isHoriz ? '85.6mm' : '54mm';
+        const cardH = isHoriz ? '54mm' : '85.6mm';
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Cetak Kartu Pelajar - ${studentName}</title>
+              <style>
+                @page { size: A4 portrait; margin: 10mm; }
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fff; margin: 0; padding: 20px; }
+                .print-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+                .card-wrapper { width: ${cardW}; height: ${cardH}; border: ${borderWidth}px ${borderStyle} ${borderColor}; border-radius: ${borderRadius}px; background: ${bgType === 'solid' ? bgColor1 : `linear-gradient(135deg, ${bgColor1}, ${bgColor2})`}; color: ${bodyTextColor}; box-sizing: border-box; overflow: hidden; position: relative; page-break-inside: avoid; }
+                .header-bar { background-color: ${headerBgColor}; color: ${headerTextColor}; padding: 8px 12px; text-align: center; }
+                .header-title { font-size: 8px; font-weight: 800; letter-spacing: 1px; }
+                .inst-title { font-size: 10px; font-weight: 900; }
+                .body-content { padding: 10px; display: flex; gap: 10px; align-items: center; }
+                .student-photo { width: ${isHoriz ? '50px' : '65px'}; height: ${isHoriz ? '60px' : '75px'}; border: 2px solid ${photoBorderColor}; border-radius: ${photoShape === 'circle' ? '50%' : photoShape === 'rounded' ? '8px' : '0'}; object-fit: cover; }
+                .info-label { font-size: 7px; opacity: 0.8; text-transform: uppercase; }
+                .info-value { font-size: 9px; font-weight: bold; color: ${accentColor}; }
+                @media print { .no-print { display: none; } }
+              </style>
+            </head>
+            <body>
+              <div class="print-container">
+                <div class="card-wrapper">
+                  <div class="header-bar">
+                    <div class="header-title">${headerTitle}</div>
+                    <div class="inst-title">${institutionName}</div>
+                  </div>
+                  <div class="body-content">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120" class="student-photo" />
+                    <div>
+                      <div class="info-label">${labelName}</div>
+                      <div class="info-value">${studentName}</div>
+                      <div class="info-label" style="margin-top: 4px;">${labelNis}</div>
+                      <div style="font-size: 9px; font-weight: bold;">${studentNis}</div>
+                      <div class="info-label" style="margin-top: 4px;">${labelClass}</div>
+                      <div style="font-size: 9px;">${studentClass}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        setTimeout(() => { printWindow.print(); }, 300);
+      }
+    }
   };
 
   return (
@@ -935,7 +879,7 @@ export function StudentCardPrinter({ students, tenantName, subTab }: StudentCard
 
         {/* 1. KARTU PELAJAR PREVIEW AREA */}
         {subTab === 'KARTU' && (
-          <div className="flex flex-col items-center gap-8 w-full max-w-xl py-2">
+          <div id="student-card-print-area" className="flex flex-col items-center gap-8 w-full max-w-xl py-2">
             
             {/* FRONT SIDE CARD (SISI DEPAN) */}
             <div className="flex flex-col items-center gap-1.5 w-full">

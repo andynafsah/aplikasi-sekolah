@@ -948,7 +948,7 @@ export default function Attendance() {
                       <p className="text-xs text-slate-500">Rekap log kehadiran pribadi Anda periode Juli 2026</p>
                     </div>
                     <button 
-                      onClick={() => alert('Cetak Rekap Presensi Mandiri Ustadz / Guru berhasil diunduh (PDF).')}
+                      onClick={() => window.print()}
                       className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
                     >
                       <Download className="h-3.5 w-3.5 text-slate-500" />
@@ -2116,7 +2116,32 @@ export default function Attendance() {
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => alert('Mengekspor denda & bonus lembur payroll absensi ke berkas .xlsx...')}
+                  onClick={() => {
+                    const headers = ['Nama Personil', 'Peran', 'Tepat Waktu', 'Terlambat', 'Alfa', 'Denda', 'Bonus', 'Kalkulasi Bersih'];
+                    const rows = [
+                      { name: 'Ustadz Budi Raharjo, M.Pd.', role: 'GURU', ontime: '21 hari', late: '1 kali', alfa: '0 hari', denda: 15000, bonus: 180000, net: 165000 },
+                      { name: 'Ustazah Laila Fitri, S.Pd.I.', role: 'GURU', ontime: '18 hari', late: '0 kali', alfa: '1 hari', denda: 50000, bonus: 90000, net: 40000 },
+                      { name: 'Slamet Hariadi', role: 'PEGAWAI', ontime: '15 hari', late: '3 kali', alfa: '0 hari', denda: 45000, bonus: 75000, net: 30000 },
+                      { name: 'Muhammad Ahmad Baihaqi', role: 'SANTRI', ontime: '24 hari', late: '1 kali', alfa: '0 hari', denda: 15000, bonus: 0, net: -15000 }
+                    ].map(p => [
+                      `"${p.name}"`,
+                      `"${p.role}"`,
+                      `"${p.ontime}"`,
+                      `"${p.late}"`,
+                      `"${p.alfa}"`,
+                      p.denda,
+                      p.bonus,
+                      p.net
+                    ]);
+                    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', encodedUri);
+                    link.setAttribute('download', `Rekap_Denda_Presensi_${Date.now()}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
                   className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition font-mono flex items-center gap-1"
                 >
                   <Download className="h-4 w-4" /> Export CSV

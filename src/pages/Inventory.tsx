@@ -1590,14 +1590,7 @@ export default function Inventory() {
               <div className="flex gap-2 justify-center">
                 <button
                   onClick={() => {
-                    const printContents = document.getElementById('print-label-area')?.innerHTML;
-                    const originalContents = document.body.innerHTML;
-                    if (printContents) {
-                      document.body.innerHTML = printContents;
-                      window.print();
-                      document.body.innerHTML = originalContents;
-                      window.location.reload();
-                    }
+                    window.print();
                   }}
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >

@@ -192,7 +192,7 @@ export default function ArchiveReportExportModal({
           
           {showPdfPreview ? (
             /* Official Printable PDF Report Layout */
-            <div className="bg-white border border-slate-300 shadow-xl p-8 rounded max-w-3xl mx-auto space-y-6 text-slate-900 font-sans">
+            <div id="printable-archive-report" className="bg-white border border-slate-300 shadow-xl p-8 rounded max-w-3xl mx-auto space-y-6 text-slate-900 font-sans">
               
               {/* Header Kop */}
               <div className="border-b-2 border-slate-900 pb-3 text-center space-y-1">

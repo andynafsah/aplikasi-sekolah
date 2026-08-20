@@ -3212,7 +3212,7 @@ export default function BillingSpp() {
               </button>
             </div>
             
-            <div className="p-8 space-y-6">
+            <div id="printable-receipt" className="p-8 space-y-6">
               
               {/* Kwitansi Header */}
               <div className="text-center border-b border-dashed border-slate-200 pb-5">

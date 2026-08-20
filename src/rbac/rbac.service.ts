@@ -14,9 +14,11 @@ export enum Role {
   WAKIL_KEPALA_SEKOLAH = 'WAKIL_KEPALA_SEKOLAH',
   ADMIN_TU = 'ADMIN_TU',
   BENDAHARA_SEKOLAH = 'BENDAHARA_SEKOLAH',
+  OPERATOR_SEKOLAH = 'OPERATOR_SEKOLAH',
   GURU = 'GURU',
   WALI_KELAS = 'WALI_KELAS',
   PEGAWAI = 'PEGAWAI',
+  SECURITY = 'SECURITY',
   PETUGAS_PPDB = 'PETUGAS_PPDB',
   PETUGAS_PERPUSTAKAAN = 'PETUGAS_PERPUSTAKAAN',
   PETUGAS_INVENTARIS = 'PETUGAS_INVENTARIS',
@@ -75,6 +77,9 @@ export class RbacService {
     if (r === 'TEACHER') return 'GURU';
     if (r === 'STUDENT' || r === 'SISWA') return 'SANTRI';
     if (r === 'PARENT' || r === 'ORANG_TUA') return 'WALI_SANTRI';
+    if (r === 'SATPAM' || r === 'PETUGAS_KEAMANAN' || r === 'SECURITY_GUARD' || r === 'GUARD') return 'SECURITY';
+    if (r === 'TU' || r === 'TATA_USAHA') return 'ADMIN_TU';
+    if (r === 'OPERATOR') return 'OPERATOR_SEKOLAH';
 
     const matched = this.getRoles().find(role => role.code === r);
     return matched ? matched.code : r;
@@ -123,8 +128,9 @@ export class RbacService {
    * Checks if a role has a specific permission
    */
   public hasPermission(role: string, permission: string): boolean {
-    const permissions = this.getPermissionsForRole(role);
-    if (role === 'SUPER_ADMIN') return true;
+    const norm = this.normalizeRole(role);
+    if (norm === 'SUPER_ADMIN') return true;
+    const permissions = this.getPermissionsForRole(norm);
     return permissions.includes(permission);
   }
 

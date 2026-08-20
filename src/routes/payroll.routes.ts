@@ -130,3 +130,36 @@ payrollRoutes.post('/getAuditLogs', (req, res, next) => {
   const role = authUser ? authUser.role : '';
   controller.handle('getAuditLogs', req, res, tenantId, authUser, username, role);
 });
+
+export async function handlePayroll(
+  action: string,
+  req: any,
+  res: any,
+  tenantId: string,
+  authUser: any,
+  username: string,
+  role: string
+): Promise<any> {
+  const payrollActionMap: Record<string, string> = {
+    payrollMasterList: 'getMasters',
+    getPayrollMasters: 'getMasters',
+    savePayrollMaster: 'saveMaster',
+    importPayrollMasters: 'importMasters',
+    getPayrollRuns: 'getRuns',
+    runPayroll: 'calculatePeriod',
+    calculatePayroll: 'calculatePeriod',
+    approvePayroll: 'approvePeriod',
+    payrollLoanList: 'getLoans',
+    submitPayrollLoan: 'submitLoan',
+    approvePayrollLoan: 'approveLoan',
+    payrollKasbonList: 'getKasbons',
+    submitPayrollKasbon: 'submitKasbon',
+    approvePayrollKasbon: 'approveKasbon',
+    payrollAuditLogs: 'getAuditLogs'
+  };
+
+  const resolvedAction = payrollActionMap[action] || action;
+  return controller.handle(resolvedAction, req, res, tenantId, authUser, username, role);
+}
+
+export default payrollRoutes;

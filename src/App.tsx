@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import Login from './pages/Login';
@@ -12,10 +13,43 @@ import FirstRunDatabaseSetup from './pages/FirstRunDatabaseSetup';
 import apiClient from './api/client';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
+import { Menu, Sprout, GraduationCap, CalendarDays, LogOut, User, BookOpen, Loader2 } from 'lucide-react';
+import { PWAInstallerBanner, PWAInstallHeaderButton } from './components/pwa/PWAInstallerBanner';
+
+// Resilient dynamic module importer with auto-retry
+function lazyRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+  retries = 2,
+  interval = 600
+): React.LazyExoticComponent<T> {
+  return lazy(() =>
+    new Promise<{ default: T }>((resolve, reject) => {
+      const attempt = (remainingRetries: number) => {
+        factory()
+          .then(resolve)
+          .catch((error) => {
+            if (remainingRetries <= 0) {
+              const refreshed = sessionStorage.getItem('lazy_import_refreshed');
+              if (!refreshed) {
+                sessionStorage.setItem('lazy_import_refreshed', 'true');
+                window.location.reload();
+                return;
+              }
+              sessionStorage.removeItem('lazy_import_refreshed');
+              reject(error);
+              return;
+            }
+            setTimeout(() => {
+              attempt(remainingRetries - 1);
+            }, interval);
+          });
+      };
+      attempt(retries);
+    })
+  );
+}
+
 import Sivitas from './pages/Sivitas';
-import Akademik from './pages/Akademik';
-import TeacherWorkspace from './pages/TeacherWorkspace';
-import VirtualClassroom from './pages/VirtualClassroom';
 import Keuangan from './pages/Keuangan';
 import Library from './pages/Library';
 import Inventory from './pages/Inventory';
@@ -45,21 +79,16 @@ import Pegawai from './pages/Pegawai';
 import Payroll from './pages/Payroll';
 import BillingSpp from './pages/BillingSpp';
 import Dapodik from './pages/Dapodik';
-import PlotingGuru from './pages/PlotingGuru';
-import AutoLeger from './pages/AutoLeger';
-import EnterpriseCurriculumCommandCenter from './components/EnterpriseCurriculumCommandCenter';
 import UserGuide from './pages/UserGuide';
-import { Menu, Sprout, GraduationCap, CalendarDays, LogOut, User, Bell, BookOpen } from 'lucide-react';
-import { PWAInstallerBanner, PWAInstallHeaderButton } from './components/pwa/PWAInstallerBanner';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
+function PageLoader() {
+  return (
+    <div className="min-h-[300px] flex flex-col items-center justify-center gap-3 p-8 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200">
+      <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      <span className="text-xs font-semibold text-slate-500 font-mono uppercase tracking-wider">Memuat Halaman...</span>
+    </div>
+  );
+}
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   state = { hasError: false, error: null };
@@ -86,7 +115,13 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
               {this.state.error.toString()}
             </pre>
           )}
-          <div className="flex gap-3 justify-center">
+          <div className="flex flex-wrap gap-3 justify-center">
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all shadow-sm cursor-pointer"
+            >
+              Coba Muat Ulang Modul
+            </button>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-all shadow-sm cursor-pointer"
@@ -218,27 +253,13 @@ function AppContent() {
       case 'sivitas':
         return <Sivitas />;
       case 'curriculum-command-center':
-        return <EnterpriseCurriculumCommandCenter />;
-      case 'akademik': {
-        const norm = (activeRole || user?.role || '').toUpperCase().replace(/\s+/g, '_');
-        const studentParentRoles = ['SANTRI', 'SISWA', 'WALI_SANTRI', 'PARENT', 'ORANG_TUA', 'STUDENT'];
-        if (studentParentRoles.includes(norm)) {
-          return <Dashboard />;
-        }
-        return <Akademik />;
-      }
+      case 'akademik':
       case 'auto-leger':
-        return <AutoLeger />;
-      case 'teacher-workspace': {
-        const norm = (activeRole || user?.role || '').toUpperCase().replace(/\s+/g, '_');
-        const teacherRoles = ['GURU', 'GURU_MAPEL', 'WALI_KELAS', 'TEACHER', 'USTADZ', 'SUPER_ADMIN'];
-        if (!teacherRoles.includes(norm)) {
-          return <Dashboard />;
-        }
-        return <TeacherWorkspace />;
-      }
+      case 'teacher-workspace':
       case 'virtual-classroom':
-        return <VirtualClassroom />;
+      case 'ploting-guru':
+      case 'subject-management':
+        return <Dashboard />;
       case 'keuangan':
         return <Keuangan />;
       case 'billing-spp':
@@ -315,10 +336,6 @@ function AppContent() {
         return <Pegawai />;
       case 'dapodik':
         return <Dapodik />;
-      case 'ploting-guru':
-        return <PlotingGuru />;
-      case 'subject-management':
-        return <EnterpriseCurriculumCommandCenter />;
       default:
         return <Dashboard />;
     }
@@ -431,7 +448,9 @@ function AppContent() {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-[#f1f5f9]">
           <div className="max-w-7xl mx-auto animate-fade-in pb-12">
             <ErrorBoundary>
-              {renderView()}
+              <Suspense fallback={<PageLoader />}>
+                {renderView()}
+              </Suspense>
             </ErrorBoundary>
           </div>
         </main>

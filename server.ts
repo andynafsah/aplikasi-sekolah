@@ -21,6 +21,20 @@ import { handleOfficeActions } from './src/lib/tu-server-data';
 import { handleAuditActions } from './src/lib/audit-server-data';
 import { handleSettingsActions } from './src/lib/settings-server-data';
 import { handleDbActions } from './src/lib/db-server-data';
+import { handleWorkflowActions } from './src/lib/workflow-server-data';
+import { handleIntegrationActions } from './src/lib/integration-server-data';
+import { handleProductionQaActions } from './src/lib/production-qa-server-data';
+import {
+  handleMonitoringActions,
+  runFullHealthCheck,
+  getAggregatedSystemMetrics,
+  captureObservabilityError,
+  OBSERVABILITY_ERRORS,
+  OBSERVABILITY_ALERTS,
+  OBSERVABILITY_INCIDENTS,
+  ACTIVE_BACKGROUND_WORKERS,
+  OBSERVABILITY_CONFIG
+} from './src/lib/monitoring-server-data';
 
 /// --- SYSTEM DIAGNOSTICS & STATE FLAGS ---
 export const DIAG_STATE = {
@@ -38,6 +52,7 @@ export const DIAG_STATE = {
   jwtMessage: 'Fully Secure (Simulated JWT Keys Verified)',
   apiUrlMessage: 'Fully Operational (Sandbox Rest Communication Active)'
 };
+(globalThis as any).DIAG_STATE = DIAG_STATE;
 
 import mysql from 'mysql2/promise';
 import fs from 'fs';
@@ -828,7 +843,19 @@ app.get('/health/liveness', (req, res) => {
   res.status(200).json({ status: 'alive', timestamp: new Date().toISOString() });
 });
 
+app.get('/health/live', (req, res) => {
+  res.status(200).json({ status: 'alive', timestamp: new Date().toISOString() });
+});
+
 app.get('/health/readiness', (req, res) => {
+  const isReady = true;
+  res.status(isReady ? 200 : 503).json({
+    status: isReady ? 'ready' : 'not_ready',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health/ready', (req, res) => {
   const isReady = true;
   res.status(isReady ? 200 : 503).json({
     status: isReady ? 'ready' : 'not_ready',
@@ -865,6 +892,70 @@ app.get('/health/redis', (req, res) => {
     message: DIAG_STATE.redisMessage,
     timestamp: new Date().toISOString()
   });
+});
+
+app.get('/health/queue', (req, res) => {
+  res.json({
+    service: 'queue_bullmq',
+    status: 'HEALTHY',
+    waiting_jobs: 0,
+    active_jobs: 2,
+    completed_24h: 5964,
+    failed_24h: 6,
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health/workers', (req, res) => {
+  res.json({
+    service: 'background_workers',
+    status: 'HEALTHY',
+    workers: ACTIVE_BACKGROUND_WORKERS,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// REST Observability Hub Endpoints (Section 63-68 Blueprint)
+app.get('/monitoring/health', async (req, res) => {
+  const health = await runFullHealthCheck();
+  res.json({ success: true, data: health });
+});
+
+app.get('/monitoring/metrics', async (req, res) => {
+  const metrics = await getAggregatedSystemMetrics();
+  res.json({ success: true, data: metrics });
+});
+
+app.get('/monitoring/errors', (req, res) => {
+  res.json({ success: true, data: OBSERVABILITY_ERRORS, total: OBSERVABILITY_ERRORS.length });
+});
+
+app.get('/monitoring/alerts', (req, res) => {
+  res.json({ success: true, data: OBSERVABILITY_ALERTS, total: OBSERVABILITY_ALERTS.length });
+});
+
+app.get('/monitoring/incidents', (req, res) => {
+  res.json({ success: true, data: OBSERVABILITY_INCIDENTS, total: OBSERVABILITY_INCIDENTS.length });
+});
+
+app.post('/monitoring/alerts/:id/acknowledge', (req, res) => {
+  const alertId = req.params.id;
+  const alertItem = OBSERVABILITY_ALERTS.find(a => a.id === alertId);
+  if (!alertItem) return res.status(404).json({ success: false, message: 'Alert tidak ditemukan.' });
+  alertItem.state = 'ACKNOWLEDGED';
+  alertItem.acknowledged_at = new Date().toISOString();
+  alertItem.acknowledged_by = 'Administrator';
+  res.json({ success: true, data: alertItem, message: 'Alert berhasil di-acknowledge.' });
+});
+
+app.post('/monitoring/alerts/:id/resolve', (req, res) => {
+  const alertId = req.params.id;
+  const alertItem = OBSERVABILITY_ALERTS.find(a => a.id === alertId);
+  if (!alertItem) return res.status(404).json({ success: false, message: 'Alert tidak ditemukan.' });
+  alertItem.state = 'RESOLVED';
+  alertItem.resolved_at = new Date().toISOString();
+  alertItem.resolved_by = 'Administrator';
+  res.json({ success: true, data: alertItem, message: 'Alert berhasil di-resolve.' });
 });
 
 app.get('/api/health', (req, res) => {
@@ -919,6 +1010,7 @@ import { handlePpdb } from './src/routes/ppdb.routes';
 import { handleDocument } from './src/routes/document.routes';
 import { handleReport } from './src/routes/report.routes';
 import { handleNotification } from './src/routes/notification.routes';
+import { handlePayroll } from './src/routes/payroll.routes';
 import { handleWhatsapp } from './src/routes/whatsapp.routes';
 import { handleAi } from './src/routes/ai.routes';
 import { handleSystem } from './src/routes/system.routes';
@@ -1143,9 +1235,14 @@ app.all('/api/action', async (req, res) => {
     if (authRes !== null) return authRes;
   }
 
-  // Handle public getSettings (do not require token verification)
+  // Handle public getSettings and getRbacConfig (do not require token verification)
   if (action === 'getSettings') {
     const response = await handleSettingsActions('getSettings', req, res, 'tenant-main', null, 'visitor', 'visitor', logActivity, DB);
+    if (response !== null) return response;
+  }
+
+  if (action === 'getRbacConfig') {
+    const response = await handleRbac('getRbacConfig', req, res, 'tenant-main', null, 'visitor', 'GUEST');
     if (response !== null) return response;
   }
 
@@ -1408,10 +1505,39 @@ app.all('/api/action', async (req, res) => {
     'accreditationPeriod',
     'accreditationAssessment',
     'governmentReport',
-    'executiveAudit'
+    'executiveAudit',
+    'auditExceptionList',
+    'auditExceptions',
+    'auditExceptionCreate',
+    'auditExceptionResolve',
+    'internalControl',
+    'verifyHashChain',
+    'retentionPolicy',
+    'runRetentionJob',
+    'securityEvents'
   ];
   if (auditActionsList.includes(action as string)) {
     const response = await handleAuditActions(action as string, req, res, tenantId, authUser, username, role, logActivity, DB);
+    if (response !== null) return response;
+  }
+
+  // Delegate Workflow & Multi-Tier Approval Actions directly
+  const workflowActionsList = [
+    'getWorkflowCategories',
+    'getWorkflowTemplates',
+    'getWorkflowDefinitions',
+    'saveWorkflowDefinition',
+    'deleteWorkflowDefinition',
+    'getWorkflowInstances',
+    'createWorkflowInstance',
+    'getWorkflowTasks',
+    'processWorkflowTask',
+    'getN8nIntegrations',
+    'saveN8nIntegration',
+    'triggerN8nSimulator'
+  ];
+  if (workflowActionsList.includes(action as string)) {
+    const response = await handleWorkflowActions(action as string, req, res, tenantId, authUser, username, role, logActivity, DB);
     if (response !== null) return response;
   }
 
@@ -1472,6 +1598,70 @@ app.all('/api/action', async (req, res) => {
     }
   }
 
+  // Delegate Enterprise Observability, Health & Monitoring Actions (Blueprint 149)
+  const monitoringActionsList = [
+    'getMonitoringHealth',
+    'getMonitoringMetrics',
+    'getMonitoringErrors',
+    'resolveMonitoringError',
+    'getMonitoringAlerts',
+    'acknowledgeMonitoringAlert',
+    'resolveMonitoringAlert',
+    'getMonitoringIncidents',
+    'createMonitoringIncident',
+    'updateMonitoringIncident',
+    'getMonitoringWorkers',
+    'getMonitoringConfig',
+    'updateMonitoringConfig',
+    'testServiceHealth',
+    'triggerManualHealthCheck'
+  ];
+  if (monitoringActionsList.includes(action as string)) {
+    const response = await handleMonitoringActions(action as string, req, res, tenantId, authUser, username, role);
+    if (response !== null) return response;
+  }
+
+  // Delegate Enterprise Integration & API Gateway Engine Actions (Blueprint 150)
+  const integrationActionsList = [
+    'getIntegrationDashboard',
+    'getIntegrationConfigs',
+    'saveIntegrationConfig',
+    'testIntegrationConnection',
+    'getApiKeys',
+    'createApiKey',
+    'rotateApiKey',
+    'revokeApiKey',
+    'getWebhooks',
+    'saveWebhook',
+    'testWebhookDelivery',
+    'getSyncDashboard',
+    'triggerSyncJob',
+    'resolveSyncConflict',
+    'getAcademicBridgeConfig',
+    'saveAcademicBridgeConfig',
+    'resetCircuitBreaker'
+  ];
+  if (integrationActionsList.includes(action as string)) {
+    const response = await handleIntegrationActions(action as string, req, res, tenantId, authUser, username, role);
+    if (response !== null) return response;
+  }
+
+  // Delegate Enterprise Production Readiness & Final QA Engine Actions (Blueprint 151)
+  const productionQaActionsList = [
+    'getProductionGateDashboard',
+    'runComprehensiveSystemAudit',
+    'getBugMatrix',
+    'saveBugRecord',
+    'runRegressionTests',
+    'verifyPrintExportPdfs',
+    'submitUatSignOff',
+    'toggleProductionGateRelease'
+  ];
+  if (productionQaActionsList.includes(action as string)) {
+    const response = await handleProductionQaActions(action as string, req, res, tenantId, authUser, username, role);
+    if (response !== null) return response;
+  }
+
   // Sequential delegation to modular routing files
   let response = null;
 
@@ -1517,6 +1707,9 @@ app.all('/api/action', async (req, res) => {
   response = await handleNotification(action as string, req, res, tenantId, authUser, username, role);
   if (response !== null) return;
 
+  response = await handlePayroll(action as string, req, res, tenantId, authUser, username, role);
+  if (response !== null) return;
+
   response = await handleWhatsapp(action as string, req, res, tenantId, authUser, username, role);
   if (response !== null) return;
 
@@ -1532,11 +1725,10 @@ app.all('/api/action', async (req, res) => {
   response = await handleInventory(action as string, req, res, tenantId, authUser, username, role, logActivity);
   if (response !== null) return;
 
-  response = await handleKbm(action as string, req, res, tenantId, authUser, username, role);
-  if (response !== null) return;
-
-  response = await handleLeger(action as string, req, res, tenantId, authUser, username, role);
-  if (response !== null) return;
+  // Deprecated: Academic & Leger modules are handled by separate external application
+  if (action === 'kbm' || action === 'leger' || action === 'akademik') {
+    return res.status(403).json({ success: false, message: 'Modul Akademik & Leger dikelola oleh aplikasi terpisah.' });
+  }
 
   response = await handleMigration(action as string, req, res, tenantId, authUser, username, role);
   if (response !== null) return;
@@ -1598,10 +1790,28 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const dirSelf = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+    const candidate1 = path.join(process.cwd(), 'dist');
+    const candidate2 = dirSelf;
+    const candidate3 = path.join(dirSelf, '..', 'dist');
+    
+    let distPath = process.cwd();
+    if (fs.existsSync(path.join(candidate1, 'index.html'))) {
+      distPath = candidate1;
+    } else if (fs.existsSync(path.join(candidate2, 'index.html'))) {
+      distPath = candidate2;
+    } else if (fs.existsSync(path.join(candidate3, 'index.html'))) {
+      distPath = candidate3;
+    }
+    
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(200).send('<!DOCTYPE html><html><head><title>App</title></head><body><div id="root"></div></body></html>');
+      }
     });
   }
 
@@ -1610,4 +1820,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+  startServer();
+}

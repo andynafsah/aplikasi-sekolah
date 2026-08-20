@@ -44,6 +44,76 @@ reportRoutes.post('/attendance', async (req, res) => {
   await controller.handle('getReportAttendance', req, res, tenantId, authUser, username, role);
 });
 
+// GET and POST /administration
+reportRoutes.get('/administration', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportAdministration', req, res, tenantId, authUser, username, role);
+});
+reportRoutes.post('/administration', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportAdministration', req, res, tenantId, authUser, username, role);
+});
+
+// GET and POST /document
+reportRoutes.get('/document', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportDocument', req, res, tenantId, authUser, username, role);
+});
+reportRoutes.post('/document', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportDocument', req, res, tenantId, authUser, username, role);
+});
+
+// GET and POST /archive
+reportRoutes.get('/archive', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportArchive', req, res, tenantId, authUser, username, role);
+});
+reportRoutes.post('/archive', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportArchive', req, res, tenantId, authUser, username, role);
+});
+
+// GET and POST /inventory
+reportRoutes.get('/inventory', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportInventory', req, res, tenantId, authUser, username, role);
+});
+reportRoutes.post('/inventory', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportInventory', req, res, tenantId, authUser, username, role);
+});
+
+// GET and POST /finance
+reportRoutes.get('/finance', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportFinance', req, res, tenantId, authUser, username, role);
+});
+reportRoutes.post('/finance', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportFinance', req, res, tenantId, authUser, username, role);
+});
+
+// GET and POST /audit
+reportRoutes.get('/audit', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportAudit', req, res, tenantId, authUser, username, role);
+});
+reportRoutes.post('/audit', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportAudit', req, res, tenantId, authUser, username, role);
+});
+
+// GET and POST /executive
+reportRoutes.get('/executive', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportExecutive', req, res, tenantId, authUser, username, role);
+});
+reportRoutes.post('/executive', async (req, res) => {
+  const { tenantId, authUser, username, role } = extractAuthInfo(req);
+  await controller.handle('getReportExecutive', req, res, tenantId, authUser, username, role);
+});
+
 // GET and POST /download
 reportRoutes.get('/download', async (req, res) => {
   const { tenantId, authUser, username, role } = extractAuthInfo(req);

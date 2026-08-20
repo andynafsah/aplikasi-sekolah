@@ -82,7 +82,7 @@ export class InventoryController {
           return res.json({ success: true, data: movements });
         }
 
-        // --- CATEGORIES & WAREHOUSES ---
+        // --- CATEGORIES & WAREHOUSES & UNITS ---
         case 'getInventoryCategoriesList': {
           const cats = InventoryRepository.getCategories(tenantId);
           return res.json({ success: true, data: cats });
@@ -94,6 +94,40 @@ export class InventoryController {
           return res.json({ success: true, data: created });
         }
 
+        case 'updateInventoryCategory': {
+          const id = req.body.id || req.query.id;
+          const updated = InventoryRepository.updateCategory(tenantId, id, req.body);
+          return res.json({ success: true, data: updated });
+        }
+
+        case 'deleteInventoryCategory': {
+          const id = req.body.id || req.query.id;
+          InventoryRepository.deleteCategory(tenantId, id);
+          return res.json({ success: true, message: 'Kategori berhasil dihapus' });
+        }
+
+        case 'getInventoryUnitsList': {
+          const units = InventoryRepository.getUnits(tenantId);
+          return res.json({ success: true, data: units });
+        }
+
+        case 'createInventoryUnit': {
+          const created = InventoryRepository.createUnit(tenantId, req.body);
+          return res.json({ success: true, data: created });
+        }
+
+        case 'updateInventoryUnit': {
+          const id = req.body.id || req.query.id;
+          const updated = InventoryRepository.updateUnit(tenantId, id, req.body);
+          return res.json({ success: true, data: updated });
+        }
+
+        case 'deleteInventoryUnit': {
+          const id = req.body.id || req.query.id;
+          InventoryRepository.deleteUnit(tenantId, id);
+          return res.json({ success: true, message: 'Satuan berhasil dihapus' });
+        }
+
         case 'getInventoryWarehousesList': {
           const whs = InventoryRepository.getWarehouses(tenantId);
           return res.json({ success: true, data: whs });
@@ -103,6 +137,18 @@ export class InventoryController {
           const created = InventoryRepository.createWarehouse(tenantId, req.body);
           logActivity(tenantId, userId, username, role, 'CREATE', 'Asset & Inventory', `Membuat gudang baru: ${created.name}`);
           return res.json({ success: true, data: created });
+        }
+
+        case 'updateInventoryWarehouse': {
+          const id = req.body.id || req.query.id;
+          const updated = InventoryRepository.updateWarehouse(tenantId, id, req.body);
+          return res.json({ success: true, data: updated });
+        }
+
+        case 'deleteInventoryWarehouse': {
+          const id = req.body.id || req.query.id;
+          InventoryRepository.deleteWarehouse(tenantId, id);
+          return res.json({ success: true, message: 'Gudang berhasil dihapus' });
         }
 
         case 'getInventorySuppliersList': {
@@ -254,6 +300,60 @@ export class InventoryController {
           const created = InventoryRepository.createDisposal(tenantId, req.body, userId);
           logActivity(tenantId, userId, username, role, 'DISPOSAL', 'Fixed Asset', `Penghapusan/Disposal aset ID: ${created.asset_id}`);
           return res.json({ success: true, data: created });
+        }
+
+        case 'getFixedAssetDisposalsList': {
+          const list = InventoryRepository.getDisposals(tenantId);
+          return res.json({ success: true, data: list });
+        }
+
+        case 'getAssetMovementsList': {
+          const list = InventoryRepository.getAssetMovements(tenantId);
+          return res.json({ success: true, data: list });
+        }
+
+        case 'createAssetTransfer': {
+          const created = InventoryRepository.createAssetTransfer(tenantId, req.body, userId);
+          logActivity(tenantId, userId, username, role, 'TRANSFER', 'Fixed Asset', `Mutasi/Transfer lokasi aset ID: ${created.asset_id} ke ${created.to_location}`);
+          return res.json({ success: true, data: created });
+        }
+
+        case 'scanCode': {
+          const code = req.body.code || req.query.code;
+          const result = InventoryRepository.scanCode(tenantId, code);
+          if (!result) return res.status(404).json({ success: false, message: 'Kode QR/Barcode tidak terdaftar dalam sistem' });
+          return res.json({ success: true, data: result });
+        }
+
+        case 'getItemStockCard': {
+          const itemId = req.body.itemId || req.query.itemId;
+          const card = InventoryRepository.getItemStockCard(tenantId, itemId);
+          if (!card) return res.status(404).json({ success: false, message: 'Barang tidak ditemukan' });
+          return res.json({ success: true, data: card });
+        }
+
+        case 'getOpnameSessionsList': {
+          const list = InventoryRepository.getOpnameSessions(tenantId);
+          return res.json({ success: true, data: list });
+        }
+
+        case 'createOpnameSession': {
+          const created = InventoryRepository.createOpnameSession(tenantId, req.body, userId, username);
+          logActivity(tenantId, userId, username, role, 'OPNAME_CREATE', 'Asset & Inventory', `Membuat sesi stock opname: ${created.title}`);
+          return res.json({ success: true, data: created });
+        }
+
+        case 'updateOpnameSessionItem': {
+          const { sessionId, itemId, actualQty, notes } = req.body;
+          const updated = InventoryRepository.updateOpnameSessionItem(tenantId, sessionId, itemId, actualQty, notes);
+          return res.json({ success: true, data: updated });
+        }
+
+        case 'approveOpnameSession': {
+          const { sessionId } = req.body;
+          const approved = InventoryRepository.approveOpnameSession(tenantId, sessionId, userId, username, InventoryEngine.handleStockAdjustment);
+          logActivity(tenantId, userId, username, role, 'OPNAME_APPROVE', 'Asset & Inventory', `Menyetujui sesi stock opname ID: ${sessionId}`);
+          return res.json({ success: true, data: approved });
         }
 
         // --- EXPORTS & IMPORTS ---

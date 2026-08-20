@@ -28,12 +28,27 @@ import {
   Award,
   AlertTriangle,
   BookOpen,
-  DollarSign
+  DollarSign,
+  FileCheck2,
+  Archive,
+  Boxes,
+  Activity,
+  BarChart3
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 
-type ReportModule = 'student' | 'employee' | 'attendance';
+export type ReportModule = 
+  | 'student' 
+  | 'employee' 
+  | 'attendance' 
+  | 'administration' 
+  | 'document' 
+  | 'archive' 
+  | 'inventory' 
+  | 'finance' 
+  | 'audit' 
+  | 'executive';
 
 interface EnterpriseReportPrintEngineProps {
   initialModule?: ReportModule;
@@ -146,6 +161,35 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
     website: 'www.darulhijrah.sch.id'
   };
 
+  // Safe helper arrays for list iteration
+  const studentList = Array.isArray(reportData?.data)
+    ? reportData.data
+    : Array.isArray(reportData?.data?.students)
+    ? reportData.data.students
+    : Array.isArray(reportData?.data?.items)
+    ? reportData.data.items
+    : Array.isArray(reportData?.data?.list)
+    ? reportData.data.list
+    : [];
+
+  const employeeList = Array.isArray(reportData?.data)
+    ? reportData.data
+    : Array.isArray(reportData?.data?.employees)
+    ? reportData.data.employees
+    : Array.isArray(reportData?.data?.items)
+    ? reportData.data.items
+    : Array.isArray(reportData?.data?.list)
+    ? reportData.data.list
+    : [];
+
+  const breakdownList = Array.isArray(reportData?.data?.breakdown)
+    ? reportData.data.breakdown
+    : Array.isArray(reportData?.data)
+    ? reportData.data
+    : Array.isArray(reportData?.data?.items)
+    ? reportData.data.items
+    : [];
+
   return (
     <div className="space-y-6">
       {/* Print CSS Styles */}
@@ -187,39 +231,116 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
           </div>
 
           {/* Module Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+          <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-1.5 rounded-lg border border-slate-200">
             <button
               onClick={() => setActiveModule('student')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                 activeModule === 'student'
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
               }`}
             >
-              <GraduationCap className="w-4 h-4" />
-              Laporan Siswa
+              <GraduationCap className="w-3.5 h-3.5" />
+              Siswa
             </button>
             <button
               onClick={() => setActiveModule('employee')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                 activeModule === 'employee'
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
               }`}
             >
-              <Users className="w-4 h-4" />
-              Laporan Pegawai
+              <Users className="w-3.5 h-3.5" />
+              Pegawai
             </button>
             <button
               onClick={() => setActiveModule('attendance')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                 activeModule === 'attendance'
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
               }`}
             >
-              <Clock className="w-4 h-4" />
-              Laporan Absensi
+              <Clock className="w-3.5 h-3.5" />
+              Absensi
+            </button>
+            <button
+              onClick={() => setActiveModule('administration')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeModule === 'administration'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <FileCheck2 className="w-3.5 h-3.5" />
+              Persuratan
+            </button>
+            <button
+              onClick={() => setActiveModule('document')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeModule === 'document'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Dokumen
+            </button>
+            <button
+              onClick={() => setActiveModule('archive')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeModule === 'archive'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <Archive className="w-3.5 h-3.5" />
+              Arsip
+            </button>
+            <button
+              onClick={() => setActiveModule('inventory')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeModule === 'inventory'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <Boxes className="w-3.5 h-3.5" />
+              Inventaris
+            </button>
+            <button
+              onClick={() => setActiveModule('finance')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeModule === 'finance'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              Keuangan
+            </button>
+            <button
+              onClick={() => setActiveModule('audit')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeModule === 'audit'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              Audit
+            </button>
+            <button
+              onClick={() => setActiveModule('executive')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                activeModule === 'executive'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              Eksekutif KPI
             </button>
           </div>
         </div>
@@ -425,6 +546,13 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
               {activeModule === 'student' && 'LAPORAN DATA INDUK & RIWAYAT LENGKAP SISWA / SANTRI'}
               {activeModule === 'employee' && 'LAPORAN DATA INDUK & RIWAYAT INTEGRATED PEGAWAI / GURU'}
               {activeModule === 'attendance' && 'LAPORAN REKAPITULASI PRESENSI & KEHADIRAN TERPADU'}
+              {activeModule === 'administration' && 'LAPORAN TATA USAHA & PERSURATAN RESMI'}
+              {activeModule === 'document' && 'LAPORAN REKAPITULASI DOKUMEN & LEGALITAS'}
+              {activeModule === 'archive' && 'LAPORAN ARSIP DIGITAL & RETENSI DOKUMEN'}
+              {activeModule === 'inventory' && 'LAPORAN LOGISTIK, INVENTARIS & ASET LEMBAGA'}
+              {activeModule === 'finance' && 'LAPORAN KEUANGAN, BKU & REKONSILIASI KAS BANK'}
+              {activeModule === 'audit' && 'LAPORAN AUDIT TRAIL & KEPATUHAN AKTIVITAS SISTEM'}
+              {activeModule === 'executive' && 'LAPORAN EXECUTIVE COCKPIT & HEALTH CHECK INDIKATOR'}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
               Unit: {unitFilter} | Kelas: {kelasFilter} | Periode: {semesterFilter} {tahunAjaranFilter}
@@ -453,17 +581,22 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
             {/* 1. STUDENT REPORT */}
             {activeModule === 'student' && (
               <div className="space-y-8">
-                {reportData.data?.map((st: any, idx: number) => {
-                  const induk = st?.dataInduk || {};
-                  const ortu = st?.dataOrangTua || {};
-                  const ayah = ortu?.ayah || {};
-                  const ibu = ortu?.ibu || {};
-                  const wali = st?.dataWali || {};
-                  const pend = st?.riwayatPendidikan || {};
-                  const tahfidz = st?.riwayatTahfidz || {};
-                  const abs = st?.riwayatAbsensi?.rekap || {};
-                  const prestasi = st?.riwayatPrestasi || [];
-                  const pelanggaran = st?.riwayatPelanggaran || [];
+                {studentList.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
+                    Belum ada data siswa untuk filter terpilih.
+                  </div>
+                ) : (
+                  studentList.map((st: any, idx: number) => {
+                    const induk = st?.dataInduk || st || {};
+                    const ortu = st?.dataOrangTua || {};
+                    const ayah = ortu?.ayah || {};
+                    const ibu = ortu?.ibu || {};
+                    const wali = st?.dataWali || {};
+                    const pend = st?.riwayatPendidikan || {};
+                    const tahfidz = st?.riwayatTahfidz || {};
+                    const abs = st?.riwayatAbsensi?.rekap || {};
+                    const prestasi = Array.isArray(st?.riwayatPrestasi) ? st.riwayatPrestasi : [];
+                    const pelanggaran = Array.isArray(st?.riwayatPelanggaran) ? st.riwayatPelanggaran : [];
 
                   return (
                   <div key={induk.id || idx} className="border border-slate-200 rounded-lg p-6 space-y-6">
@@ -599,18 +732,23 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
 
                   </div>
                 );
-                })}
+                }))}
               </div>
             )}
 
             {/* 2. EMPLOYEE REPORT */}
             {activeModule === 'employee' && (
               <div className="space-y-8">
-                {reportData.data?.map((emp: any, idx: number) => {
-                  const induk = emp?.dataInduk || {};
-                  const jab = emp?.jabatan || {};
-                  const plotting = emp?.plottingKelas || [];
-                  const mengajar = emp?.riwayatMengajar || [];
+                {employeeList.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
+                    Belum ada data pegawai / guru untuk filter terpilih.
+                  </div>
+                ) : (
+                  employeeList.map((emp: any, idx: number) => {
+                    const induk = emp?.dataInduk || emp || {};
+                    const jab = emp?.jabatan || {};
+                    const plotting = Array.isArray(emp?.plottingKelas) ? emp.plottingKelas : [];
+                    const mengajar = Array.isArray(emp?.riwayatMengajar) ? emp.riwayatMengajar : [];
 
                   return (
                   <div key={induk.id || idx} className="border border-slate-200 rounded-lg p-6 space-y-6">
@@ -690,7 +828,7 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
 
                   </div>
                 );
-                })}
+                }))}
               </div>
             )}
 
@@ -746,18 +884,85 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                       </tr>
                     </thead>
                     <tbody>
-                      {reportData.data.breakdown?.map((bd: any, bidx: number) => (
-                        <tr key={bidx} className="border-b last:border-0 hover:bg-slate-50">
-                          <td className="p-2.5 font-bold text-slate-800">{bd.groupName}</td>
-                          <td className="p-2.5 text-center font-semibold text-emerald-700">{bd.hadir}</td>
-                          <td className="p-2.5 text-center text-blue-700">{bd.izin}</td>
-                          <td className="p-2.5 text-center text-indigo-700">{bd.sakit}</td>
-                          <td className="p-2.5 text-center text-rose-700 font-bold">{bd.alfa}</td>
-                          <td className="p-2.5 text-center text-amber-700">{bd.terlambat}</td>
-                          <td className="p-2.5 text-center font-mono">{bd.total}</td>
-                          <td className="p-2.5 text-center">
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full text-[11px]">
-                              {bd.persentaseKehadiran}%
+                      {breakdownList.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-4 text-center text-slate-400">
+                            Tidak ada rincian rekapitulasi presensi.
+                          </td>
+                        </tr>
+                      ) : (
+                        breakdownList.map((bd: any, bidx: number) => (
+                          <tr key={bidx} className="border-b last:border-0 hover:bg-slate-50">
+                            <td className="p-2.5 font-bold text-slate-800">{bd.groupName || bd.name || bd.title || '-'}</td>
+                            <td className="p-2.5 text-center font-semibold text-emerald-700">{bd.hadir ?? 0}</td>
+                            <td className="p-2.5 text-center text-blue-700">{bd.izin ?? 0}</td>
+                            <td className="p-2.5 text-center text-indigo-700">{bd.sakit ?? 0}</td>
+                            <td className="p-2.5 text-center text-rose-700 font-bold">{bd.alfa ?? 0}</td>
+                            <td className="p-2.5 text-center text-amber-700">{bd.terlambat ?? 0}</td>
+                            <td className="p-2.5 text-center font-mono">{bd.total ?? 0}</td>
+                            <td className="p-2.5 text-center">
+                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full text-[11px]">
+                                {bd.persentaseKehadiran ?? 100}%
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* 4. ADMINISTRATION & LETTERS REPORT */}
+            {activeModule === 'administration' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Total Persuratan</span>
+                    <p className="text-xl font-bold text-slate-800 mt-1">{reportData.data?.summary?.totalSurat || 0}</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-blue-700 uppercase">Surat Masuk</span>
+                    <p className="text-xl font-bold text-blue-900 mt-1">{reportData.data?.summary?.totalMasuk || 0}</p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase">Surat Keluar</span>
+                    <p className="text-xl font-bold text-emerald-900 mt-1">{reportData.data?.summary?.totalKeluar || 0}</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-purple-700 uppercase">SK & Surat Tugas</span>
+                    <p className="text-xl font-bold text-purple-900 mt-1">{(reportData.data?.summary?.totalSK || 0) + (reportData.data?.summary?.totalTugas || 0)}</p>
+                  </div>
+                </div>
+
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="p-3 border-b">No. Surat</th>
+                        <th className="p-3 border-b">Tipe</th>
+                        <th className="p-3 border-b">Pengirim / Penerima</th>
+                        <th className="p-3 border-b">Perihal</th>
+                        <th className="p-3 border-b">Tanggal</th>
+                        <th className="p-3 border-b text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(reportData.data?.records || []).map((r: any, idx: number) => (
+                        <tr key={idx} className="border-b last:border-0 hover:bg-slate-50">
+                          <td className="p-3 font-mono font-medium">{r.nomorSurat}</td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 bg-slate-100 font-semibold text-slate-700 rounded text-[10px]">
+                              {r.tipe}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-700">{r.pengirimAtauPenerima}</td>
+                          <td className="p-3 font-medium text-slate-800">{r.perihal}</td>
+                          <td className="p-3 text-slate-600">{r.tanggal}</td>
+                          <td className="p-3 text-center">
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-semibold rounded text-[10px]">
+                              {r.status}
                             </span>
                           </td>
                         </tr>
@@ -765,7 +970,386 @@ export default function EnterpriseReportPrintEngine({ initialModule = 'student' 
                     </tbody>
                   </table>
                 </div>
+              </div>
+            )}
 
+            {/* 5. DOCUMENT REPORT */}
+            {activeModule === 'document' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Total Dokumen</span>
+                    <p className="text-xl font-bold text-slate-800 mt-1">{reportData.data?.summary?.totalDokumen || 0}</p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase">Dokumen Aktif/Sah</span>
+                    <p className="text-xl font-bold text-emerald-900 mt-1">{reportData.data?.summary?.statusAktif || 0}</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-blue-700 uppercase">Kategori Dokumen</span>
+                    <p className="text-xl font-bold text-blue-900 mt-1">{reportData.data?.summary?.totalKategori || 0}</p>
+                  </div>
+                </div>
+
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="p-3 border-b">Judul Dokumen</th>
+                        <th className="p-3 border-b">Kategori</th>
+                        <th className="p-3 border-b">Tipe File</th>
+                        <th className="p-3 border-b">Ukuran</th>
+                        <th className="p-3 border-b">Tanggal Unggah</th>
+                        <th className="p-3 border-b text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(reportData.data?.records || []).map((r: any, idx: number) => (
+                        <tr key={idx} className="border-b last:border-0 hover:bg-slate-50">
+                          <td className="p-3 font-semibold text-slate-800">{r.judul}</td>
+                          <td className="p-3"><span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-medium">{r.kategori}</span></td>
+                          <td className="p-3 text-slate-600 uppercase">{r.tipe}</td>
+                          <td className="p-3 font-mono text-slate-600">{r.ukuranMb} MB</td>
+                          <td className="p-3 text-slate-600">{r.tanggalUnggah}</td>
+                          <td className="p-3 text-center"><span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]">{r.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* 6. ARCHIVE REPORT */}
+            {activeModule === 'archive' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Total Berkas Arsip</span>
+                    <p className="text-xl font-bold text-slate-800 mt-1">{reportData.data?.summary?.totalArsip || 0}</p>
+                  </div>
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-rose-700 uppercase">Legal Hold</span>
+                    <p className="text-xl font-bold text-rose-900 mt-1">{reportData.data?.summary?.legalHoldCount || 0}</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-purple-700 uppercase">Retensi Permanen</span>
+                    <p className="text-xl font-bold text-purple-900 mt-1">{reportData.data?.summary?.retensiPermanen || 0}</p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase">Klasifikasi</span>
+                    <p className="text-xl font-bold text-emerald-900 mt-1">{reportData.data?.summary?.kategoriUnik || 0}</p>
+                  </div>
+                </div>
+
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="p-3 border-b">Kode Arsip</th>
+                        <th className="p-3 border-b">Nama Berkas Arsip</th>
+                        <th className="p-3 border-b">Kategori</th>
+                        <th className="p-3 border-b">Tahun</th>
+                        <th className="p-3 border-b">Masa Retensi</th>
+                        <th className="p-3 border-b">Lokasi Fisik</th>
+                        <th className="p-3 border-b text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(reportData.data?.records || []).map((r: any, idx: number) => (
+                        <tr key={idx} className="border-b last:border-0 hover:bg-slate-50">
+                          <td className="p-3 font-mono font-medium">{r.kode}</td>
+                          <td className="p-3 font-medium text-slate-800">{r.nama}</td>
+                          <td className="p-3"><span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-semibold">{r.kategori}</span></td>
+                          <td className="p-3 text-slate-600">{r.tahun}</td>
+                          <td className="p-3 font-medium text-slate-700">{r.masaRetensi}</td>
+                          <td className="p-3 text-slate-600">{r.lokasiFisik}</td>
+                          <td className="p-3 text-center">
+                            <span className={`px-2 py-0.5 rounded font-semibold text-[10px] ${r.legalHold ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                              {r.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* 7. INVENTORY & ASSET REPORT */}
+            {activeModule === 'inventory' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Item Logistik</span>
+                    <p className="text-xl font-bold text-slate-800 mt-1">{reportData.data?.summary?.totalItemLogistik || 0}</p>
+                  </div>
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-rose-700 uppercase">Stok Menipis</span>
+                    <p className="text-xl font-bold text-rose-900 mt-1">{reportData.data?.summary?.lowStockCount || 0}</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-blue-700 uppercase">Total Aset Fisik</span>
+                    <p className="text-xl font-bold text-blue-900 mt-1">{reportData.data?.summary?.totalAset || 0}</p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase">Valuasi Aset</span>
+                    <p className="text-xl font-bold text-emerald-900 mt-1">Rp {(reportData.data?.summary?.totalValuasiAset || 0).toLocaleString('id-ID')}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase">Daftar Barang & Stok Logistik</h4>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-100 text-slate-700">
+                        <tr>
+                          <th className="p-2.5 border-b">Kode</th>
+                          <th className="p-2.5 border-b">Nama Barang</th>
+                          <th className="p-2.5 border-b">Kategori</th>
+                          <th className="p-2.5 border-b text-center">Stok</th>
+                          <th className="p-2.5 border-b text-center">Min Stok</th>
+                          <th className="p-2.5 border-b">Satuan</th>
+                          <th className="p-2.5 border-b">Lokasi</th>
+                          <th className="p-2.5 border-b text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(reportData.data?.items || []).map((i: any, idx: number) => (
+                          <tr key={idx} className="border-b last:border-0 hover:bg-slate-50">
+                            <td className="p-2.5 font-mono">{i.kode}</td>
+                            <td className="p-2.5 font-medium text-slate-800">{i.nama}</td>
+                            <td className="p-2.5 text-slate-600">{i.kategori}</td>
+                            <td className="p-2.5 text-center font-bold">{i.stok}</td>
+                            <td className="p-2.5 text-center text-slate-500">{i.minStok}</td>
+                            <td className="p-2.5 text-slate-600">{i.satuan}</td>
+                            <td className="p-2.5 text-slate-600">{i.lokasi}</td>
+                            <td className="p-2.5 text-center">
+                              <span className={`px-2 py-0.5 rounded font-semibold text-[10px] ${i.statusStok === 'MENIPIS' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                                {i.statusStok}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase">Daftar Aset Lembaga & Nilai Buku</h4>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-100 text-slate-700">
+                        <tr>
+                          <th className="p-2.5 border-b">Kode Aset</th>
+                          <th className="p-2.5 border-b">Nama Aset</th>
+                          <th className="p-2.5 border-b">Kategori</th>
+                          <th className="p-2.5 border-b">Kondisi</th>
+                          <th className="p-2.5 border-b">Lokasi</th>
+                          <th className="p-2.5 border-b text-right">Nilai Perolehan</th>
+                          <th className="p-2.5 border-b text-right">Nilai Sekarang</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(reportData.data?.assets || []).map((a: any, idx: number) => (
+                          <tr key={idx} className="border-b last:border-0 hover:bg-slate-50">
+                            <td className="p-2.5 font-mono">{a.kode}</td>
+                            <td className="p-2.5 font-semibold text-slate-800">{a.nama}</td>
+                            <td className="p-2.5 text-slate-600">{a.kategori}</td>
+                            <td className="p-2.5">
+                              <span className={`px-2 py-0.5 rounded font-semibold text-[10px] ${a.kondisi === 'BAIK' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                {a.kondisi}
+                              </span>
+                            </td>
+                            <td className="p-2.5 text-slate-600">{a.lokasi}</td>
+                            <td className="p-2.5 text-right font-mono">Rp {a.nilaiBeli?.toLocaleString('id-ID')}</td>
+                            <td className="p-2.5 text-right font-mono font-bold text-emerald-800">Rp {a.nilaiSekarang?.toLocaleString('id-ID')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 8. FINANCE & BKU REPORT */}
+            {activeModule === 'finance' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase">Total Penerimaan</span>
+                    <p className="text-xl font-bold text-emerald-900 mt-1">Rp {(reportData.data?.summary?.totalPemasukan || 0).toLocaleString('id-ID')}</p>
+                  </div>
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-rose-700 uppercase">Total Pengeluaran</span>
+                    <p className="text-xl font-bold text-rose-900 mt-1">Rp {(reportData.data?.summary?.totalPengeluaran || 0).toLocaleString('id-ID')}</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-blue-700 uppercase">Surplus / (Defisit)</span>
+                    <p className="text-xl font-bold text-blue-900 mt-1">Rp {(reportData.data?.summary?.surplusOperasional || 0).toLocaleString('id-ID')}</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-purple-700 uppercase">Total Saldo Likuid</span>
+                    <p className="text-xl font-bold text-purple-900 mt-1">Rp {(reportData.data?.summary?.totalSaldoLikuid || 0).toLocaleString('id-ID')}</p>
+                  </div>
+                </div>
+
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="p-3 border-b">Tanggal</th>
+                        <th className="p-3 border-b">No. Referensi</th>
+                        <th className="p-3 border-b">Tipe Transaksi</th>
+                        <th className="p-3 border-b">Metode</th>
+                        <th className="p-3 border-b text-right">Jumlah</th>
+                        <th className="p-3 border-b">Uraian Transaksi</th>
+                        <th className="p-3 border-b text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(reportData.data?.transactions || []).map((t: any, idx: number) => (
+                        <tr key={idx} className="border-b last:border-0 hover:bg-slate-50">
+                          <td className="p-3 text-slate-600">{t.tanggal}</td>
+                          <td className="p-3 font-mono font-medium">{t.noReferensi}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${t.tipe === 'PENERIMAAN' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                              {t.tipe}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-600 font-semibold">{t.metode}</td>
+                          <td className="p-3 text-right font-mono font-bold">Rp {t.jumlah?.toLocaleString('id-ID')}</td>
+                          <td className="p-3 text-slate-700">{t.uraian}</td>
+                          <td className="p-3 text-center"><span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-semibold">{t.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* 9. AUDIT REPORT */}
+            {activeModule === 'audit' && (
+              <div className="space-y-6">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Rekap Audit Trail</span>
+                    <p className="text-lg font-bold text-slate-800">Total {reportData.data?.summary?.totalLog || 0} Aktivitas Tercatat</p>
+                  </div>
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-semibold text-xs rounded-full">
+                    Sistem Berjalan Aman & Normal
+                  </span>
+                </div>
+
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="p-3 border-b">Waktu & Tanggal</th>
+                        <th className="p-3 border-b">Pengguna</th>
+                        <th className="p-3 border-b">Role</th>
+                        <th className="p-3 border-b">Aksi</th>
+                        <th className="p-3 border-b">Modul</th>
+                        <th className="p-3 border-b">Rincian Perubahan</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(reportData.data?.records || []).map((l: any, idx: number) => (
+                        <tr key={idx} className="border-b last:border-0 hover:bg-slate-50">
+                          <td className="p-3 text-slate-500 font-mono text-[11px]">{l.waktu}</td>
+                          <td className="p-3 font-semibold text-slate-800">{l.pengguna}</td>
+                          <td className="p-3"><span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-semibold">{l.peran}</span></td>
+                          <td className="p-3"><span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold text-[10px]">{l.aksi}</span></td>
+                          <td className="p-3 font-medium text-slate-700">{l.modul}</td>
+                          <td className="p-3 text-slate-600">{l.rincian}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* 10. EXECUTIVE COCKPIT REPORT */}
+            {activeModule === 'executive' && (
+              <div className="space-y-6">
+                {/* 5-Pillar Health Indicators */}
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase">5-Pillar Executive Health Status</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {Object.entries(reportData.data?.healthCheck || {}).map(([pillar, status]: [string, any]) => (
+                      <div key={pillar} className="p-3 bg-white border border-slate-200 rounded-lg text-center shadow-xs">
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase">{pillar}</span>
+                        <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${status === 'GOOD' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                          {status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Key Metric Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase">Total Peserta Didik</span>
+                    <p className="text-2xl font-black text-emerald-900 mt-1">{reportData.data?.kpis?.totalStudents || 0}</p>
+                    <span className="text-[10px] text-emerald-700">Presensi hari ini: {reportData.data?.kpis?.studentAttendancePresent || 0} siswa</span>
+                  </div>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-blue-700 uppercase">Pendidik & Tenaga Kerja</span>
+                    <p className="text-2xl font-black text-blue-900 mt-1">{reportData.data?.kpis?.totalEmployees || 0}</p>
+                    <span className="text-[10px] text-blue-700">Guru: {reportData.data?.kpis?.totalTeachers || 0} | Staff: 12</span>
+                  </div>
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-purple-700 uppercase">Saldo Kas & Bank Likuid</span>
+                    <p className="text-2xl font-black text-purple-900 mt-1">Rp {((reportData.data?.kpis?.totalSaldoLikuid || 0) / 1000000).toFixed(1)} Jt</p>
+                    <span className="text-[10px] text-purple-700">Serapan: {reportData.data?.kpis?.realisasiAnggaranPersen || 0}%</span>
+                  </div>
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <span className="text-[10px] font-bold text-amber-700 uppercase">Aset & Logistik</span>
+                    <p className="text-2xl font-black text-amber-900 mt-1">{reportData.data?.kpis?.totalAssets || 0} Unit</p>
+                    <span className="text-[10px] text-amber-700">Peringatan low stock: {reportData.data?.kpis?.lowStockAlerts || 0} item</span>
+                  </div>
+                </div>
+
+                {/* Multi-Unit Overview Table */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase">Matriks Performa Antar Unit Lembaga</h4>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-100 text-slate-700">
+                        <tr>
+                          <th className="p-3 border-b">Nama Unit Lembaga</th>
+                          <th className="p-3 border-b text-center">Jumlah Siswa</th>
+                          <th className="p-3 border-b text-center">Jumlah Guru</th>
+                          <th className="p-3 border-b text-center">Presensi Rata-rata</th>
+                          <th className="p-3 border-b text-center">Kolektibilitas SPP</th>
+                          <th className="p-3 border-b text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(reportData.data?.multiUnitOverview || []).map((u: any, idx: number) => (
+                          <tr key={idx} className="border-b last:border-0 hover:bg-slate-50">
+                            <td className="p-3 font-semibold text-slate-800">{u.unit}</td>
+                            <td className="p-3 text-center font-bold">{u.siswa}</td>
+                            <td className="p-3 text-center text-slate-600">{u.guru}</td>
+                            <td className="p-3 text-center font-semibold text-emerald-700">{u.kehadiran}%</td>
+                            <td className="p-3 text-center font-semibold text-blue-700">{u.sppRate}%</td>
+                            <td className="p-3 text-center">
+                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full text-[10px]">
+                                {u.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
 

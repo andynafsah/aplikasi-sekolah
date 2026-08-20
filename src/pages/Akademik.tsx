@@ -3,16 +3,53 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/client';
-import EnterpriseAcademicEngine from '../components/EnterpriseAcademicEngine';
-import EnterpriseCurriculumCommandCenter from '../components/EnterpriseCurriculumCommandCenter';
-import EnterpriseAcademicYearCommandCenter from '../components/EnterpriseAcademicYearCommandCenter';
-import EnterpriseKbmCommandCenter from '../components/EnterpriseKbmCommandCenter';
-import EnterpriseAssessmentAndAutoLegerEngine from '../components/EnterpriseAssessmentAndAutoLegerEngine';
-import EnterpriseRaporAndDocumentEngine from '../components/EnterpriseRaporAndDocumentEngine';
+
+// Resilient dynamic module importer with auto-retry
+function lazyRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+  retries = 2,
+  interval = 800
+): React.LazyExoticComponent<T> {
+  return lazy(() =>
+    new Promise<{ default: T }>((resolve, reject) => {
+      const attempt = (remainingRetries: number) => {
+        factory()
+          .then(resolve)
+          .catch((error) => {
+            if (remainingRetries <= 0) {
+              console.warn('[DynamicImport] Max retries reached:', error);
+              reject(error);
+              return;
+            }
+            setTimeout(() => {
+              attempt(remainingRetries - 1);
+            }, interval);
+          });
+      };
+      attempt(retries);
+    })
+  );
+}
+
+const EnterpriseAcademicEngine = lazyRetry(() => import('../components/EnterpriseAcademicEngine'));
+const EnterpriseCurriculumCommandCenter = lazyRetry(() => import('../components/EnterpriseCurriculumCommandCenter'));
+const EnterpriseAcademicYearCommandCenter = lazyRetry(() => import('../components/EnterpriseAcademicYearCommandCenter'));
+const EnterpriseKbmCommandCenter = lazyRetry(() => import('../components/EnterpriseKbmCommandCenter'));
+const EnterpriseAssessmentAndAutoLegerEngine = lazyRetry(() => import('../components/EnterpriseAssessmentAndAutoLegerEngine'));
+const EnterpriseRaporAndDocumentEngine = lazyRetry(() => import('../components/EnterpriseRaporAndDocumentEngine'));
+
+function SubModuleLoader({ title }: { title: string }) {
+  return (
+    <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center justify-center gap-3">
+      <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      <p className="text-xs font-semibold text-slate-600">Memuat {title}...</p>
+    </div>
+  );
+}
 import { 
   Award,
   BookOpen, 
@@ -529,32 +566,44 @@ export default function Akademik() {
           
           {/* 00000. RAPOR & DOCUMENT ENGINE */}
           {activeTab === 'RAPOR_DOCUMENT_ENGINE' && (
-            <EnterpriseRaporAndDocumentEngine />
+            <Suspense fallback={<SubModuleLoader title="Rapor & Dokumen Engine" />}>
+              <EnterpriseRaporAndDocumentEngine />
+            </Suspense>
           )}
 
           {/* 0000. ASSESSMENT & AUTO LEGER COMMAND CENTER */}
           {activeTab === 'ASSESSMENT_COMMAND_CENTER' && (
-            <EnterpriseAssessmentAndAutoLegerEngine />
+            <Suspense fallback={<SubModuleLoader title="Assessment & Auto Leger Engine" />}>
+              <EnterpriseAssessmentAndAutoLegerEngine />
+            </Suspense>
           )}
 
           {/* 000. KBM COMMAND CENTER */}
           {activeTab === 'KBM_COMMAND_CENTER' && (
-            <EnterpriseKbmCommandCenter />
+            <Suspense fallback={<SubModuleLoader title="KBM Command Center" />}>
+              <EnterpriseKbmCommandCenter />
+            </Suspense>
           )}
 
           {/* 00. ACADEMIC YEAR COMMAND CENTER */}
           {activeTab === 'ACADEMIC_YEAR_COMMAND_CENTER' && (
-            <EnterpriseAcademicYearCommandCenter />
+            <Suspense fallback={<SubModuleLoader title="Academic Year Command Center" />}>
+              <EnterpriseAcademicYearCommandCenter />
+            </Suspense>
           )}
 
           {/* 0. CURRICULUM COMMAND CENTER */}
           {activeTab === 'CURRICULUM_COMMAND_CENTER' && (
-            <EnterpriseCurriculumCommandCenter />
+            <Suspense fallback={<SubModuleLoader title="Curriculum Command Center" />}>
+              <EnterpriseCurriculumCommandCenter />
+            </Suspense>
           )}
 
           {/* 1. ENTERPRISE ENGINE */}
           {activeTab === 'ENTERPRISE_ENGINE' && (
-            <EnterpriseAcademicEngine />
+            <Suspense fallback={<SubModuleLoader title="Enterprise Academic Engine" />}>
+              <EnterpriseAcademicEngine />
+            </Suspense>
           )}
 
           {/* 1. DASHBOARD */}

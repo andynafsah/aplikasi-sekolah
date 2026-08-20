@@ -828,7 +828,7 @@ export class KbmController extends BaseController {
         }
 
         default:
-          return res.status(400).json({ success: false, message: `Action [${action}] tidak dikenal di KbmController.` });
+          return null;
       }
     } catch (err: any) {
       console.error(`[KbmController Error] action=${action}:`, err);

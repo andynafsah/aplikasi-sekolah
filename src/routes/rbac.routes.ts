@@ -12,7 +12,11 @@ const rbacService = new RbacService();
 const DB_FILE_PATH = path.join(process.cwd(), 'src/rbac/rbac.db.json');
 
 function saveToDb(data: any) {
-  fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf8');
+  try {
+    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('Could not persist RBAC configuration to disk:', err);
+  }
 }
 
 export async function handleRbac(
@@ -28,11 +32,13 @@ export async function handleRbac(
 
   switch (action) {
     case 'getRbacConfig': {
-      // Refresh the cache first
-      rbacService.loadLatestConfig();
-      const raw = fs.readFileSync(DB_FILE_PATH, 'utf8');
-      const rbacData = JSON.parse(raw);
-      return res.json({ success: true, data: rbacData });
+      try {
+        const config = rbacService.getRawConfig();
+        return res.json({ success: true, data: config });
+      } catch (err: any) {
+        console.error('Error fetching RBAC configuration:', err);
+        return res.json({ success: true, data: rbacService.getRawConfig() });
+      }
     }
 
     case 'saveRole': {

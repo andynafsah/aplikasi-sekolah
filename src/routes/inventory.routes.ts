@@ -37,8 +37,16 @@ inventoryRoutes.post('/adjustStockLevel', wrapRoute('adjustStockLevel'));
 inventoryRoutes.post('/getStockMovementsList', wrapRoute('getStockMovementsList'));
 inventoryRoutes.post('/getInventoryCategoriesList', wrapRoute('getInventoryCategoriesList'));
 inventoryRoutes.post('/createInventoryCategory', wrapRoute('createInventoryCategory'));
+inventoryRoutes.post('/updateInventoryCategory', wrapRoute('updateInventoryCategory'));
+inventoryRoutes.post('/deleteInventoryCategory', wrapRoute('deleteInventoryCategory'));
+inventoryRoutes.post('/getInventoryUnitsList', wrapRoute('getInventoryUnitsList'));
+inventoryRoutes.post('/createInventoryUnit', wrapRoute('createInventoryUnit'));
+inventoryRoutes.post('/updateInventoryUnit', wrapRoute('updateInventoryUnit'));
+inventoryRoutes.post('/deleteInventoryUnit', wrapRoute('deleteInventoryUnit'));
 inventoryRoutes.post('/getInventoryWarehousesList', wrapRoute('getInventoryWarehousesList'));
 inventoryRoutes.post('/createInventoryWarehouse', wrapRoute('createInventoryWarehouse'));
+inventoryRoutes.post('/updateInventoryWarehouse', wrapRoute('updateInventoryWarehouse'));
+inventoryRoutes.post('/deleteInventoryWarehouse', wrapRoute('deleteInventoryWarehouse'));
 inventoryRoutes.post('/getInventorySuppliersList', wrapRoute('getInventorySuppliersList'));
 inventoryRoutes.post('/createInventorySupplier', wrapRoute('createInventorySupplier'));
 
@@ -63,6 +71,17 @@ inventoryRoutes.post('/getAssetMaintenancesList', wrapRoute('getAssetMaintenance
 inventoryRoutes.post('/createAssetMaintenance', wrapRoute('createAssetMaintenance'));
 inventoryRoutes.post('/updateAssetMaintenanceStatus', wrapRoute('updateAssetMaintenanceStatus'));
 inventoryRoutes.post('/createFixedAssetDisposal', wrapRoute('createFixedAssetDisposal'));
+inventoryRoutes.post('/getFixedAssetDisposalsList', wrapRoute('getFixedAssetDisposalsList'));
+inventoryRoutes.post('/getAssetMovementsList', wrapRoute('getAssetMovementsList'));
+inventoryRoutes.post('/createAssetTransfer', wrapRoute('createAssetTransfer'));
+
+// Scanner, Stock Card, Opname
+inventoryRoutes.post('/scanCode', wrapRoute('scanCode'));
+inventoryRoutes.post('/getItemStockCard', wrapRoute('getItemStockCard'));
+inventoryRoutes.post('/getOpnameSessionsList', wrapRoute('getOpnameSessionsList'));
+inventoryRoutes.post('/createOpnameSession', wrapRoute('createOpnameSession'));
+inventoryRoutes.post('/updateOpnameSessionItem', wrapRoute('updateOpnameSessionItem'));
+inventoryRoutes.post('/approveOpnameSession', wrapRoute('approveOpnameSession'));
 
 // Imports
 inventoryRoutes.post('/importInventoryItemsExcel', wrapRoute('importInventoryItemsExcel'));

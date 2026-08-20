@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { queryClient } from '../lib/queryClient';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/client';
 import { 
@@ -106,7 +107,7 @@ export default function Dashboard() {
       const res = await apiClient.post('/api/action?action=getStudents');
       return res.data.data || [];
     }
-  });
+  }, queryClient);
 
   // 2. Fetch Teachers
   const { data: teachersRes } = useQuery({
@@ -115,7 +116,7 @@ export default function Dashboard() {
       const res = await apiClient.post('/api/action?action=getTeachers');
       return res.data.data || [];
     }
-  });
+  }, queryClient);
 
   // 3. Fetch Invoices
   const { data: invoicesRes } = useQuery({
@@ -124,7 +125,7 @@ export default function Dashboard() {
       const res = await apiClient.post('/api/action?action=getFeeInvoices');
       return res.data.data || [];
     }
-  });
+  }, queryClient);
 
   // 4. Fetch Payments
   const { data: paymentsRes } = useQuery({
@@ -133,7 +134,7 @@ export default function Dashboard() {
       const res = await apiClient.post('/api/action?action=getFeePayments');
       return res.data.data || [];
     }
-  });
+  }, queryClient);
 
   // 5. Fetch Audit Logs
   const { data: auditLogsRes } = useQuery({
@@ -146,7 +147,7 @@ export default function Dashboard() {
         return [];
       }
     }
-  });
+  }, queryClient);
 
   const students = studentsRes || [];
   const teachers = teachersRes || [];

@@ -1,3 +1,18 @@
+/**
+ * @file Services.ts
+ * @description LEGACY COMPATIBILITY ADAPTER LAYER
+ * 
+ * @deprecated
+ * IMPORTANT: This module is maintained solely for legacy testing suite backward compatibility.
+ * All production business logic must use the Canonical Enterprise Services:
+ * - Student: src/services/student.service.ts
+ * - Teacher: src/services/teacher.service.ts
+ * - Employee: src/services/employee.service.ts
+ * - Attendance: src/services/smart-attendance.service.ts
+ * - Payroll: src/services/payroll.service.ts
+ * - Finance: src/services/finance.service.ts
+ */
+
 import { 
   StudentRepository, 
   TeacherRepository, 
@@ -8,6 +23,9 @@ import {
 } from '../repositories/Repositories';
 import { ConnectionManager } from '../connection/ConnectionManager';
 
+/**
+ * @deprecated Use `src/services/student.service.ts` (StudentService) as Primary Source of Truth.
+ */
 export class StudentService {
   private repo: StudentRepository;
 
@@ -73,6 +91,9 @@ export class StudentService {
   }
 }
 
+/**
+ * @deprecated Use `src/services/teacher.service.ts` (TeacherService) as Primary Source of Truth.
+ */
 export class TeacherService {
   private repo: TeacherRepository;
 
@@ -89,6 +110,9 @@ export class TeacherService {
   }
 }
 
+/**
+ * @deprecated Use `src/services/employee.service.ts` (EmployeeService) as Primary Source of Truth.
+ */
 export class EmployeeService {
   private repo: EmployeeRepository;
 
@@ -105,6 +129,9 @@ export class EmployeeService {
   }
 }
 
+/**
+ * @deprecated Use `src/services/smart-attendance.service.ts` (smartAttendanceService) as Primary Source of Truth.
+ */
 export class AttendanceService {
   private repo: AttendanceRepository;
 
@@ -133,6 +160,9 @@ export class AttendanceService {
   }
 }
 
+/**
+ * @deprecated Use `src/services/payroll.service.ts` (PayrollService) as Primary Source of Truth.
+ */
 export class PayrollService {
   private repo: PayrollRepository;
 
@@ -149,6 +179,9 @@ export class PayrollService {
   }
 }
 
+/**
+ * @deprecated Use `src/services/finance.service.ts` (FinanceService) as Primary Source of Truth.
+ */
 export class FinanceService {
   private repo: FinanceRepository;
 
@@ -164,3 +197,4 @@ export class FinanceService {
     return await this.repo.findById(tenantId, id);
   }
 }
+

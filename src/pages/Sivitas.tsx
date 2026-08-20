@@ -65,7 +65,8 @@ export default function Sivitas() {
     }
   });
 
-  const students = serverStudents;
+  const students = Array.isArray(serverStudents) ? serverStudents : [];
+  const safeMutations = Array.isArray(serverMutations) ? serverMutations : [];
 
   // Sync selectedStudentId with loaded students list
   React.useEffect(() => {
@@ -96,6 +97,9 @@ export default function Sivitas() {
     },
     enabled: !!selectedStudentId
   });
+
+  const safeAuditLogs = Array.isArray(auditLogs) ? auditLogs : [];
+  const safeHistories = Array.isArray(histories) ? histories : [];
 
   const handleCreateOrUpdate = async (formData: any) => {
     try {
@@ -1294,7 +1298,7 @@ export default function Sivitas() {
             {(subTab === 'MUTASI' || subTab === 'ALUMNI' || subTab === 'KELULUSAN') && (
               <StudentMutation
                 students={students}
-                mutations={serverMutations}
+                mutations={safeMutations}
                 onRefresh={() => { refetchStudents(); refetchMutations(); }}
                 subTab={subTab}
               />
@@ -1311,7 +1315,7 @@ export default function Sivitas() {
             {(subTab === 'ORTU' || subTab === 'WALI' || subTab === 'KESEHATAN' || subTab === 'RIWAYAT') && (
               <StudentHealthHistory
                 students={students}
-                histories={histories}
+                histories={safeHistories}
                 selectedStudentId={selectedStudentId}
                 onSelectStudent={setSelectedStudentId}
                 subTab={subTab}
@@ -1321,7 +1325,7 @@ export default function Sivitas() {
             {(subTab === 'DOKUMEN' || subTab === 'AUDIT') && (
               <StudentDocsAudit
                 students={students}
-                auditLogs={auditLogs}
+                auditLogs={safeAuditLogs}
                 selectedStudentId={selectedStudentId}
                 onSelectStudent={setSelectedStudentId}
                 subTab={subTab}

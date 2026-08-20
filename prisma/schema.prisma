@@ -160,6 +160,10 @@ model Student {
   rankings         StudentRanking[]
   promotion_results PromotionResult[]
   graduation_results GraduationResult[]
+
+  @@index([class_id])
+  @@index([status])
+  @@index([created_at])
 }
 
 model Parent {
@@ -502,6 +506,12 @@ model Attendance {
   created_by   String?
   updated_by   String?
   student      Student?  @relation(fields: [student_id], references: [id])
+
+  @@index([date])
+  @@index([status])
+  @@index([student_id, date])
+  @@index([user_id, date])
+  @@index([tenant_id, date])
 }
 
 model AttendanceRule {
@@ -548,6 +558,10 @@ model Payment {
   updated_at  DateTime  @updatedAt
   deleted_at  DateTime?
   student     Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@index([student_id])
+  @@index([status])
+  @@index([created_at])
 }
 
 model PayrollMaster {
@@ -691,6 +705,11 @@ model Notification {
   tenant_id    String?   @default("system")
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
+
+  @@index([recipient_id])
+  @@index([status])
+  @@index([created_at])
+  @@index([tenant_id])
 }
 
 model AuditLog {
@@ -712,6 +731,10 @@ model AuditLog {
   created_at    DateTime @default(now())
   user          User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
+  @@index([user_id])
+  @@index([created_at])
+  @@index([module])
+  @@index([tenant_id])
   @@map("audit_logs")
 }
 

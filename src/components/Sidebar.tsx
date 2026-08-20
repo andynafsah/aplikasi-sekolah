@@ -74,9 +74,6 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
     pegawai: 'guru',
     attendance: 'smart_attendance',
     admission: 'ppdb',
-    akademik: 'kbm',
-    'teacher-workspace': 'jadwal_mengajar',
-    'virtual-classroom': 'virtual_classroom',
     'billing-spp': 'spp',
     keuangan: 'laporan_keuangan',
     payroll: 'gaji',
@@ -100,9 +97,6 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
     sistem: 'setting_sistem',
     database: 'setting_sistem',
     'studio-dokumen': 'setting_sistem',
-    'ploting-guru': 'setting_sistem',
-    'auto-leger': 'kbm',
-    'curriculum-command-center': 'kbm',
     dapodik: 'dapodik'
   };
 
@@ -121,14 +115,6 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
         { id: 'parent-portal', name: 'Parent Portal & Tracker', icon: HeartHandshake }
       ]
     },
-    ...(isSuperAdmin ? [
-      {
-        title: 'Master Data',
-        items: [
-          { id: 'ploting-guru', name: 'Ploting Guru', icon: Settings }
-        ]
-      }
-    ] : []),
     {
       title: 'Sivitas',
       items: [
@@ -141,16 +127,6 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
       title: 'Penerimaan Baru',
       items: [
         { id: 'admission', name: isPondok ? 'PPDB & Seleksi Santri' : 'PPDB & Seleksi Siswa', icon: GraduationCap },
-      ]
-    },
-    {
-      title: 'Akademik',
-      items: [
-        { id: 'akademik', name: 'Kurikulum & KBM', icon: BookOpen },
-        { id: 'curriculum-command-center', name: 'Curriculum Command Center', icon: Sparkles },
-        { id: 'auto-leger', name: 'Academic Grade Center (Auto Leger)', icon: BookOpen },
-        { id: 'teacher-workspace', name: 'KBM Saya (Guru)', icon: Sparkles },
-        { id: 'virtual-classroom', name: 'Kelas & Rapat Virtual', icon: Video },
       ]
     },
     {
@@ -233,20 +209,6 @@ export default function Sidebar({ activeTab, setActiveTab, mobileOpen, setMobile
       // Explicitly hide Persiapan Dapodik for SANTRI and WALI_SANTRI roles
       if (item.id === 'dapodik' && ((user?.role as string) === 'SANTRI' || (user?.role as string) === 'WALI_SANTRI')) {
         return false;
-      }
-      // Explicitly control KBM & Absensi visibility (hide for students/parents)
-      if (item.id === 'akademik') {
-        const studentParentRoles = ['SANTRI', 'SISWA', 'WALI_SANTRI', 'PARENT', 'ORANG_TUA', 'STUDENT'];
-        if (studentParentRoles.includes(roleNorm) || studentParentRoles.includes(activeRole)) {
-          return false;
-        }
-      }
-      // Explicitly control KBM Saya (Guru) visibility (only for Teachers and Super Admin)
-      if (item.id === 'teacher-workspace') {
-        const teacherRoles = ['GURU', 'GURU_MAPEL', 'WALI_KELAS', 'TEACHER', 'USTADZ', 'SUPER_ADMIN'];
-        if (!teacherRoles.includes(roleNorm) && !teacherRoles.includes(activeRole)) {
-          return false;
-        }
       }
       // Explicitly hide Komunikasi & Pengumuman for Guru, Wali Kelas, Wali Santri, and Santri
       if (item.id === 'notification-gateway') {

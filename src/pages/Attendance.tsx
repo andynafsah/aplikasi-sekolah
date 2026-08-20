@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { GoogleMapsAttendanceView } from '../components/attendance/GoogleMapsAttendanceView';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -58,11 +58,47 @@ import {
   Pie 
 } from 'recharts';
 import SmartAttendanceCore from '../components/attendance/SmartAttendanceCore';
-import EnterpriseQrSecurityEngine from '../components/EnterpriseQrSecurityEngine';
-import EnterpriseEmployeeAttendanceWorkspace from '../components/EnterpriseEmployeeAttendanceWorkspace';
-import EnterpriseAttendanceCommandCenter from '../components/EnterpriseAttendanceCommandCenter';
-import EnterpriseAttendanceSettings from '../components/EnterpriseAttendanceSettings';
-import { AttendanceScheduler } from '../components/AttendanceScheduler';
+
+// Resilient dynamic module importer with auto-retry
+function lazyRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+  retries = 2,
+  interval = 800
+): React.LazyExoticComponent<T> {
+  return lazy(() =>
+    new Promise<{ default: T }>((resolve, reject) => {
+      const attempt = (remainingRetries: number) => {
+        factory()
+          .then(resolve)
+          .catch((error) => {
+            if (remainingRetries <= 0) {
+              console.warn('[DynamicImport] Max retries reached:', error);
+              reject(error);
+              return;
+            }
+            setTimeout(() => {
+              attempt(remainingRetries - 1);
+            }, interval);
+          });
+      };
+      attempt(retries);
+    })
+  );
+}
+
+const EnterpriseQrSecurityEngine = lazyRetry(() => import('../components/EnterpriseQrSecurityEngine'));
+const EnterpriseEmployeeAttendanceWorkspace = lazyRetry(() => import('../components/EnterpriseEmployeeAttendanceWorkspace'));
+const EnterpriseAttendanceSettings = lazyRetry(() => import('../components/EnterpriseAttendanceSettings'));
+const AttendanceScheduler = lazyRetry(() => import('../components/AttendanceScheduler').then(m => ({ default: m.AttendanceScheduler })));
+
+function AttendanceSubLoader({ label }: { label: string }) {
+  return (
+    <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center justify-center gap-3">
+      <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <p className="text-xs font-semibold text-slate-600">Memuat {label}...</p>
+    </div>
+  );
+}
 
 // ============================================================================
 // TYPES & INTERFACES FOR SPRINT 8
@@ -1697,7 +1733,9 @@ export default function Attendance() {
         {/* TAB 4: QR SECURITY ENGINE & BARCODE SCANNERS */}
         {activeSubTab === 'QR_BARCODE' && (
           <div className="space-y-6">
-            <EnterpriseQrSecurityEngine />
+            <Suspense fallback={<AttendanceSubLoader label="QR Security Engine" />}>
+              <EnterpriseQrSecurityEngine />
+            </Suspense>
 
             {/* Smart Gate Scanner (Kartu Pelajar Scanner HP Guru & Karyawan) */}
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
@@ -1923,12 +1961,16 @@ export default function Attendance() {
 
         {/* TAB 6: DYNAMIC ATTENDANCE SETTINGS ENGINE */}
         {isSuperAdmin && activeSubTab === 'RULES' && (
-          <EnterpriseAttendanceSettings />
+          <Suspense fallback={<AttendanceSubLoader label="Attendance Settings Engine" />}>
+            <EnterpriseAttendanceSettings />
+          </Suspense>
         )}
 
         {/* TAB 6.5: ENTERPRISE SCHEDULER & WORKING CALENDAR ENGINE */}
         {activeSubTab === 'SCHEDULER' && (
-          <AttendanceScheduler />
+          <Suspense fallback={<AttendanceSubLoader label="Attendance Scheduler" />}>
+            <AttendanceScheduler />
+          </Suspense>
         )}
 
         {/* TAB 7: REPLACEMENT TEACHER ENGINE */}
@@ -2340,14 +2382,11 @@ function renderJSON(obj) {
           </div>
         )}
 
-        {/* TAB 0: ENTERPRISE ATTENDANCE COMMAND CENTER */}
-        {activeSubTab === 'COMMAND_CENTER' && (
-          <EnterpriseAttendanceCommandCenter />
-        )}
-
         {/* TAB 11: ENTERPRISE EMPLOYEE ATTENDANCE WORKSPACE */}
         {activeSubTab === 'EMPLOYEE_WORKSPACE' && (
-          <EnterpriseEmployeeAttendanceWorkspace />
+          <Suspense fallback={<AttendanceSubLoader label="Employee Attendance Workspace" />}>
+            <EnterpriseEmployeeAttendanceWorkspace />
+          </Suspense>
         )}
 
       </div>

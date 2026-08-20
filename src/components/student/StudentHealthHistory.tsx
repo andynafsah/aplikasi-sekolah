@@ -18,7 +18,9 @@ interface StudentHealthHistoryProps {
 
 export function StudentHealthHistory({ students, histories, onSelectStudent, selectedStudentId, subTab }: StudentHealthHistoryProps) {
   const { tenant } = useAuth();
-  const selectedStudent = students.find(s => s.id === selectedStudentId) || students[0];
+  const safeStudents = Array.isArray(students) ? students : [];
+  const safeHistories = Array.isArray(histories) ? histories : [];
+  const selectedStudent = safeStudents.find(s => s.id === selectedStudentId) || safeStudents[0];
 
   const studentName = selectedStudent ? (selectedStudent.name || selectedStudent.identitas?.name) : 'Ahmad Baihaqi';
   const studentNis = selectedStudent ? (selectedStudent.nis || selectedStudent.identitas?.nis) : 'NIS20260001';

@@ -1046,7 +1046,7 @@ export class LegerController extends BaseController {
       }
 
       default:
-        return res.status(400).json({ success: false, message: `Unknown action: ${action}` });
+        return null;
     }
   }
 }

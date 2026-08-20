@@ -21,6 +21,7 @@ import { payrollRoutes } from './payroll.routes';
 import { inventoryRoutes } from './inventory.routes';
 import { dapodikRoutes } from './dapodik.routes';
 import { legerRoutes } from './leger.routes';
+import { auditRoutes } from './audit.routes';
 
 export const indexRoutes = Router();
 
@@ -46,5 +47,6 @@ indexRoutes.use('/payroll', payrollRoutes);
 indexRoutes.use('/inventory', inventoryRoutes);
 indexRoutes.use('/dapodik', dapodikRoutes);
 indexRoutes.use('/leger', legerRoutes);
+indexRoutes.use('/audit', auditRoutes);
 
 

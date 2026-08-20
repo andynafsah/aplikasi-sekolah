@@ -37,7 +37,8 @@ export function StudentList({
   const [deletingStudent, setDeletingStudent] = useState<any | null>(null);
 
   // Filtering Logic
-  const filteredStudents = students.filter(s => {
+  const safeStudents = Array.isArray(students) ? students : [];
+  const filteredStudents = safeStudents.filter(s => {
     if (s.deleted_at || s.status === 'DIHAPUS' || s.sekolah?.status === 'DIHAPUS') return false;
 
     const isSantriVal = s.is_santri === 'YA' || (s.pondok?.nomor_santri ? true : false);

@@ -208,8 +208,8 @@ export class ScheduleEngineService {
       resolvedCalendar = calendars.find(c => c.type === 'EMPLOYEE') || calendars[0];
     }
 
-    // Default Fallback Calendar if none exists in database
-    const defaultWorkingDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+    // Default Fallback Calendar if none exists in database (Boarding/Pesantren and Security operates 7 days)
+    const defaultWorkingDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
     const activeWorkingDays = resolvedCalendar 
       ? JSON.parse(resolvedCalendar.working_days) 
       : defaultWorkingDays;

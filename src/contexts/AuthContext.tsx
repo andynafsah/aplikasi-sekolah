@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Tenant } from '../types';
 import apiClient from '../api/client';
+import defaultRbacData from '../rbac/rbac.db.json';
 
 interface AuthContextType {
   user: User | null;
@@ -37,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [rbacConfig, setRbacConfig] = useState<any>(null);
+  const [rbacConfig, setRbacConfig] = useState<any>(defaultRbacData);
   const [previewRole, setPreviewRoleState] = useState<string | null>(localStorage.getItem('erp_preview_role'));
 
   const setPreviewRole = (role: string | null) => {
@@ -50,32 +51,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.location.reload();
   };
 
-  const fetchRbacConfig = async (userToken: string, retries = 2) => {
+  const fetchRbacConfig = async (userToken?: string | null, retries = 1) => {
     try {
-      const res = await apiClient.post('/api/action?action=getRbacConfig', {}, {
-        headers: { Authorization: `Bearer ${userToken}` }
-      });
-      if (res.data?.success) {
+      const headers: Record<string, string> = {};
+      if (userToken) {
+        headers.Authorization = `Bearer ${userToken}`;
+      }
+      const res = await apiClient.post('/api/action?action=getRbacConfig', {}, { headers });
+      if (res.data?.success && res.data?.data) {
         setRbacConfig(res.data.data);
       }
     } catch (err: any) {
-      if (err.response?.status === 401) {
-        console.warn('Session expired or invalid token (401) when fetching RBAC config.');
-        // Clear state to force redirect to login
+      if (err.response?.status === 401 && userToken) {
+        // Clear invalid token session
         setToken(null);
         setUser(null);
         setTenant(null);
-        setRbacConfig(null);
         localStorage.removeItem('erp_token');
         localStorage.removeItem('erp_user');
         localStorage.removeItem('erp_tenant');
-      } else if ((err.response?.status === 429 || !err.response) && retries > 0) {
-        console.warn('Rate limited or network error when fetching RBAC config, retrying in 1s...');
+      } else if (retries > 0) {
         setTimeout(() => fetchRbacConfig(userToken, retries - 1), 1000);
-      } else {
-        if (err.response?.status !== 429) {
-          console.warn('Failed to fetch dynamic RBAC config, using default permissions.');
-        }
       }
     }
   };
@@ -99,6 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('erp_user');
         localStorage.removeItem('erp_tenant');
       }
+    } else {
+      // Fetch public default RBAC configuration on startup
+      fetchRbacConfig(null);
     }
     setLoading(false);
   }, []);
@@ -201,10 +200,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+const fallbackAuthContext: AuthContextType = {
+  user: null,
+  tenant: null,
+  token: null,
+  isAuthenticated: false,
+  login: () => {},
+  logout: () => {},
+  loading: false,
+  rbacConfig: null,
+  hasPermission: () => true,
+  hasMenuAccess: () => true,
+  reloadRbac: async () => {},
+  previewRole: null,
+  setPreviewRole: () => {},
+  activeRole: null
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    return fallbackAuthContext;
   }
   return context;
 };

@@ -194,7 +194,7 @@ export class PayrollController extends BaseController {
       }
 
       default:
-        return res.status(404).json({ success: false, message: 'Action not found.' });
+        return null;
     }
   }
 }

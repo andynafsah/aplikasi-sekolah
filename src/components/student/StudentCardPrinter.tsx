@@ -31,8 +31,9 @@ interface StudentCardPrinterProps {
 }
 
 export function StudentCardPrinter({ students, tenantName, subTab }: StudentCardPrinterProps) {
-  const [selectedStudentId, setSelectedStudentId] = useState<string>(students[0]?.id || 'std-01');
-  const selectedStudent = students.find(s => s.id === selectedStudentId) || students[0] || {};
+  const safeStudents = Array.isArray(students) ? students : [];
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(safeStudents[0]?.id || 'std-01');
+  const selectedStudent = safeStudents.find(s => s.id === selectedStudentId) || safeStudents[0] || {};
 
   // Active Control Panel Tab
   const [designTab, setDesignTab] = useState<'LAYOUT' | 'WARNA' | 'KONTEN' | 'FOTO_CODE'>('LAYOUT');
@@ -95,9 +96,51 @@ export function StudentCardPrinter({ students, tenantName, subTab }: StudentCard
   const studentClass = selectedStudent ? (selectedStudent.kelas || selectedStudent.rombela?.name || 'Kelas X - MA Tahfidz') : 'Kelas X - MA Tahfidz';
   const isSantri = selectedStudent ? (selectedStudent.is_santri === 'YA' || selectedStudent.pondok?.nomor_santri ? true : false) : true;
 
-  // Preset Color Palettes
-  const applyPresetTheme = (preset: 'indigo_dark' | 'emerald_nature' | 'amber_gold' | 'rose_crimson' | 'cyan_tech' | 'light_clean') => {
+  // Preset Color & Template Palettes
+  const applyPresetTheme = (preset: 'dapodik_kemendikbud' | 'emis_kemenag' | 'pesantren_gold' | 'indigo_dark' | 'emerald_nature' | 'amber_gold' | 'rose_crimson' | 'cyan_tech' | 'light_clean') => {
     switch (preset) {
+      case 'dapodik_kemendikbud':
+        setBgType('gradient');
+        setBgColor1('#032830');
+        setBgColor2('#0f172a');
+        setHeaderBgColor('#1e3a8a');
+        setBorderColor('#2563eb');
+        setAccentColor('#38bdf8');
+        setBodyTextColor('#f8fafc');
+        setHeaderTextColor('#ffffff');
+        setHeaderTitle('KARTU TANDA PELAJAR');
+        setInstitutionSubtitle('STANDARDISASI DAPODIK KEMENDIKBUD R.I.');
+        setLabelNis('NISN / NIK');
+        setStampText('VERIFIKASI DAPODIK');
+        break;
+      case 'emis_kemenag':
+        setBgType('gradient');
+        setBgColor1('#022c22');
+        setBgColor2('#064e3b');
+        setHeaderBgColor('#047857');
+        setBorderColor('#10b981');
+        setAccentColor('#34d399');
+        setBodyTextColor('#ecfdf5');
+        setHeaderTextColor('#ffffff');
+        setHeaderTitle('KARTU SISWA MADRASAH');
+        setInstitutionSubtitle('STANDARDISASI EMIS KEMENTERIAN AGAMA R.I.');
+        setLabelNis('NSM / NISN');
+        setStampText('TERVERIFIKASI EMIS');
+        break;
+      case 'pesantren_gold':
+        setBgType('gradient');
+        setBgColor1('#1c1917');
+        setBgColor2('#451a03');
+        setHeaderBgColor('#78350f');
+        setBorderColor('#f59e0b');
+        setAccentColor('#fbbf24');
+        setBodyTextColor('#fffbeb');
+        setHeaderTextColor('#ffffff');
+        setHeaderTitle('KARTU SANTRI MUKIM');
+        setInstitutionSubtitle('SISTEM PONDOK PESANTREN TERPADU');
+        setLabelNis('NIS / NO. SANTRI');
+        setStampText('PENGASUH PESANTREN');
+        break;
       case 'indigo_dark':
         setBgType('gradient');
         setBgColor1('#0f172a');
@@ -107,6 +150,10 @@ export function StudentCardPrinter({ students, tenantName, subTab }: StudentCard
         setAccentColor('#818cf8');
         setBodyTextColor('#f8fafc');
         setHeaderTextColor('#ffffff');
+        setHeaderTitle('KARTU PELAJAR ELEKTRONIK');
+        setInstitutionSubtitle('SISTEM INTEGRASI KARTU PINTAR SANTRI');
+        setLabelNis('NIS / NISN');
+        setStampText('TERVERIFIKASI RESMI');
         break;
       case 'emerald_nature':
         setBgType('gradient');
@@ -476,9 +523,37 @@ export function StudentCardPrinter({ students, tenantName, subTab }: StudentCard
             {/* TAB 2: COLOR & BACKGROUND DESIGN */}
             {designTab === 'WARNA' && (
               <div className="space-y-4 font-medium animate-fadeIn">
-                {/* Preset Theme Quick Picks */}
+                {/* Standard Preset Selector */}
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-700 block">Preset Tema Warna Cepat</label>
+                  <label className="font-bold text-slate-700 block text-xs">Template Standardisasi Nasional</label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => applyPresetTheme('dapodik_kemendikbud')}
+                      className="p-2 bg-blue-950 text-blue-300 rounded-xl font-extrabold border border-blue-500/50 text-[10px] hover:scale-95 transition text-center"
+                    >
+                      Dapodik Kemendikbud
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPresetTheme('emis_kemenag')}
+                      className="p-2 bg-emerald-950 text-emerald-300 rounded-xl font-extrabold border border-emerald-500/50 text-[10px] hover:scale-95 transition text-center"
+                    >
+                      EMIS Kemenag
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPresetTheme('pesantren_gold')}
+                      className="p-2 bg-amber-950 text-amber-300 rounded-xl font-extrabold border border-amber-500/50 text-[10px] hover:scale-95 transition text-center"
+                    >
+                      Pondok Pesantren
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preset Theme Quick Picks */}
+                <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                  <label className="font-bold text-slate-700 block text-xs">Preset Palet Warna</label>
                   <div className="grid grid-cols-3 gap-1.5">
                     <button
                       type="button"

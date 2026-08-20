@@ -1,7 +1,10 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { fileURLToPath } from 'url';
+import { defineConfig } from 'vite';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(() => {
   return {
@@ -12,24 +15,35 @@ export default defineConfig(() => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
-        'react': path.resolve(__dirname, 'node_modules/react'),
-        'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+        '@': path.resolve(__dirname, './src'),
       },
-      dedupe: ['react', 'react-dom'],
+      dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime', '@tanstack/react-query'],
     },
     optimizeDeps: {
+      entries: ['./src/main.tsx'],
       include: [
         'react',
         'react-dom',
+        'react-dom/client',
         'react/jsx-runtime',
+        'react/jsx-dev-runtime',
         '@tanstack/react-query',
+        '@vis.gl/react-google-maps',
         'lucide-react',
         'axios',
         'recharts',
         'motion',
-        'motion/react'
+        'motion/react',
+        'jsbarcode',
+        'qrcode',
+        'react-hook-form',
+        'react-markdown',
+        'react-router-dom',
+        'react-window',
+        'exceljs',
+        'jszip'
       ],
+      force: true
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
@@ -42,12 +56,9 @@ export default defineConfig(() => {
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
         output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('recharts')) return 'vendor-charts';
-              if (id.includes('lucide-react')) return 'vendor-lucide';
-              if (id.includes('motion')) return 'vendor-motion';
-            }
+          manualChunks: {
+            'vendor-core': ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime', '@tanstack/react-query'],
+            'icons-vendor': ['lucide-react'],
           },
         },
       },

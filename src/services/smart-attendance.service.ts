@@ -445,7 +445,7 @@ export class SmartAttendanceService {
 
       return {
         status: 'DUPLICATE',
-        message: `Absensi siswa sudah tercatat hari ini pada pukul ${existing.time_in}.`,
+        message: `Siswa sudah melakukan absensi masuk hari ini pada pukul ${existing.time_in}.`,
         student: minimalProfile,
         previousTime: existing.time_in,
         attendanceStatus: existing.status,

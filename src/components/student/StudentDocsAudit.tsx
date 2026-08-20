@@ -35,7 +35,9 @@ export function StudentDocsAudit({ students, auditLogs, selectedStudentId, onSel
     enabled: !!selectedStudentId
   });
 
-  const selectedStudent = students.find(s => s.id === selectedStudentId) || students[0];
+  const safeStudents = Array.isArray(students) ? students : [];
+  const safeAuditLogs = Array.isArray(auditLogs) ? auditLogs : [];
+  const selectedStudent = safeStudents.find(s => s.id === selectedStudentId) || safeStudents[0];
   const currentStudentDocs = documents;
 
   const handleUploadDoc = async (e: React.FormEvent) => {

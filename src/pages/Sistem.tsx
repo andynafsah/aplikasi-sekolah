@@ -46,11 +46,15 @@ import {
   Shield,
   Key,
   X,
-  Check
+  Check,
+  Award
 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/client';
+import { EnterpriseMonitoringObservabilityEngine } from '../components/EnterpriseMonitoringObservabilityEngine';
+import { EnterpriseIntegrationApiGatewayEngine } from '../components/EnterpriseIntegrationApiGatewayEngine';
+import { EnterpriseProductionReadinessEngine } from '../components/EnterpriseProductionReadinessEngine';
 
 export default function Sistem() {
   const { user, previewRole } = useAuth();
@@ -469,8 +473,10 @@ export default function Sistem() {
     { id: 'dashboard', name: 'Pengaturan Dashboard', icon: Layers, section: 'Antarmuka' },
     { id: 'ai', name: 'Pengaturan AI Copilot', icon: Sparkles, section: 'Integrasi' },
     { id: 'mobile', name: 'Pengaturan Mobile', icon: Smartphone, section: 'Antarmuka' },
+    { id: 'integration-gateway', name: 'Integration & API Gateway', icon: Cpu, section: 'Integrasi' },
     { id: 'sistem', name: 'Pengaturan Sistem', icon: Settings, section: 'Sistem' },
     { id: 'monitoring', name: 'Monitoring & Health Engine', icon: Activity, section: 'Sistem' },
+    { id: 'production-qa', name: 'Production Readiness (Gate 151)', icon: Award, section: 'Sistem' },
   ];
 
   // Filtering tabs matching search and section
@@ -2183,216 +2189,19 @@ export default function Sistem() {
                   </div>
                 )}
 
-                {/* 23. MONITORING & HEALTH ENGINE */}
+                {/* 23. MONITORING & HEALTH ENGINE (Blueprint 149) */}
                 {activeTab === 'monitoring' && (
-                  <div className="space-y-6 animate-fade-in font-sans">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-                      <div>
-                        <h2 className="text-base font-extrabold text-slate-950 flex items-center gap-2">
-                          <Activity className="h-5 w-5 text-emerald-600 animate-pulse" />
-                          <span>Enterprise Monitoring &amp; Health Engine</span>
-                        </h2>
-                        <p className="text-xs text-slate-500">Pusat kendali operasional, telemetri real-time server, database MySQL, Prisma, dan API status.</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
-                          <span className="h-2 w-2 rounded-full bg-emerald-600 animate-ping"></span>
-                          System Health: 99.4% (Excellent)
-                        </span>
-                      </div>
-                    </div>
+                  <EnterpriseMonitoringObservabilityEngine />
+                )}
 
-                    {/* 4 Core Telemetry Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-2xl p-5 shadow-lg border border-slate-800 flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-slate-400 uppercase">Server Telemetry</span>
-                          <Cpu className="h-4 w-4 text-emerald-400" />
-                        </div>
-                        <div className="my-3">
-                          <div className="text-2xl font-black text-white">14.2% <span className="text-xs font-normal text-emerald-400">CPU Load</span></div>
-                          <div className="text-xs text-slate-300 mt-1">RAM: 4.2 GB / 16 GB (26.2%)</div>
-                          <div className="text-xs text-slate-300">Disk: 38.5% (192 GB Free)</div>
-                        </div>
-                        <div className="text-[10px] text-emerald-400 font-mono">Uptime: 45 hari 12 jam (Stable)</div>
-                      </div>
+                {/* 24. ENTERPRISE INTEGRATION & API GATEWAY ENGINE (Blueprint 150) */}
+                {activeTab === 'integration-gateway' && (
+                  <EnterpriseIntegrationApiGatewayEngine />
+                )}
 
-                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-slate-500 uppercase">MySQL &amp; Prisma ORM</span>
-                          <Database className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div className="my-3">
-                          <div className="text-xl font-extrabold text-slate-900">Connected</div>
-                          <div className="text-xs text-slate-600 mt-1">Pool: 12 / 50 Active</div>
-                          <div className="text-xs text-slate-600">Slow Query: 0 (Optimized)</div>
-                        </div>
-                        <div className="text-[10px] text-blue-600 font-mono">Schema v2.4.1 (No Drift)</div>
-                      </div>
-
-                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-slate-500 uppercase">API &amp; Queue Status</span>
-                          <RefreshCw className="h-4 w-4 text-indigo-600" />
-                        </div>
-                        <div className="my-3">
-                          <div className="text-xl font-extrabold text-slate-900">24ms <span className="text-xs font-normal text-slate-500">Avg Latency</span></div>
-                          <div className="text-xs text-slate-600 mt-1">Success Rate: 99.92%</div>
-                          <div className="text-xs text-slate-600">Queue: 0 pending, 1420 done</div>
-                        </div>
-                        <div className="text-[10px] text-indigo-600 font-mono">Redis Queue Worker: Active</div>
-                      </div>
-
-                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-slate-500 uppercase">Security &amp; Backup</span>
-                          <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                        </div>
-                        <div className="my-3">
-                          <div className="text-xl font-extrabold text-slate-900">Secure</div>
-                          <div className="text-xs text-slate-600 mt-1">Failed Logins (24h): 0</div>
-                          <div className="text-xs text-slate-600">Last Backup: 2 jam lalu</div>
-                        </div>
-                        <div className="text-[10px] text-emerald-600 font-mono">SSL Certificate: Valid 280 Hari</div>
-                      </div>
-                    </div>
-
-                    {/* Progressive Web App (PWA) Engine Status */}
-                    <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-6 shadow-md border border-slate-700/60 space-y-4">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-700/60 pb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-sm">
-                            PWA
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-                              <span>Progressive Web App (PWA) Engine Telemetry</span>
-                              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] px-2 py-0.5 rounded-full font-mono uppercase font-bold">
-                                Offline Ready
-                              </span>
-                            </h3>
-                            <p className="text-xs text-slate-300">Spesifikasi PWA Installable, Offline Service Worker Caching, & Background Sync Active.</p>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={async () => {
-                            if ('caches' in window) {
-                              const keys = await caches.keys();
-                              await Promise.all(keys.map(k => caches.delete(k)));
-                              alert('Cache PWA lokal berhasil dibersihkan! Halaman akan dimuat ulang.');
-                              window.location.reload();
-                            } else {
-                              alert('Browser tidak mendukung API Cache.');
-                            }
-                          }}
-                          className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-auto"
-                        >
-                          <RefreshCw className="h-3.5 w-3.5" />
-                          <span>Bersihkan Cache PWA Lokal</span>
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                        <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-xl">
-                          <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">Service Worker Status</span>
-                          <span className="text-sm font-extrabold text-emerald-400 flex items-center gap-1.5">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span>Active (er-static-v1)</span>
-                          </span>
-                        </div>
-                        <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-xl">
-                          <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">Web App Manifest</span>
-                          <span className="text-sm font-extrabold text-blue-400">/manifest.json (Standalone)</span>
-                        </div>
-                        <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-xl">
-                          <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">Offline Fallback Strategy</span>
-                          <span className="text-sm font-extrabold text-amber-400">Network-First + Cache</span>
-                        </div>
-                        <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-xl">
-                          <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">Flutter REST API Sync</span>
-                          <span className="text-sm font-extrabold text-indigo-400">Unified REST Single Backend</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Module Health Matrix */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                      <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                        <Layers className="h-4 w-4 text-emerald-600" />
-                        <span>Indikator Kesehatan Modul ERP (Module Health Status)</span>
-                      </h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                        {[
-                          { name: 'Sivitas Akademika', status: 'Healthy', latency: '12ms' },
-                          { name: 'KBM & Kurikulum', status: 'Healthy', latency: '18ms' },
-                          { name: 'Assessment & Ujian', status: 'Healthy', latency: '15ms' },
-                          { name: 'Leger & Rapor', status: 'Healthy', latency: '22ms' },
-                          { name: 'Tahfidz & Quran', status: 'Healthy', latency: '14ms' },
-                          { name: 'Keuangan & SPP', status: 'Healthy', latency: '20ms' },
-                          { name: 'Payroll & Gaji', status: 'Healthy', latency: '19ms' },
-                          { name: 'Inventaris & Aset', status: 'Healthy', latency: '11ms' },
-                          { name: 'Perpustakaan', status: 'Healthy', latency: '16ms' },
-                          { name: 'PPDB & Penerimaan', status: 'Healthy', latency: '13ms' },
-                          { name: 'Dapodik Sync', status: 'Healthy', latency: '25ms' },
-                          { name: 'Studio Dokumen', status: 'Healthy', latency: '17ms' },
-                          { name: 'Enterprise Print', status: 'Healthy', latency: '10ms' },
-                          { name: 'Notification Gateway', status: 'Healthy', latency: '14ms' },
-                          { name: 'Audit & Compliance', status: 'Healthy', latency: '12ms' },
-                        ].map((m, idx) => (
-                          <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between gap-2">
-                            <span className="font-bold text-slate-800 text-xs truncate">{m.name}</span>
-                            <div className="flex items-center justify-between">
-                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md text-[10px] font-extrabold flex items-center gap-1">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                                {m.status}
-                              </span>
-                              <span className="text-[10px] font-mono text-slate-500">{m.latency}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* API Health Check Endpoints Table */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                      <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                        <Terminal className="h-4 w-4 text-indigo-600" />
-                        <span>Status Endpoint API Kesehatan Sistem (Health Check Endpoints)</span>
-                      </h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                          <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
-                              <th className="p-3">Endpoint URL</th>
-                              <th className="p-3">Method</th>
-                              <th className="p-3">Status HTTP</th>
-                              <th className="p-3">Waktu Respon</th>
-                              <th className="p-3">Keterangan</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 font-mono">
-                            {[
-                              { url: '/api/health', method: 'GET', status: '200 OK', time: '12ms', desc: 'Sistem core online' },
-                              { url: '/api/database/status', method: 'GET', status: '200 OK', time: '18ms', desc: 'Koneksi MySQL stabil' },
-                              { url: '/api/prisma/status', method: 'GET', status: '200 OK', time: '14ms', desc: 'Prisma ORM synced' },
-                              { url: '/api/storage/status', method: 'GET', status: '200 OK', time: '8ms', desc: 'Storage upload ready' },
-                              { url: '/api/queue/status', method: 'GET', status: '200 OK', time: '10ms', desc: 'Redis queue active' },
-                              { url: '/api/whatsapp/status', method: 'GET', status: '200 OK', time: '35ms', desc: 'WA Gateway connected' },
-                            ].map((ep, i) => (
-                              <tr key={i} className="hover:bg-slate-50">
-                                <td className="p-3 font-bold text-indigo-600">{ep.url}</td>
-                                <td className="p-3 font-bold text-slate-700">{ep.method}</td>
-                                <td className="p-3"><span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">{ep.status}</span></td>
-                                <td className="p-3 text-slate-600">{ep.time}</td>
-                                <td className="p-3 text-slate-500 font-sans">{ep.desc}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
+                {/* 25. ENTERPRISE PRODUCTION READINESS & FINAL QA GATE (Blueprint 151) */}
+                {activeTab === 'production-qa' && (
+                  <EnterpriseProductionReadinessEngine />
                 )}
 
               </div>

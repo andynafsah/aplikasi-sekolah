@@ -114,12 +114,12 @@ export default function AutomationWorkflow() {
         apiClient.post('/api/action?action=getN8nIntegrations')
       ]);
 
-      if (catRes.data.success) setCategories(catRes.data.data);
-      if (tplRes.data.success) setTemplates(tplRes.data.data);
-      if (defRes.data.success) setDefinitions(defRes.data.data);
-      if (instRes.data.success) setInstances(instRes.data.data);
-      if (taskRes.data.success) setTasks(taskRes.data.data);
-      if (n8nRes.data.success) setIntegrations(n8nRes.data.data);
+      if (catRes.data?.success && Array.isArray(catRes.data.data)) setCategories(catRes.data.data);
+      if (tplRes.data?.success && Array.isArray(tplRes.data.data)) setTemplates(tplRes.data.data);
+      if (defRes.data?.success && Array.isArray(defRes.data.data)) setDefinitions(defRes.data.data);
+      if (instRes.data?.success && Array.isArray(instRes.data.data)) setInstances(instRes.data.data);
+      if (taskRes.data?.success && Array.isArray(taskRes.data.data)) setTasks(taskRes.data.data);
+      if (n8nRes.data?.success && Array.isArray(n8nRes.data.data)) setIntegrations(n8nRes.data.data);
     } catch (err) {
       console.error('Failed to load automation records', err);
       showToast('Gagal memuat konfigurasi alur kerja', 'error');
@@ -322,20 +322,22 @@ export default function AutomationWorkflow() {
   const handleLoadTemplate = (tpl: any) => {
     setSelectedTemplate(tpl);
     setEditingDefinition(null);
-    setDefName(tpl.name);
-    setDefDescription(tpl.description);
-    setDefCategory(tpl.category_id);
-    setDefNodes(JSON.parse(JSON.stringify(tpl.nodes))); // deep clone
+    setDefName(tpl.name || '');
+    setDefDescription(tpl.description || '');
+    setDefCategory(tpl.category_id || '');
+    const nodes = tpl.nodes || tpl.sample_nodes || [];
+    setDefNodes(JSON.parse(JSON.stringify(nodes))); // deep clone
   };
 
   // Setup existing definition for editing
   const handleLoadDefinitionForEdit = (def: any) => {
     setEditingDefinition(def);
     setSelectedTemplate(null);
-    setDefName(def.name);
-    setDefDescription(def.description);
-    setDefCategory(def.category_id);
-    setDefNodes(JSON.parse(JSON.stringify(def.nodes)));
+    setDefName(def.name || '');
+    setDefDescription(def.description || '');
+    setDefCategory(def.category_id || '');
+    const nodes = def.nodes || def.sample_nodes || [];
+    setDefNodes(JSON.parse(JSON.stringify(nodes)));
   };
 
   // Add a step in node designer
@@ -688,7 +690,10 @@ ON CONFLICT (id) DO NOTHING;
               <div className="grid grid-cols-1 gap-6">
                 {instances.map((inst) => {
                   const wfDef = definitions.find(d => d.id === inst.workflow_id) || templates.find(t => t.id === inst.workflow_id);
-                  const activeStepIdx = wfDef ? wfDef.nodes.findIndex((n: any) => n.id === inst.current_step_id) : -1;
+                  const nodesList: any[] = (wfDef?.nodes || wfDef?.sample_nodes || []) as any[];
+                  const activeStepIdx = nodesList.findIndex((n: any) => n.id === inst.current_step_id || String(n.id) === String(inst.current_step_order));
+                  const isRunning = inst.status === 'RUNNING' || inst.current_status === 'PENDING' || inst.current_status === 'IN_REVIEW';
+                  const isCompleted = inst.status === 'COMPLETED' || inst.current_status === 'APPROVED';
                   
                   return (
                     <div key={inst.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
@@ -699,12 +704,12 @@ ON CONFLICT (id) DO NOTHING;
                           <div className="flex items-center gap-2">
                             <h4 className="font-bold text-slate-800 text-sm">{inst.title}</h4>
                             <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
-                              inst.status === 'RUNNING' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
-                              inst.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                              isRunning ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                              isCompleted ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
                               'bg-rose-50 text-rose-700 border border-rose-100'
                             }`}>
-                              {inst.status === 'RUNNING' ? 'Proses Berjalan' :
-                               inst.status === 'COMPLETED' ? 'Selesai Terverifikasi' : 'Ditolak / Gagal'}
+                              {isRunning ? 'Proses Berjalan' :
+                               isCompleted ? 'Selesai Terverifikasi' : 'Ditolak / Gagal'}
                             </span>
                           </div>
                           <div className="flex items-center gap-3 text-[10px] text-slate-400 font-mono mt-1">
@@ -716,8 +721,8 @@ ON CONFLICT (id) DO NOTHING;
 
                         {/* Variables info block */}
                         <div className="text-right text-[11px] bg-slate-50 border border-slate-100 rounded-lg p-2 font-mono">
-                          <div className="text-slate-500"><span className="font-bold text-slate-700">Siswa:</span> {inst.variables.student_name}</div>
-                          <div className="text-slate-400 mt-0.5"><span className="font-bold text-slate-600">Alasan:</span> {inst.variables.reason}</div>
+                          <div className="text-slate-500"><span className="font-bold text-slate-700">Subjek:</span> {inst.variables?.student_name || inst.variables?.nominal || inst.title}</div>
+                          <div className="text-slate-400 mt-0.5"><span className="font-bold text-slate-600">Alasan:</span> {inst.variables?.reason || inst.variables?.item_summary || 'Operasional'}</div>
                         </div>
                       </div>
 
@@ -726,40 +731,40 @@ ON CONFLICT (id) DO NOTHING;
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-3">Peta Perjalanan Alur Kerja (BPM Stepper)</span>
                         
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                          {wfDef?.nodes?.map((node: any, idx: number) => {
-                            const isCompleted = idx < activeStepIdx || inst.status === 'COMPLETED';
-                            const isActive = idx === activeStepIdx && inst.status === 'RUNNING';
-                            const isFailed = inst.status === 'REJECTED' && idx === activeStepIdx;
+                          {nodesList.map((node: any, idx: number) => {
+                            const nodeCompleted = idx < activeStepIdx || isCompleted;
+                            const nodeActive = idx === activeStepIdx && isRunning;
+                            const nodeFailed = (inst.status === 'REJECTED' || inst.current_status === 'REJECTED') && idx === activeStepIdx;
 
                             return (
-                              <div key={node.id} className="relative flex flex-col items-center text-center p-3 rounded-xl border transition-all duration-300 bg-white shadow-sm">
+                              <div key={node.id || idx} className="relative flex flex-col items-center text-center p-3 rounded-xl border transition-all duration-300 bg-white shadow-sm">
                                 
                                 {/* Top Connector Line */}
                                 {idx > 0 && (
                                   <div className={`hidden md:block absolute top-1/2 -left-3.5 w-6 h-0.5 z-0 ${
-                                    isCompleted ? `bg-emerald-500` : isActive ? `bg-${accentColor}-500 animate-pulse` : 'bg-slate-200'
+                                    nodeCompleted ? `bg-emerald-500` : nodeActive ? `bg-${accentColor}-500 animate-pulse` : 'bg-slate-200'
                                   }`} />
                                 )}
 
                                 {/* Icon indicator */}
                                 <div className={`h-8 w-8 rounded-full flex items-center justify-center z-10 text-xs font-bold mb-2 ${
-                                  isCompleted ? 'bg-emerald-500 text-white shadow-emerald-100 shadow-md' :
-                                  isActive ? `bg-${accentColor}-600 text-white shadow-md animate-pulse` :
-                                  isFailed ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-400 border border-slate-200'
+                                  nodeCompleted ? 'bg-emerald-500 text-white shadow-emerald-100 shadow-md' :
+                                  nodeActive ? `bg-${accentColor}-600 text-white shadow-md animate-pulse` :
+                                  nodeFailed ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-400 border border-slate-200'
                                 }`}>
-                                  {isCompleted ? <Check className="h-4 w-4" /> :
-                                   isFailed ? <X className="h-4 w-4" /> :
+                                  {nodeCompleted ? <Check className="h-4 w-4" /> :
+                                   nodeFailed ? <X className="h-4 w-4" /> :
                                    idx + 1}
                                 </div>
 
                                 <div className="space-y-0.5">
                                   <span className={`text-xs font-bold block ${
-                                    isActive ? `text-${accentColor}-700` : isCompleted ? 'text-emerald-700' : isFailed ? 'text-rose-700' : 'text-slate-500'
+                                    nodeActive ? `text-${accentColor}-700` : nodeCompleted ? 'text-emerald-700' : nodeFailed ? 'text-rose-700' : 'text-slate-500'
                                   }`}>
                                     {node.label}
                                   </span>
                                   <span className="text-[9px] font-mono text-slate-400 block">
-                                    {node.type === 'trigger' ? 'Pemohon' : node.assignee}
+                                    {node.type === 'trigger' ? 'Pemohon' : node.assignee || 'PIC'}
                                   </span>
                                 </div>
                               </div>
@@ -813,12 +818,12 @@ ON CONFLICT (id) DO NOTHING;
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-                          <h4 className="font-bold text-slate-800 text-sm">{task.label}</h4>
+                          <h4 className="font-bold text-slate-800 text-sm">{task.label || task.task_name || task.title}</h4>
                         </div>
                         <p className="text-[10px] text-slate-400 font-mono mt-1">Task ID: {task.id}</p>
                       </div>
                       <span className="text-[9px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-200 uppercase font-mono">
-                        {task.assignee_role}
+                        {task.assignee_role || task.assigned_role || 'STAFF'}
                       </span>
                     </div>
 
@@ -826,22 +831,24 @@ ON CONFLICT (id) DO NOTHING;
                     <div className="bg-white border border-slate-100 rounded-lg p-3 space-y-2 text-xs">
                       <div className="grid grid-cols-3">
                         <span className="text-slate-400 font-semibold">Instansi Run:</span>
-                        <span className="col-span-2 text-slate-700 font-bold font-mono">{task.instance_title}</span>
+                        <span className="col-span-2 text-slate-700 font-bold font-mono">{task.instance_title || task.title}</span>
                       </div>
                       <div className="grid grid-cols-3">
                         <span className="text-slate-400 font-semibold">Nama Siswa:</span>
-                        <span className="col-span-2 text-slate-700 font-semibold">{task.variables.student_name}</span>
+                        <span className="col-span-2 text-slate-700 font-semibold">{task.variables?.student_name || task.variables?.vendor || task.assigned_user_name || 'Pemohon'}</span>
                       </div>
                       <div className="grid grid-cols-3">
-                        <span className="text-slate-400 font-semibold">Alasan Izin:</span>
-                        <span className="col-span-2 text-slate-700 font-medium italic">"{task.variables.reason}"</span>
+                        <span className="text-slate-400 font-semibold">Alasan / Uraian:</span>
+                        <span className="col-span-2 text-slate-700 font-medium italic">"{task.variables?.reason || task.variables?.item_summary || 'Pengajuan persetujuan alur kerja'}"</span>
                       </div>
-                      <div className="grid grid-cols-3">
-                        <span className="text-slate-400 font-semibold">Durasi:</span>
-                        <span className="col-span-2 text-slate-600 font-mono">
-                          {task.variables.start_date} s/d {task.variables.end_date}
-                        </span>
-                      </div>
+                      {task.variables?.start_date && (
+                        <div className="grid grid-cols-3">
+                          <span className="text-slate-400 font-semibold">Durasi:</span>
+                          <span className="col-span-2 text-slate-600 font-mono">
+                            {task.variables.start_date} s/d {task.variables.end_date || task.variables.start_date}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Process Actions */}
@@ -916,7 +923,7 @@ ON CONFLICT (id) DO NOTHING;
                     ) : (
                       tasks.filter(t => t.status !== 'PENDING').map(t => (
                         <tr key={t.id} className="hover:bg-slate-50">
-                          <td className="p-4 font-semibold">{t.label}</td>
+                          <td className="p-4 font-semibold">{t.label || t.task_name || t.title}</td>
                           <td className="p-4">
                             <span className={`px-2 py-0.5 font-bold rounded-full text-[10px] ${
                               t.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
@@ -925,7 +932,7 @@ ON CONFLICT (id) DO NOTHING;
                             </span>
                           </td>
                           <td className="p-4 italic text-slate-400">{t.notes || 'Tanpa catatan.'}</td>
-                          <td className="p-4 font-mono text-slate-400">{new Date(t.processed_at).toLocaleString('id-ID')}</td>
+                          <td className="p-4 font-mono text-slate-400">{new Date(t.processed_at || t.action_at || t.updated_at || t.created_at || Date.now()).toLocaleString('id-ID')}</td>
                         </tr>
                       ))
                     )}
@@ -947,39 +954,42 @@ ON CONFLICT (id) DO NOTHING;
             <div className="space-y-3">
               <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Pustaka Template Alur Kerja Siap Pakai</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {templates.map(tpl => (
-                  <div key={tpl.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:border-blue-300 transition-all shadow-sm flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className={`p-1.5 rounded-lg bg-${accentColor}-50 text-${accentColor}-600`}>
-                          <Zap className="h-4 w-4" />
-                        </div>
-                        <h4 className="font-bold text-slate-800 text-sm">{tpl.name}</h4>
-                      </div>
-                      <p className="text-slate-500 text-xs mt-2">{tpl.description}</p>
-                      
-                      {/* Steps mini summary */}
-                      <div className="flex flex-wrap items-center gap-2 mt-4">
-                        {tpl.nodes.map((n: any, i: number) => (
-                          <div key={n.id} className="flex items-center gap-1 text-[10px] bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md font-mono text-slate-500">
-                            <span>{n.label}</span>
-                            {i < tpl.nodes.length - 1 && <ArrowRight className="h-3 w-3 text-slate-300" />}
+                {templates.map(tpl => {
+                  const tplNodes: any[] = (tpl.nodes || tpl.sample_nodes || []) as any[];
+                  return (
+                    <div key={tpl.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:border-blue-300 transition-all shadow-sm flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1.5 rounded-lg bg-${accentColor}-50 text-${accentColor}-600`}>
+                            <Zap className="h-4 w-4" />
                           </div>
-                        ))}
+                          <h4 className="font-bold text-slate-800 text-sm">{tpl.name}</h4>
+                        </div>
+                        <p className="text-slate-500 text-xs mt-2">{tpl.description}</p>
+                        
+                        {/* Steps mini summary */}
+                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                          {tplNodes.map((n: any, i: number) => (
+                            <div key={n.id || i} className="flex items-center gap-1 text-[10px] bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md font-mono text-slate-500">
+                              <span>{n.label}</span>
+                              {i < tplNodes.length - 1 && <ArrowRight className="h-3 w-3 text-slate-300" />}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="mt-5 pt-3 border-t flex justify-end">
+                        <button
+                          onClick={() => handleLoadTemplate(tpl)}
+                          className={`px-3 py-1.5 border font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${accentBorder} hover:bg-slate-50`}
+                        >
+                          <Sliders className="h-3.5 w-3.5" />
+                          <span>Muat ke Designer</span>
+                        </button>
                       </div>
                     </div>
-
-                    <div className="mt-5 pt-3 border-t flex justify-end">
-                      <button
-                        onClick={() => handleLoadTemplate(tpl)}
-                        className={`px-3 py-1.5 border font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${accentBorder} hover:bg-slate-50`}
-                      >
-                        <Sliders className="h-3.5 w-3.5" />
-                        <span>Muat ke Designer</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

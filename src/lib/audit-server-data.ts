@@ -198,6 +198,46 @@ export interface CorrectiveAction {
   }[];
 }
 
+export interface AuditException {
+  id: string;
+  tenant_id: string;
+  exception_type: 'NEGATIVE_STOCK' | 'BUDGET_OVERRUN' | 'DUPLICATE_PAYMENT' | 'UNRECONCILED_BANK' | 'OVERDUE_LOAN' | 'MISSING_DOCUMENT' | 'SEGREGATION_VIOLATION' | 'UNAUTHORIZED_ACTION';
+  title: string;
+  description: string;
+  module: string;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'IGNORED' | 'CLOSED';
+  detected_at: string;
+  target_id?: string;
+  target_type?: string;
+  actor_id?: string;
+  actor_name?: string;
+  resolution_notes?: string;
+  resolved_by?: string;
+  resolved_at?: string;
+  metadata?: any;
+}
+
+export interface RetentionPolicy {
+  id: string;
+  tenant_id: string;
+  retention_years: number; // 1, 3, 5 years
+  auto_archive_enabled: boolean;
+  tamper_detection_enabled: boolean;
+  last_archived_at?: string;
+  archived_records_count: number;
+}
+
+export interface InternalControlPolicy {
+  id: string;
+  tenant_id: string;
+  segregation_of_duties_enforced: boolean;
+  dual_approval_threshold_idr: number;
+  financial_period_locked_until: string;
+  tamper_detection_active: boolean;
+  immutable_audit_trail_active: boolean;
+}
+
 export interface ComplianceFramework {
   id: string;
   tenant_id: string;
@@ -342,6 +382,9 @@ export const AUDIT_DB: {
   govTemplates: GovernmentReportTemplate[];
   accreditationPeriods: AccreditationPeriod[];
   accreditations: AccreditationAssessment[];
+  exceptions: AuditException[];
+  retentionPolicies: RetentionPolicy[];
+  internalControlRules: InternalControlPolicy[];
 } = {
   auditLogs: [],
   entityChanges: [],
@@ -361,7 +404,10 @@ export const AUDIT_DB: {
   governmentReports: [],
   govTemplates: [],
   accreditationPeriods: [],
-  accreditations: []
+  accreditations: [],
+  exceptions: [],
+  retentionPolicies: [],
+  internalControlRules: []
 };
 
 // Seed Helper
@@ -638,6 +684,95 @@ export function seedAuditData(tenantId: string) {
       created_at: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
     }
   );
+
+  // 8. Retention Policy Seed
+  AUDIT_DB.retentionPolicies.push({
+    id: `retpol-1-${tId}`,
+    tenant_id: tId,
+    retention_years: 5,
+    auto_archive_enabled: true,
+    tamper_detection_enabled: true,
+    last_archived_at: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().split('T')[0],
+    archived_records_count: 1420
+  });
+
+  // 9. Internal Control Policy Seed
+  AUDIT_DB.internalControlRules.push({
+    id: `ic-1-${tId}`,
+    tenant_id: tId,
+    segregation_of_duties_enforced: true,
+    dual_approval_threshold_idr: 5000000,
+    financial_period_locked_until: '2026-06-30',
+    tamper_detection_active: true,
+    immutable_audit_trail_active: true
+  });
+
+  // 10. Audit Exceptions Seed
+  AUDIT_DB.exceptions.push(
+    {
+      id: `exc-1-${tId}`,
+      tenant_id: tId,
+      exception_type: 'BUDGET_OVERRUN',
+      title: 'Peringatan Over-Budget Anggaran Sarpras Q3',
+      description: 'Pengajuan pengadaan perlengkapan smart classroom melebihi alokasi pos anggaran belanja RAPBS sebesar Rp 2.500.000.',
+      module: 'Sarana & Keuangan',
+      risk_level: 'HIGH',
+      status: 'OPEN',
+      detected_at: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+      actor_id: 'user-3',
+      actor_name: 'Bendahara Sekolah',
+      target_id: 'PO-2026-08-012',
+      target_type: 'PurchaseOrder'
+    },
+    {
+      id: `exc-2-${tId}`,
+      tenant_id: tId,
+      exception_type: 'SEGREGATION_VIOLATION',
+      title: 'Pencegahan Approval Mandiri (Segregation of Duties Violation)',
+      description: 'Sistem menolak otorisasi pencairan kas BOS karena akun pembuat voucher (Maker) sama dengan akun penyetujui (Approver).',
+      module: 'Keuangan & Kas',
+      risk_level: 'CRITICAL',
+      status: 'RESOLVED',
+      detected_at: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString(),
+      actor_id: 'user-3',
+      actor_name: 'Bendahara Sekolah',
+      target_id: 'VOC-2026-0044',
+      target_type: 'CashVoucher',
+      resolution_notes: 'Diteruskan ke Kepala Sekolah untuk otorisasi resmi bertingkat ganda sesuai SOP Internal Control.',
+      resolved_by: 'Kepala Sekolah (Dr. H. Ahmad Fauzi)',
+      resolved_at: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString()
+    },
+    {
+      id: `exc-3-${tId}`,
+      tenant_id: tId,
+      exception_type: 'MISSING_DOCUMENT',
+      title: 'Dokumen SK Pengangkatan Belum Terarsip Digital',
+      description: 'Ditemukan 3 berkas fisik SK Pembina Ekstrakurikuler Tahun 2025/2026 belum memiliki lampiran pindaian terverifikasi di modul Arsip.',
+      module: 'Tata Usaha & Dokumen',
+      risk_level: 'MEDIUM',
+      status: 'INVESTIGATING',
+      detected_at: new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString(),
+      actor_id: 'user-2',
+      actor_name: 'Staf Tata Usaha',
+      target_id: 'DOC-SK-2026-09',
+      target_type: 'OfficialDocument'
+    },
+    {
+      id: `exc-4-${tId}`,
+      tenant_id: tId,
+      exception_type: 'UNRECONCILED_BANK',
+      title: 'Selisih Rekonsiliasi Rekening Giro Operasional',
+      description: 'Terdapat transaksi transfer masuk pembayaran santri Rp 350.000 pada mutasi bank tanpa referensi invoice valid.',
+      module: 'Keuangan & SPP',
+      risk_level: 'MEDIUM',
+      status: 'OPEN',
+      detected_at: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString(),
+      actor_id: 'system-agent',
+      actor_name: 'BankSync Daemon',
+      target_id: 'MUT-BSI-9921',
+      target_type: 'BankStatement'
+    }
+  );
 }
 
 // Log helper to simulate Immutable Audit log chain
@@ -681,6 +816,32 @@ export function appendAuditLog(
 
   AUDIT_DB.auditLogs.unshift(log);
   return log;
+}
+
+export function logAudit(opts: {
+  tenant_id?: string;
+  user_id?: string;
+  username?: string;
+  action: 'Create' | 'Update' | 'Delete' | 'Restore' | 'Approve' | 'Reject' | 'Login' | 'Logout' | 'Export' | 'Import';
+  module: string;
+  description: string;
+  severity: 'Information' | 'Warning' | 'Critical' | 'Security';
+  ip_address?: string;
+  user_agent?: string;
+  payload?: any;
+}): AuditLog {
+  return appendAuditLog(
+    opts.tenant_id || 'system',
+    opts.user_id || 'admin',
+    opts.username || 'Super Admin',
+    opts.action,
+    opts.module,
+    opts.description,
+    opts.severity,
+    opts.ip_address || '127.0.0.1',
+    opts.user_agent || 'School-ERP-Agent-Browser',
+    opts.payload || null
+  );
 }
 
 // Helper to track entity before/after changes
@@ -1535,6 +1696,323 @@ export async function handleAuditActions(
           compliance_rate: 92.5,
           risk_index: 'Rendah (Aman)',
           accreditation_prediction: 'A (Unggul)'
+        }
+      });
+    }
+
+    case 'auditExceptions':
+    case 'auditExceptionList': {
+      const { status, risk_level, moduleName, search, page = 1, limit = 50 } = { ...req.query, ...req.body };
+      let list = AUDIT_DB.exceptions.filter(e => e.tenant_id === tenantId);
+
+      if (status && status !== 'ALL') {
+        list = list.filter(e => e.status.toUpperCase() === status.toString().toUpperCase());
+      }
+      if (risk_level && risk_level !== 'ALL') {
+        list = list.filter(e => e.risk_level.toUpperCase() === risk_level.toString().toUpperCase());
+      }
+      if (moduleName && moduleName !== 'ALL') {
+        list = list.filter(e => e.module.toLowerCase().includes(moduleName.toString().toLowerCase()));
+      }
+      if (search) {
+        const q = search.toString().toLowerCase();
+        list = list.filter(e => e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q) || (e.target_id && e.target_id.toLowerCase().includes(q)));
+      }
+
+      const total = list.length;
+      const startIndex = (Number(page) - 1) * Number(limit);
+      const paginated = list.slice(startIndex, startIndex + Number(limit));
+
+      return res.json({
+        success: true,
+        data: {
+          items: paginated,
+          total,
+          page: Number(page),
+          limit: Number(limit),
+          total_open: AUDIT_DB.exceptions.filter(e => e.tenant_id === tenantId && e.status === 'OPEN').length,
+          total_critical: AUDIT_DB.exceptions.filter(e => e.tenant_id === tenantId && e.risk_level === 'CRITICAL').length
+        }
+      });
+    }
+
+    case 'auditExceptionCreate': {
+      const { exception_type, title, description, module: modName, risk_level, target_id, target_type } = req.body;
+      const newExc: AuditException = {
+        id: `exc-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        tenant_id: tenantId,
+        exception_type: exception_type || 'UNAUTHORIZED_ACTION',
+        title: title || 'Peringatan Anomali Internal Control',
+        description: description || '',
+        module: modName || 'General',
+        risk_level: risk_level || 'MEDIUM',
+        status: 'OPEN',
+        detected_at: new Date().toISOString(),
+        target_id: target_id || null,
+        target_type: target_type || null,
+        actor_id: userId,
+        actor_name: uName
+      };
+
+      AUDIT_DB.exceptions.unshift(newExc);
+
+      // Audit Log
+      appendAuditLog(
+        tenantId,
+        userId,
+        uName,
+        'Create',
+        'Audit',
+        `Mencatat exception internal control baru: ${newExc.title} [Tingkat: ${newExc.risk_level}]`,
+        newExc.risk_level === 'CRITICAL' || newExc.risk_level === 'HIGH' ? 'Security' : 'Warning',
+        req.ip,
+        req.headers['user-agent'] || '',
+        newExc
+      );
+
+      return res.json({ success: true, data: newExc });
+    }
+
+    case 'auditExceptionResolve': {
+      const exceptionId = req.body.exception_id || req.body.id || req.query.id;
+      const { resolution_notes, new_status = 'RESOLVED' } = req.body;
+
+      const exc = AUDIT_DB.exceptions.find(e => e.tenant_id === tenantId && e.id === exceptionId);
+      if (!exc) return res.status(404).json({ success: false, message: 'Exception tidak ditemukan' });
+
+      exc.status = new_status;
+      exc.resolution_notes = resolution_notes || 'Telah diverifikasi dan ditangani sesuai SOP pengawasan internal';
+      exc.resolved_by = uName;
+      exc.resolved_at = new Date().toISOString();
+
+      // Audit Log
+      appendAuditLog(
+        tenantId,
+        userId,
+        uName,
+        'Approve',
+        'Audit',
+        `Menyelesaikan exception pengendalian internal: ${exc.title} (Status: ${exc.status})`,
+        'Information',
+        req.ip,
+        req.headers['user-agent'] || '',
+        exc
+      );
+
+      return res.json({ success: true, data: exc });
+    }
+
+    case 'internalControl': {
+      // Get internal control policies & check rules
+      let policy = AUDIT_DB.internalControlRules.find(r => r.tenant_id === tenantId);
+      if (!policy) {
+        policy = {
+          id: `ic-1-${tenantId}`,
+          tenant_id: tenantId,
+          segregation_of_duties_enforced: true,
+          dual_approval_threshold_idr: 5000000,
+          financial_period_locked_until: '2026-06-30',
+          tamper_detection_active: true,
+          immutable_audit_trail_active: true
+        };
+        AUDIT_DB.internalControlRules.push(policy);
+      }
+
+      if (req.method === 'POST') {
+        const { action_type, segregation_of_duties_enforced, dual_approval_threshold_idr, financial_period_locked_until } = req.body;
+        
+        if (action_type === 'validate_segregation') {
+          const { maker_id, approver_id } = req.body;
+          const isViolation = maker_id && approver_id && maker_id === approver_id;
+          return res.json({
+            success: true,
+            data: {
+              is_valid: !isViolation,
+              violation_detected: isViolation,
+              message: isViolation ? 'Pelanggaran Segregation of Duties: Pembuat transaksi tidak boleh menyetujui transaksi sendiri.' : 'Validasi Segregation of Duties lolos.'
+            }
+          });
+        }
+
+        if (action_type === 'validate_period_lock') {
+          const { transaction_date } = req.body;
+          const isLocked = transaction_date && transaction_date <= policy.financial_period_locked_until;
+          return res.json({
+            success: true,
+            data: {
+              is_locked: isLocked,
+              locked_until: policy.financial_period_locked_until,
+              message: isLocked ? `Periode buku hingga ${policy.financial_period_locked_until} telah dikunci (Period Lock). Transaksi tidak dapat diubah.` : 'Periode buku terbuka untuk pencatatan.'
+            }
+          });
+        }
+
+        // Update settings
+        if (segregation_of_duties_enforced !== undefined) policy.segregation_of_duties_enforced = Boolean(segregation_of_duties_enforced);
+        if (dual_approval_threshold_idr !== undefined) policy.dual_approval_threshold_idr = Number(dual_approval_threshold_idr);
+        if (financial_period_locked_until !== undefined) policy.financial_period_locked_until = financial_period_locked_until;
+
+        appendAuditLog(
+          tenantId,
+          userId,
+          uName,
+          'Update',
+          'Audit',
+          `Memperbarui kebijakan Pengendalian Internal (Period Lock & Segregation of Duties)`,
+          'Warning',
+          req.ip,
+          req.headers['user-agent'] || '',
+          policy
+        );
+
+        return res.json({ success: true, data: policy });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          policy,
+          active_checks: [
+            { name: 'Segregation of Duties (Maker != Approver)', status: policy.segregation_of_duties_enforced ? 'ACTIVE' : 'INACTIVE', risk: 'HIGH' },
+            { name: 'Financial Period Locking', status: 'ACTIVE', locked_until: policy.financial_period_locked_until, risk: 'CRITICAL' },
+            { name: 'Dual Approval Threshold', status: 'ACTIVE', threshold: `Rp ${policy.dual_approval_threshold_idr.toLocaleString('id-ID')}`, risk: 'MEDIUM' },
+            { name: 'Cryptographic Hash-Chained Audit Trail', status: 'ACTIVE', algorithm: 'SHA-256 Chained', risk: 'LOW' },
+            { name: 'Automated Exception Scanner', status: 'ACTIVE', scan_interval: 'Real-time & Batch Daily', risk: 'MEDIUM' }
+          ]
+        }
+      });
+    }
+
+    case 'verifyHashChain': {
+      // Validate all audit logs in sequence for tamper resistance
+      const logs = AUDIT_DB.auditLogs.filter(l => l.tenant_id === tenantId);
+      let isValid = true;
+      let corruptedIndex = -1;
+      let previousSimHash = 'genesis_sprint_27_audit_log_hash_init_root';
+
+      // Verify from oldest to newest
+      const chronological = [...logs].reverse();
+      for (let i = 0; i < chronological.length; i++) {
+        const item = chronological[i];
+        const calculated = generateSecureHash(`${item.id}|${item.tenant_id}|${item.user_id}|${item.action}|${item.module}|${item.severity}|${item.created_at}|${previousSimHash}`);
+        if (item.encrypted_hash !== calculated) {
+          isValid = false;
+          corruptedIndex = i;
+          break;
+        }
+        previousSimHash = calculated;
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          is_tamper_free: isValid,
+          total_records_checked: logs.length,
+          corrupted_records_count: isValid ? 0 : 1,
+          algorithm: 'SHA-256 Immutable Hash Chain',
+          integrity_status: isValid ? '100% TERVERIFIKASI ASLI & TIDAK DAPAT DIMANIPULASI' : 'PERINGATAN: ANOMALI INTEGRITAS TERDETEKSI',
+          latest_block_hash: logs.length > 0 ? logs[0].encrypted_hash : previousSimHash,
+          verified_at: new Date().toISOString()
+        }
+      });
+    }
+
+    case 'retentionPolicy': {
+      let pol = AUDIT_DB.retentionPolicies.find(p => p.tenant_id === tenantId);
+      if (!pol) {
+        pol = {
+          id: `retpol-1-${tenantId}`,
+          tenant_id: tenantId,
+          retention_years: 5,
+          auto_archive_enabled: true,
+          tamper_detection_enabled: true,
+          last_archived_at: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().split('T')[0],
+          archived_records_count: 1420
+        };
+        AUDIT_DB.retentionPolicies.push(pol);
+      }
+
+      if (req.method === 'POST') {
+        const { retention_years, auto_archive_enabled, tamper_detection_enabled } = req.body;
+        if (retention_years !== undefined) pol.retention_years = Number(retention_years);
+        if (auto_archive_enabled !== undefined) pol.auto_archive_enabled = Boolean(auto_archive_enabled);
+        if (tamper_detection_enabled !== undefined) pol.tamper_detection_enabled = Boolean(tamper_detection_enabled);
+
+        appendAuditLog(
+          tenantId,
+          userId,
+          uName,
+          'Update',
+          'Audit',
+          `Memperbarui kebijakan retensi audit log menjadi ${pol.retention_years} tahun`,
+          'Warning',
+          req.ip,
+          req.headers['user-agent'] || '',
+          pol
+        );
+
+        return res.json({ success: true, data: pol });
+      }
+
+      return res.json({ success: true, data: pol });
+    }
+
+    case 'runRetentionJob': {
+      let pol = AUDIT_DB.retentionPolicies.find(p => p.tenant_id === tenantId);
+      if (!pol) {
+        pol = {
+          id: `retpol-1-${tenantId}`,
+          tenant_id: tenantId,
+          retention_years: 5,
+          auto_archive_enabled: true,
+          tamper_detection_enabled: true,
+          last_archived_at: new Date().toISOString().split('T')[0],
+          archived_records_count: 1420
+        };
+        AUDIT_DB.retentionPolicies.push(pol);
+      }
+
+      pol.last_archived_at = new Date().toISOString().split('T')[0];
+      pol.archived_records_count += 48; // Simulated batch archive
+
+      appendAuditLog(
+        tenantId,
+        userId,
+        uName,
+        'Export',
+        'Audit',
+        `Menjalankan job retensi arsip data audit otomatis (${pol.retention_years} tahun). Berhasil mengarsipkan 48 entri riwayat.`,
+        'Information',
+        req.ip,
+        req.headers['user-agent'] || '',
+        { archived_count: 48, total_archived: pol.archived_records_count }
+      );
+
+      return res.json({
+        success: true,
+        message: `Job retensi & pengarsipan audit selesai dijalankan. Data terarsip: ${pol.archived_records_count} entri.`,
+        data: pol
+      });
+    }
+
+    case 'securityEvents': {
+      // Returns security audit trail: Failed logins, password changes, permission updates, role assignments
+      const logs = AUDIT_DB.auditLogs.filter(l => l.tenant_id === tenantId && (l.severity === 'Security' || l.severity === 'Critical' || l.module === 'Auth' || l.module === 'RBAC'));
+      const loginHistories = AUDIT_DB.loginHistories.filter(lh => lh.tenant_id === tenantId);
+      const activeSessions = AUDIT_DB.sessions.filter(s => s.tenant_id === tenantId && s.is_active);
+
+      return res.json({
+        success: true,
+        data: {
+          security_logs: logs,
+          login_histories: loginHistories,
+          active_sessions: activeSessions,
+          threat_indicators: {
+            failed_logins_last_24h: loginHistories.filter(lh => lh.status === 'FAILED').length,
+            suspicious_ips_detected: 0,
+            active_sessions_count: activeSessions.length,
+            mfa_enforced_percentage: 100
+          }
         }
       });
     }

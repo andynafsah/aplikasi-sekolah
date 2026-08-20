@@ -494,10 +494,18 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
+const fallbackSettingsContext: SettingsContextProps = {
+  settings: defaultValues,
+  loading: false,
+  refreshSettings: async () => {},
+  updateSingleSetting: () => {},
+  saveAllSettings: async () => true
+};
+
 export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (!context) {
-    throw new Error('useSettings must be used within a SettingsProvider');
+    return fallbackSettingsContext;
   }
   return context;
 };

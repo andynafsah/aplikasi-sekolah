@@ -15,6 +15,8 @@ interface StudentMutationProps {
 }
 
 export function StudentMutation({ students, mutations, onRefresh, subTab }: StudentMutationProps) {
+  const safeStudents = Array.isArray(students) ? students : [];
+  const safeMutations = Array.isArray(mutations) ? mutations : [];
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [mutationType, setMutationType] = useState<string>('MUTASI_KELUAR');
   const [schoolTarget, setSchoolTarget] = useState<string>('');

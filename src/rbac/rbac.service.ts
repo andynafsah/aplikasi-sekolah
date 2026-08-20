@@ -56,6 +56,14 @@ export class RbacService {
   }
 
   /**
+   * Returns complete RBAC raw data configuration
+   */
+  public getRawConfig(): any {
+    this.loadLatestConfig();
+    return this.data || rbacData;
+  }
+
+  /**
    * Translates role code strings dynamically
    */
   public normalizeRole(rawRole: string): string {

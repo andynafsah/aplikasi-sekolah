@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import apiClient from '../api/client';
 import { 
   Award, 
   BookOpen, 
@@ -139,16 +140,19 @@ export default function EnterpriseAssessmentAndAutoLegerEngine() {
   const apiCall = async (action: string, payload: any = {}) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, year: selectedYear, semester: selectedSemester, classId: selectedClass, subjectId: selectedSubject, ...payload })
+      const res = await apiClient.post(`/api/action?action=${action}`, {
+        action,
+        year: selectedYear,
+        semester: selectedSemester,
+        classId: selectedClass,
+        subjectId: selectedSubject,
+        ...payload
       });
-      const data = await res.json();
-      return data;
+      return res.data;
     } catch (err: any) {
-      notify('error', `API Error: ${err.message}`);
-      return { success: false, message: err.message };
+      const msg = err.response?.data?.message || err.message;
+      notify('error', `API Error: ${msg}`);
+      return { success: false, message: msg };
     } finally {
       setLoading(false);
     }

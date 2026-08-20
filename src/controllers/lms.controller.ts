@@ -170,7 +170,7 @@ export class LmsController extends BaseController {
         }
 
         default:
-          return res.status(400).json({ success: false, message: `Action ${action} not found in LMS Controller` });
+          return null;
       }
     } catch (error: any) {
       console.error('LMS Controller Error:', error);

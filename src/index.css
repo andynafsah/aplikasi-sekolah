@@ -117,15 +117,19 @@
     border: none !important;
   }
 
-  /* Isolate barcode/inventory label print area */
-  body:has(#print-label-area) * {
+  /* Isolate barcode/inventory/asset label print area */
+  body:has(#print-label-area) *,
+  body:has(#print-asset-label-area) * {
     visibility: hidden;
   }
   body:has(#print-label-area) #print-label-area,
-  body:has(#print-label-area) #print-label-area * {
+  body:has(#print-label-area) #print-label-area *,
+  body:has(#print-asset-label-area) #print-asset-label-area,
+  body:has(#print-asset-label-area) #print-asset-label-area * {
     visibility: visible;
   }
-  body:has(#print-label-area) #print-label-area {
+  body:has(#print-label-area) #print-label-area,
+  body:has(#print-asset-label-area) #print-asset-label-area {
     position: absolute;
     left: 0;
     top: 0;

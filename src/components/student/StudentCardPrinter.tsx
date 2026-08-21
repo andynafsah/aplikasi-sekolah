@@ -38,6 +38,13 @@ export function StudentCardPrinter({ students, tenantName, subTab }: StudentCard
   // Active Control Panel Tab
   const [designTab, setDesignTab] = useState<'LAYOUT' | 'WARNA' | 'KONTEN' | 'FOTO_CODE'>('LAYOUT');
 
+  // Sync institutionName when tenantName prop updates
+  React.useEffect(() => {
+    if (tenantName) {
+      setInstitutionName(tenantName);
+    }
+  }, [tenantName]);
+
   // --- DESIGN CONFIGURATIONS ---
   // 1. Orientation & Dimensions
   const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');

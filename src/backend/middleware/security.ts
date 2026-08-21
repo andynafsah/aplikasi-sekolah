@@ -20,7 +20,7 @@ class SecurityMiddlewareManager {
   // Rate limiter tracker: Map<IP, Array<Timestamp>>
   private rateLimitBuckets = new Map<string, number[]>();
   private readonly rateLimitWindowMs = 60000; // 1 minute window
-  private readonly rateLimitMaxRequests = 100000; // max 100000 requests per window to prevent false-positive 429 rate limit errors
+  private readonly rateLimitMaxRequests = 500000; // max 500000 requests per window to prevent false-positive 429 rate limit errors
 
   /**
    * Generates secure standard Helmet-style headers for Express / Fastify responses

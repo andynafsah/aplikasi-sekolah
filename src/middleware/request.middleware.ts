@@ -7,7 +7,7 @@ const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
  * 1. Rate Limiting Middleware
  * Throttles excessive requests from a single IP within a sliding window (e.g. max 100 requests per 1 minute)
  */
-export function rateLimiter(limit = 100000, windowMs = 60 * 1000) {
+export function rateLimiter(limit = 500000, windowMs = 60 * 1000) {
   return (req: Request, res: Response, next: NextFunction): any => {
     const ip = req.ip || req.headers['x-forwarded-for'] as string || '127.0.0.1';
     const now = Date.now();

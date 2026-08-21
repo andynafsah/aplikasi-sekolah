@@ -539,6 +539,7 @@ export async function runFullHealthCheck(): Promise<{
   timestamp: string;
   services: ServiceHealthItem[];
 }> {
+  const DIAG_STATE = getDiagState();
   const now = new Date().toISOString();
   const services: ServiceHealthItem[] = [];
 
@@ -691,6 +692,7 @@ export async function runFullHealthCheck(): Promise<{
 // ----------------------------------------------------------------------------
 
 export async function getAggregatedSystemMetrics(): Promise<SystemMetrics> {
+  const DIAG_STATE = getDiagState();
   const mem = process.memoryUsage();
   const uptimeSec = Math.floor(process.uptime());
   const healthData = await runFullHealthCheck();

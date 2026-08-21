@@ -1599,12 +1599,12 @@ export default function Inventory() {
                 </button>
                 <button
                   onClick={() => {
-                    alert('Label barcode berhasil didownload dalam format PDF/PNG!');
+                    window.print();
                   }}
                   className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <FileDown className="h-4 w-4" />
-                  <span>Download Label</span>
+                  <span>Download / Simpan PDF</span>
                 </button>
               </div>
 

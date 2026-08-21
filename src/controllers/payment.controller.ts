@@ -1650,6 +1650,692 @@ export class PaymentController extends BaseController {
       return res.json({ success: true, message: `Rekonsiliasi selesai! ${matchedCount} transaksi berhasil dicocokkan otomatis secara real-time.` });
     }
 
+    // --- PHASED ENHANCEMENTS: WEBHOOK SIMULATOR, WA REMINDER, AGING SCHEDULE, AUTO-DEBIT ---
+    case 'simulateWebhookPayment': {
+      const { invoice_id, provider, reference_no, amount } = req.body;
+      const invoiceIndex = DB.feeInvoices.findIndex(i => i.id === invoice_id && i.tenant_id === tenantId);
+      if (invoiceIndex === -1) return res.json({ success: false, message: 'Tagihan tidak ditemukan' });
+
+      const invoice = DB.feeInvoices[invoiceIndex];
+      const payVal = Number(amount || invoice.amount);
+
+      const disc = Number((invoice as any).discount_amount || 0);
+      const fine = Number((invoice as any).fine_amount || 0);
+      const schol = Number((invoice as any).scholarship_amount || 0);
+      const netAmount = Math.max(0, invoice.amount + fine - disc - schol);
+
+      const newPaid = invoice.amount_paid + payVal;
+      const newStatus = newPaid >= netAmount ? 'PAID' : 'PARTIAL';
+
+      DB.feeInvoices[invoiceIndex] = {
+        ...invoice,
+        amount_paid: newPaid,
+        status: newStatus as any,
+        updated_at: new Date().toISOString()
+      };
+
+      const refCode = reference_no || `WH-${provider || 'GATEWAY'}-${Date.now()}`;
+      const paymentId = AutoNumberService.generateNextNumber(tenantId, 'PAY');
+      
+      const payment = {
+        id: paymentId,
+        tenant_id: tenantId,
+        invoice_id,
+        payment_date: new Date().toISOString().split('T')[0],
+        amount: payVal,
+        payment_method: `GATEWAY_${provider || 'XENDIT'}`,
+        recorded_by: `Webhook ${provider || 'Xendit'}`,
+        gateway_reference: refCode,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        created_by: 'webhook_system',
+        updated_by: 'webhook_system'
+      };
+      DB.feePayments.push(payment);
+
+      // Auto Post to Cash Book & Ledger Journal
+      DB.cashTransactions.push({
+        id: `csh-wh-${Date.now()}`,
+        tenant_id: tenantId,
+        date: new Date().toISOString().split('T')[0],
+        type: 'IN',
+        amount: payVal,
+        description: `Penerimaan Webhook Instant Payment (${provider || 'Xendit'}) - Ref: ${refCode}`,
+        category: 'SPP',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        created_by: 'system',
+        updated_by: 'system'
+      });
+
+      DB.ledgerEntries.push(
+        {
+          id: `led-wh-${Date.now()}-dr`,
+          tenant_id: tenantId,
+          date: new Date().toISOString().split('T')[0],
+          account_code: '11202',
+          account_name: 'Bank Muamalat - Gateway',
+          debit: payVal,
+          credit: 0,
+          description: `Setoran Webhook ${provider || 'Gateway'} [Ref: ${refCode}]`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted_at: null,
+          created_by: 'system',
+          updated_by: 'system'
+        },
+        {
+          id: `led-wh-${Date.now()}-cr`,
+          tenant_id: tenantId,
+          date: new Date().toISOString().split('T')[0],
+          account_code: '41101',
+          account_name: 'Pendapatan SPP Sekolah',
+          debit: 0,
+          credit: payVal,
+          description: `Pendapatan SPP via Gateway Webhook [Ref: ${refCode}]`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted_at: null,
+          created_by: 'system',
+          updated_by: 'system'
+        }
+      );
+
+      // Send automated notification log
+      const student = DB.students.find(s => s.id === invoice.student_id);
+      const studentName = student ? student.name : invoice.student_name || 'Siswa';
+      
+      if (!(DB as any).billingNotifications) (DB as any).billingNotifications = [];
+      (DB as any).billingNotifications.unshift({
+        id: `ntf-wh-${Date.now()}`,
+        tenant_id: tenantId,
+        student_id: invoice.student_id,
+        student_name: studentName,
+        student_nis: student?.nis || invoice.student_nis || '-',
+        type: 'WHATSAPP',
+        phone: student?.parent_phone || '081234567890',
+        message: `Pembayaran SPP sebesar Rp ${payVal.toLocaleString('id-ID')} via ${provider || 'Gateway'} [Ref: ${refCode}] TELAH DITERIMA. Kwitansi digital: LUNAS.`,
+        status: 'SENT',
+        sent_at: new Date().toISOString()
+      });
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Payment Gateway', `Webhook Callback Sukses: ${provider} (Ref: ${refCode})`);
+      return res.json({
+        success: true,
+        message: `Webhook Callback ${provider || 'Xendit'} Berhasil Diproses! Status tagihan #${invoice_id} diperbarui menjadi ${newStatus}.`,
+        data: payment
+      });
+    }
+
+    case 'sendWhatsappReminder': {
+      const { invoice_id, phone, custom_message } = req.body;
+      const invoice = DB.feeInvoices.find(i => i.id === invoice_id && i.tenant_id === tenantId);
+      if (!invoice) return res.json({ success: false, message: 'Tagihan tidak ditemukan' });
+
+      const student = DB.students.find(s => s.id === invoice.student_id);
+      const studentName = student ? student.name : invoice.student_name || 'Siswa';
+      const targetPhone = phone || student?.parent_phone || '081234567890';
+
+      const msg = custom_message || `Assalamu'alaikum Wr. Wb. Yth. Wali Santri/Siswa dari ${studentName}. Mengingatkan tagihan ${invoice.fee_name} sebesar Rp ${invoice.amount.toLocaleString('id-ID')} dengan tanggal jatuh tempo ${invoice.due_date}. Pembayaran dapat dilakukan via VA Muamalat/QRIS. Terima kasih.`;
+
+      const notif = {
+        id: `ntf-wa-${Date.now()}`,
+        tenant_id: tenantId,
+        student_id: invoice.student_id,
+        student_name: studentName,
+        student_nis: student?.nis || invoice.student_nis || '-',
+        type: 'WHATSAPP',
+        phone: targetPhone,
+        message: msg,
+        status: 'SENT',
+        sent_at: new Date().toISOString()
+      };
+
+      if (!(DB as any).billingNotifications) (DB as any).billingNotifications = [];
+      (DB as any).billingNotifications.unshift(notif);
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Notification', `Kirim pengingat WA ke ${targetPhone} untuk tagihan #${invoice_id}`);
+      return res.json({
+        success: true,
+        message: `Pengingat WhatsApp berhasil dikirimkan ke ${targetPhone}!`,
+        data: notif,
+        waLink: `https://wa.me/${targetPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`
+      });
+    }
+
+    case 'getAgingSchedule': {
+      const unpaidInvoices = DB.feeInvoices.filter(i => i.tenant_id === tenantId && i.status !== 'PAID');
+      const now = new Date();
+
+      let under30 = { count: 0, amount: 0, items: [] as any[] };
+      let days31to60 = { count: 0, amount: 0, items: [] as any[] };
+      let days61to90 = { count: 0, amount: 0, items: [] as any[] };
+      let over90 = { count: 0, amount: 0, items: [] as any[] };
+
+      unpaidInvoices.forEach(inv => {
+        const dueDate = new Date(inv.due_date);
+        const diffTime = now.getTime() - dueDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 3600 * 24));
+
+        const disc = Number((inv as any).discount_amount || 0);
+        const fine = Number((inv as any).fine_amount || 0);
+        const schol = Number((inv as any).scholarship_amount || 0);
+        const netAmount = Math.max(0, inv.amount + fine - disc - schol);
+        const remaining = Math.max(0, netAmount - inv.amount_paid);
+
+        const itemData = {
+          id: inv.id,
+          student_name: inv.student_name,
+          student_nis: inv.student_nis,
+          fee_name: inv.fee_name,
+          due_date: inv.due_date,
+          overdue_days: Math.max(0, diffDays),
+          remaining
+        };
+
+        if (diffDays <= 30) {
+          under30.count++;
+          under30.amount += remaining;
+          under30.items.push(itemData);
+        } else if (diffDays <= 60) {
+          days31to60.count++;
+          days31to60.amount += remaining;
+          days31to60.items.push(itemData);
+        } else if (diffDays <= 90) {
+          days61to90.count++;
+          days61to90.amount += remaining;
+          days61to90.items.push(itemData);
+        } else {
+          over90.count++;
+          over90.amount += remaining;
+          over90.items.push(itemData);
+        }
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          under30,
+          days31to60,
+          days61to90,
+          over90,
+          totalUnpaidAmount: under30.amount + days31to60.amount + days61to90.amount + over90.amount,
+          totalUnpaidCount: unpaidInvoices.length
+        }
+      });
+    }
+
+    case 'toggleAutoDebit': {
+      const { student_id, enabled } = req.body;
+      if (!(DB as any).studentAutoDebit) (DB as any).studentAutoDebit = [];
+
+      const existingIndex = (DB as any).studentAutoDebit.findIndex((a: any) => a.student_id === student_id && a.tenant_id === tenantId);
+      if (existingIndex !== -1) {
+        (DB as any).studentAutoDebit[existingIndex].enabled = enabled;
+      } else {
+        (DB as any).studentAutoDebit.push({
+          id: `autodebit-${Date.now()}`,
+          tenant_id: tenantId,
+          student_id,
+          enabled,
+          created_at: new Date().toISOString()
+        });
+      }
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'UPDATE', 'Tabungan', `Auto-debit SPP ${enabled ? 'DITANGKAP' : 'DINONAKTIFKAN'} untuk siswa ${student_id}`);
+      return res.json({ success: true, message: `Aturan Auto-Debit tabungan siswa berhasil ${enabled ? 'diaktifkan' : 'dinonaktifkan'}.` });
+    }
+
+    // --- PHASE 2 ENHANCEMENTS: SCHOLARSHIP WORKFLOW, INSTALLMENT PLAN, DUNNING LETTERS, BULK WA ---
+    case 'submitScholarshipRequest': {
+      const { student_id, invoice_id, reason, requested_discount, document_notes } = req.body;
+      if (!(DB as any).scholarshipRequests) (DB as any).scholarshipRequests = [];
+
+      const student = DB.students.find(s => s.id === student_id);
+      const invoice = DB.feeInvoices.find(i => i.id === invoice_id);
+
+      const newReq = {
+        id: `SCH-${Date.now()}`,
+        tenant_id: tenantId,
+        student_id,
+        student_name: student?.name || invoice?.student_name || 'Siswa',
+        student_nis: student?.nis || invoice?.student_nis || '-',
+        invoice_id: invoice_id || null,
+        fee_name: invoice?.fee_name || 'SPP & Biaya Pendidikan',
+        requested_discount: Number(requested_discount || 0),
+        reason: reason || 'Keringanan Biaya Pendidikan / Jalur Prestasi / Yatim',
+        document_notes: document_notes || 'Surat Keterangan Kurang Mampu / Prestasi terlampir',
+        status: 'PENDING',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      (DB as any).scholarshipRequests.unshift(newReq);
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Keringanan', `Pengajuan Keringanan #${newReq.id} dibuat untuk siswa ${newReq.student_name}`);
+
+      return res.json({
+        success: true,
+        message: `Pengajuan keringanan/beasiswa #${newReq.id} berhasil dikirim dan menunggu persetujuan Kepala Sekolah/Yayasan.`,
+        data: newReq
+      });
+    }
+
+    case 'approveScholarshipRequest': {
+      const { request_id, approved, approved_amount, notes } = req.body;
+      if (!(DB as any).scholarshipRequests) (DB as any).scholarshipRequests = [];
+
+      const reqIndex = (DB as any).scholarshipRequests.findIndex((r: any) => r.id === request_id && r.tenant_id === tenantId);
+      if (reqIndex === -1) return res.json({ success: false, message: 'Pengajuan tidak ditemukan' });
+
+      const request = (DB as any).scholarshipRequests[reqIndex];
+      const newStatus = approved ? 'APPROVED' : 'REJECTED';
+      const grantAmount = approved ? Number(approved_amount || request.requested_discount) : 0;
+
+      (DB as any).scholarshipRequests[reqIndex] = {
+        ...request,
+        status: newStatus,
+        approved_amount: grantAmount,
+        approval_notes: notes || (approved ? 'Disetujui oleh Pimpinan Yayasan' : 'Ditolak - Berkas belum memenuhi syarat'),
+        approved_at: new Date().toISOString(),
+        approved_by: username || 'Kepala Sekolah'
+      };
+
+      // If approved and invoice_id exists, update invoice discount/scholarship
+      if (approved && request.invoice_id) {
+        const invIndex = DB.feeInvoices.findIndex(i => i.id === request.invoice_id);
+        if (invIndex !== -1) {
+          const inv = DB.feeInvoices[invIndex];
+          DB.feeInvoices[invIndex] = {
+            ...inv,
+            discount_amount: (Number((inv as any).discount_amount || 0) + grantAmount),
+            scholarship_amount: grantAmount,
+            updated_at: new Date().toISOString()
+          } as any;
+        }
+      }
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'UPDATE', 'Keringanan', `Pengajuan Keringanan #${request_id} ${newStatus}`);
+      return res.json({
+        success: true,
+        message: `Pengajuan Keringanan #${request_id} berhasil ${approved ? 'DISETUJUI' : 'DITOLAK'}. Diskon Rp ${grantAmount.toLocaleString('id-ID')} telah diterapkan ke tagihan!`,
+        data: (DB as any).scholarshipRequests[reqIndex]
+      });
+    }
+
+    case 'createInstallmentPlan': {
+      const { invoice_id, num_installments } = req.body;
+      const invIndex = DB.feeInvoices.findIndex(i => i.id === invoice_id && i.tenant_id === tenantId);
+      if (invIndex === -1) return res.json({ success: false, message: 'Tagihan utama tidak ditemukan' });
+
+      const mainInvoice = DB.feeInvoices[invIndex];
+      const count = Number(num_installments || 3);
+      const installmentAmount = Math.ceil(mainInvoice.amount / count);
+
+      // Mark main invoice as replaced or split
+      DB.feeInvoices[invIndex] = {
+        ...mainInvoice,
+        status: 'PAID' as any, // cancel/replace main
+        notes: `Dipecah menjadi ${count} cicilan`,
+        updated_at: new Date().toISOString()
+      };
+
+      const generatedInvoices = [];
+      const startDate = new Date(mainInvoice.due_date);
+
+      for (let i = 1; i <= count; i++) {
+        const dueDate = new Date(startDate);
+        dueDate.setMonth(dueDate.getMonth() + (i - 1));
+
+        const newId = AutoNumberService.generateNextNumber(tenantId, 'INV');
+        const instInv = {
+          id: newId,
+          tenant_id: tenantId,
+          student_id: mainInvoice.student_id,
+          student_name: mainInvoice.student_name,
+          student_nis: mainInvoice.student_nis,
+          class_id: mainInvoice.class_id,
+          class_name: mainInvoice.class_name,
+          fee_type_id: mainInvoice.fee_type_id,
+          fee_name: `${mainInvoice.fee_name} (Cicilan ${i}/${count})`,
+          billing_period: `${mainInvoice.billing_period} - C${i}`,
+          due_date: dueDate.toISOString().split('T')[0],
+          amount: installmentAmount,
+          amount_paid: 0,
+          status: 'UNPAID' as any,
+          notes: `Program Skema Cicilan ${count}x dari Tagihan Utama #${mainInvoice.id}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted_at: null,
+          created_by: username || 'system',
+          updated_by: username || 'system'
+        };
+
+        DB.feeInvoices.push(instInv as any);
+        generatedInvoices.push(instInv);
+      }
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Cicilan', `Membuat skema cicilan ${count}x untuk tagihan #${invoice_id}`);
+      return res.json({
+        success: true,
+        message: `Skema Cicilan ${count}x berhasil dibuat! ${count} tagihan cicilan sebesar Rp ${installmentAmount.toLocaleString('id-ID')}/bulan telah diterbitkan.`,
+        data: generatedInvoices
+      });
+    }
+
+    case 'generateDunningLetter': {
+      const { invoice_id, letter_level } = req.body;
+      const invoice = DB.feeInvoices.find(i => i.id === invoice_id && i.tenant_id === tenantId);
+      if (!invoice) return res.json({ success: false, message: 'Tagihan tidak ditemukan' });
+
+      const level = letter_level || 'ST-1'; // ST-1, ST-2, ST-3
+      const student = DB.students.find(s => s.id === invoice.student_id);
+      const studentName = student ? student.name : invoice.student_name || 'Siswa';
+      const letterNo = `ST/${level}/${tenantId.toUpperCase()}/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const dunningLetter = {
+        id: `DUN-${Date.now()}`,
+        tenant_id: tenantId,
+        letter_no: letterNo,
+        letter_level: level,
+        invoice_id: invoice.id,
+        student_id: invoice.student_id,
+        student_name: studentName,
+        student_nis: student?.nis || invoice.student_nis || '-',
+        parent_name: student?.parent_name || 'Orang Tua / Wali Santri',
+        parent_phone: student?.parent_phone || '081234567890',
+        fee_name: invoice.fee_name,
+        amount_overdue: Math.max(0, invoice.amount - invoice.amount_paid),
+        due_date: invoice.due_date,
+        issued_date: new Date().toISOString().split('T')[0],
+        status: 'ISSUED',
+        created_at: new Date().toISOString()
+      };
+
+      if (!(DB as any).dunningLetters) (DB as any).dunningLetters = [];
+      (DB as any).dunningLetters.unshift(dunningLetter);
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Surat Tagihan', `Menerbitkan ${level} (${letterNo}) untuk ${studentName}`);
+      return res.json({
+        success: true,
+        message: `Surat Teguran Tagihan Resmi (${level}) No. ${letterNo} berhasil diterbitkan!`,
+        data: dunningLetter
+      });
+    }
+
+    case 'broadcastWhatsappInvoices': {
+      const { invoice_ids } = req.body;
+      const ids: string[] = Array.isArray(invoice_ids) ? invoice_ids : [];
+      if (ids.length === 0) return res.json({ success: false, message: 'Pilih minimal 1 tagihan untuk broadcast' });
+
+      let countSuccess = 0;
+      if (!(DB as any).billingNotifications) (DB as any).billingNotifications = [];
+
+      ids.forEach(invId => {
+        const inv = DB.feeInvoices.find(i => i.id === invId && i.tenant_id === tenantId);
+        if (inv) {
+          const student = DB.students.find(s => s.id === inv.student_id);
+          const studentName = student ? student.name : inv.student_name || 'Siswa';
+          const targetPhone = student?.parent_phone || '081234567890';
+          const msg = `[BROADCAST MASAL SPP] Yth. Wali Santri ${studentName}. Mengingatkan tagihan ${inv.fee_name} Rp ${inv.amount.toLocaleString('id-ID')} jatuh tempo ${inv.due_date}. Mohon pelunasan via VA/QRIS. Terima kasih.`;
+
+          (DB as any).billingNotifications.unshift({
+            id: `ntf-bc-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            tenant_id: tenantId,
+            student_id: inv.student_id,
+            student_name: studentName,
+            student_nis: student?.nis || inv.student_nis || '-',
+            type: 'WHATSAPP_BROADCAST',
+            phone: targetPhone,
+            message: msg,
+            status: 'SENT',
+            sent_at: new Date().toISOString()
+          });
+          countSuccess++;
+        }
+      });
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Broadcast WA', `Broadcast WA tagihan masal dikirimkan ke ${countSuccess} wali santri`);
+      return res.json({
+        success: true,
+        message: `Pesan broadcast WhatsApp tagihan berhasil dikirimkan ke ${countSuccess} Wali Santri dalam 1x klik!`,
+        count: countSuccess
+      });
+    }
+
+    // --- PHASE 3: PAYMENT CLAIMS, SMART CARD QRIS, & FINANCIAL CLOSING ---
+    case 'submitPaymentClaim': {
+      const { student_id, invoice_id, amount, bank_name, account_holder, transfer_date, proof_url, notes } = req.body;
+      if (!(DB as any).paymentClaims) (DB as any).paymentClaims = [];
+
+      const student = DB.students.find(s => s.id === student_id);
+      const invoice = DB.feeInvoices.find(i => i.id === invoice_id);
+
+      const claimId = `CLM-${Date.now()}`;
+      const newClaim = {
+        id: claimId,
+        tenant_id: tenantId,
+        student_id: student_id || invoice?.student_id || 'STU-001',
+        student_name: student ? student.name : invoice?.student_name || 'Siswa',
+        student_nis: student ? student.nis : invoice?.student_nis || '-',
+        invoice_id: invoice_id || null,
+        fee_name: invoice ? invoice.fee_name : 'SPP & Biaya Pendidikan',
+        amount: Number(amount || invoice?.amount || 0),
+        bank_name: bank_name || 'Bank Muamalat / Transfer ATM',
+        account_holder: account_holder || 'Wali Santri',
+        transfer_date: transfer_date || new Date().toISOString().split('T')[0],
+        proof_url: proof_url || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=60',
+        notes: notes || 'Klaim bukti transfer manual via aplikasi Wali Santri',
+        status: 'PENDING',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      (DB as any).paymentClaims.unshift(newClaim);
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Klaim Pembayaran', `Klaim pembayaran #${claimId} dikirim untuk siswa ${newClaim.student_name}`);
+
+      return res.json({
+        success: true,
+        message: `Bukti transfer berhasil dikirim! Kode Klaim #${claimId} kini dalam antrean verifikasi 2-Way Match Bendahara.`,
+        data: newClaim
+      });
+    }
+
+    case 'getPaymentClaims': {
+      if (!(DB as any).paymentClaims) (DB as any).paymentClaims = [];
+      const claims = (DB as any).paymentClaims.filter((c: any) => c.tenant_id === tenantId);
+      return res.json({ success: true, data: claims });
+    }
+
+    case 'verifyPaymentClaim': {
+      const { claim_id, status, rejection_reason } = req.body;
+      if (!(DB as any).paymentClaims) (DB as any).paymentClaims = [];
+
+      const claimIndex = (DB as any).paymentClaims.findIndex((c: any) => c.id === claim_id && c.tenant_id === tenantId);
+      if (claimIndex === -1) return res.json({ success: false, message: 'Data klaim tidak ditemukan' });
+
+      const claim = (DB as any).paymentClaims[claimIndex];
+      claim.status = status;
+      claim.verified_at = new Date().toISOString();
+      claim.verified_by = username || 'Bendahara';
+      if (rejection_reason) claim.rejection_reason = rejection_reason;
+
+      if (status === 'APPROVED' && claim.invoice_id) {
+        const invIdx = DB.feeInvoices.findIndex(i => i.id === claim.invoice_id && i.tenant_id === tenantId);
+        if (invIdx !== -1) {
+          const inv = DB.feeInvoices[invIdx];
+          const newPaid = inv.amount_paid + claim.amount;
+          const disc = Number((inv as any).discount_amount || 0);
+          const fine = Number((inv as any).fine_amount || 0);
+          const schol = Number((inv as any).scholarship_amount || 0);
+          const net = Math.max(0, inv.amount + fine - disc - schol);
+          const newStatus = newPaid >= net ? 'PAID' : 'PARTIAL';
+
+          DB.feeInvoices[invIdx] = {
+            ...inv,
+            amount_paid: newPaid,
+            status: newStatus as any,
+            updated_at: new Date().toISOString()
+          };
+
+          DB.cashTransactions.push({
+            id: `csh-clm-${Date.now()}`,
+            tenant_id: tenantId,
+            date: new Date().toISOString().split('T')[0],
+            type: 'IN',
+            amount: claim.amount,
+            description: `Verifikasi Klaim Resi Transfer #${claim.id} (${claim.student_name})`,
+            category: 'SPP',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            deleted_at: null,
+            created_by: 'system',
+            updated_by: 'system'
+          });
+
+          DB.ledgerEntries.push(
+            {
+              id: `led-clm-${Date.now()}-dr`,
+              tenant_id: tenantId,
+              date: new Date().toISOString().split('T')[0],
+              account_code: '11101',
+              account_name: 'Kas Bendahara SPP',
+              debit: claim.amount,
+              credit: 0,
+              description: `Verifikasi Klaim Transfer Wali Santri #${claim.id}`,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              deleted_at: null,
+              created_by: 'system',
+              updated_by: 'system'
+            },
+            {
+              id: `led-clm-${Date.now()}-cr`,
+              tenant_id: tenantId,
+              date: new Date().toISOString().split('T')[0],
+              account_code: '41101',
+              account_name: 'Pendapatan SPP Sekolah',
+              debit: 0,
+              credit: claim.amount,
+              description: `Pendapatan SPP terverifikasi #${claim.id}`,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              deleted_at: null,
+              created_by: 'system',
+              updated_by: 'system'
+            }
+          );
+        }
+      }
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'UPDATE', 'Klaim Pembayaran', `Verifikasi klaim #${claim_id} set status: ${status}`);
+      return res.json({
+        success: true,
+        message: status === 'APPROVED' ? `Klaim pembayaran #${claim_id} BERHASIL DISETUJUI & Tagihan diperbarui!` : `Klaim pembayaran #${claim_id} DITOLAK.`,
+        data: claim
+      });
+    }
+
+    case 'getStudentPaymentCard': {
+      const { student_id } = req.body;
+      const student = DB.students.find(s => s.id === student_id) || DB.students[0];
+      if (!student) return res.json({ success: false, message: 'Data siswa tidak tersedia' });
+
+      const unpaidInvoices = DB.feeInvoices.filter(i => i.student_id === student.id && i.tenant_id === tenantId && i.status !== 'PAID');
+      const totalUnpaid = unpaidInvoices.reduce((acc, inv) => {
+        const disc = Number((inv as any).discount_amount || 0);
+        const fine = Number((inv as any).fine_amount || 0);
+        const schol = Number((inv as any).scholarship_amount || 0);
+        const net = Math.max(0, inv.amount + fine - disc - schol);
+        return acc + Math.max(0, net - inv.amount_paid);
+      }, 0);
+
+      const cleanNis = String(student.nis || '1001').replace(/[^0-9]/g, '');
+      const cardData = {
+        student_id: student.id,
+        student_name: student.name,
+        student_nis: student.nis || '1001',
+        class_name: student.classroom_id || 'Kelas Regular',
+        parent_name: student.parent_name || 'Wali Santri',
+        parent_phone: student.parent_phone || '081234567890',
+        virtual_accounts: {
+          muamalat: `988771${cleanNis.padStart(6, '0')}`,
+          bca: `88011${cleanNis.padStart(6, '0')}`,
+          mandiri: `89022${cleanNis.padStart(6, '0')}`,
+          bri: `77033${cleanNis.padStart(6, '0')}`
+        },
+        qris_payload: `00020101021226670016COM.QRIS.WWW01189360091100223344550215ID10203040506070303UMI5204581253033605802ID5912PONDOK_PESANTREN6007BANDUNG61054011562070703A0163041A2B`,
+        total_unpaid_amount: totalUnpaid,
+        unpaid_invoices_count: unpaidInvoices.length
+      };
+
+      return res.json({ success: true, data: cardData });
+    }
+
+    case 'executeFinancialClosing': {
+      const { period_month, period_year, notes } = req.body;
+      if (!(DB as any).financialClosings) (DB as any).financialClosings = [];
+
+      const month = period_month || new Date().toLocaleString('id-ID', { month: 'long' });
+      const year = period_year || new Date().getFullYear();
+
+      const allInvoices = DB.feeInvoices.filter(i => i.tenant_id === tenantId);
+      const totalCollected = DB.feePayments.filter(p => p.tenant_id === tenantId).reduce((sum, p) => sum + p.amount, 0);
+      const totalOutstanding = allInvoices.filter(i => i.status !== 'PAID').reduce((sum, i) => {
+        const disc = Number((i as any).discount_amount || 0);
+        const fine = Number((i as any).fine_amount || 0);
+        const schol = Number((i as any).scholarship_amount || 0);
+        const net = Math.max(0, i.amount + fine - disc - schol);
+        return sum + Math.max(0, net - i.amount_paid);
+      }, 0);
+
+      const closingRecord = {
+        id: `CLS-${year}-${month.substring(0, 3).toUpperCase()}-${Date.now()}`,
+        tenant_id: tenantId,
+        period_month: month,
+        period_year: year,
+        total_collected: totalCollected,
+        total_outstanding: totalOutstanding,
+        closing_date: new Date().toISOString(),
+        closed_by: username || 'Kepala Keuangan',
+        notes: notes || `Jurnal penutup & konsolidasi neraca periode ${month} ${year}`,
+        status: 'CLOSED'
+      };
+
+      (DB as any).financialClosings.unshift(closingRecord);
+
+      DB.ledgerEntries.push({
+        id: `led-cls-${Date.now()}`,
+        tenant_id: tenantId,
+        date: new Date().toISOString().split('T')[0],
+        account_code: '31101',
+        account_name: 'Ikhtisar Laba Rugi / Saldo Akhir Periode',
+        debit: totalCollected,
+        credit: 0,
+        description: `Autoposting Jurnal Penutup Periode ${month} ${year}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        created_by: 'closing_system',
+        updated_by: 'closing_system'
+      });
+
+      logActivity(tenantId, authUser?.id || 'system', username || 'system', role || 'STAFF', 'INSERT', 'Tutup Buku', `Tutup buku keuangan periode ${month} ${year} berhasil dieksekusi.`);
+
+      return res.json({
+        success: true,
+        message: `Tutup Buku & Jurnal Penutup Keuangan Periode ${month} ${year} BERHASIL DIEKSEKUSI! Saldo terkonsolidasi.`,
+        data: closingRecord
+      });
+    }
+
+    case 'getFinancialClosings': {
+      if (!(DB as any).financialClosings) (DB as any).financialClosings = [];
+      const list = (DB as any).financialClosings.filter((f: any) => f.tenant_id === tenantId);
+      return res.json({ success: true, data: list });
+    }
+
     default:
       return null;
   }

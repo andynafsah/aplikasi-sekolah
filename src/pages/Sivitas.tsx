@@ -174,17 +174,21 @@ export default function Sivitas() {
       const isSantri = student.is_santri === 'YA' || (student.pondok?.nomor_santri ? true : false);
       const photoUrl = student.foto || student.identitas?.foto || student.foto_url || student.avatar || null;
 
+      const logoUrl = settings?.logo_url || settings?.sekolah_logo || settings?.logo || (tenant as any)?.logo || null;
+      const schoolName = settings?.sekolah_nama || settings?.sekolah?.nama || settings?.pondok_nama || tenant?.name || 'Pondok Pesantren & Madrasah Al-Hikmah';
+      const yayasanName = settings?.yayasan_nama || settings?.yayasan || (schoolName.toUpperCase().includes('YAYASAN') ? schoolName : `YAYASAN ${schoolName.toUpperCase()}`);
+
       const studentUnit = student.unit || student.sekolah?.unit || (kelas.startsWith('1') || kelas.startsWith('2') || kelas.startsWith('3') || kelas.startsWith('4') || kelas.startsWith('5') || kelas.startsWith('6') ? 'SD' : kelas.toUpperCase().includes('TK') ? 'TK' : kelas.toUpperCase().includes('SMP') || kelas.startsWith('VII') || kelas.startsWith('VIII') || kelas.startsWith('IX') ? 'SMP' : 'SMA');
       const unitLogoText = studentUnit === 'TK' ? 'TK' : studentUnit === 'SD' ? 'SD' : studentUnit === 'SMP' ? 'SMP' : studentUnit === 'SMK' ? 'SMK' : 'SMA';
       const unitInstansiTitle = studentUnit === 'TK' 
-        ? 'TAMAN KANAK-KANAK ISLAM DARUL HUFFADZ' 
+        ? `TAMAN KANAK-KANAK ISLAM ${schoolName.toUpperCase()}` 
         : studentUnit === 'SD' 
-        ? 'SEKOLAH DASAR ISLAM TERPADU (SDIT) DARUL HUFFADZ' 
+        ? `SEKOLAH DASAR ISLAM TERPADU (SDIT) ${schoolName.toUpperCase()}` 
         : studentUnit === 'SMP' 
-        ? 'MADRASAH TSANAWIYAH / SMP DARUL HUFFADZ' 
+        ? `MADRASAH TSANAWIYAH / SMP ${schoolName.toUpperCase()}` 
         : studentUnit === 'SMK'
-        ? 'SEKOLAH MENENGAH KEJURUAN (SMK) DARUL HUFFADZ'
-        : 'MADRASAH ALIYAH / SMA DARUL HUFFADZ';
+        ? `SEKOLAH MENENGAH KEJURUAN (SMK) ${schoolName.toUpperCase()}`
+        : `MADRASAH ALIYAH / SMA ${schoolName.toUpperCase()}`;
 
       // Vector SVG QR Code generator for precise, realistic QR Code rendering
       const qrSVG = `
@@ -239,17 +243,21 @@ export default function Sivitas() {
             <!-- Kop Surat Resmi -->
             <div class="kop-header">
               <div class="kop-logo-left">
-                <div class="logo-circle" style="font-size: 14px; font-weight: 800;">
-                  ${unitLogoText}
-                </div>
+                ${logoUrl ? `
+                  <img src="${logoUrl}" alt="Logo Instansi" style="max-height: 58px; max-width: 65px; object-fit: contain; display: block;" />
+                ` : `
+                  <div class="logo-circle" style="font-size: 14px; font-weight: 800;">
+                    ${unitLogoText}
+                  </div>
+                `}
               </div>
               <div class="kop-text">
-                <div class="yayasan-title">${settings.yayasan_nama || 'YAYASAN DARUL HUFFADZ ENTERPRISE'}</div>
+                <div class="yayasan-title">${yayasanName.toUpperCase()}</div>
                 <div class="instansi-title">${unitInstansiTitle}</div>
-                <div class="akreditasi-tag">NSM: 121232010045 &nbsp;•&nbsp; NPSN: 69945120 &nbsp;•&nbsp; TERAKREDITASI "A" (KEMENTERIAN AGAMA RI)</div>
+                <div class="akreditasi-tag">NSM: ${settings?.nsm || '121232010045'} &nbsp;•&nbsp; NPSN: ${settings?.npsn || '69945120'} &nbsp;•&nbsp; TERAKREDITASI "${settings?.akreditasi || 'A'}"</div>
                 <div class="alamat-text">
-                  ${isPondok ? (settings.pondok_alamat || 'Jl. Raya Megamendung-Ciawi No. 45, RT 03 RW 01, Sukamaju, Megamendung, Bogor 16770') : (settings.sekolah_alamat || 'Jl. Raya Megamendung-Ciawi No. 45, RT 03 RW 01, Sukamaju, Megamendung, Bogor 16770')}<br />
-                  Telp: ${settings.sekolah_telepon || '(0251) 824-9011'} &nbsp;|&nbsp; Website: ${settings.sekolah_website || 'www.darulhuffadz.sch.id'} &nbsp;|&nbsp; Email: ${settings.sekolah_email || 'info@darulhuffadz.sch.id'}
+                  ${isPondok ? (settings?.pondok_alamat || settings?.sekolah_alamat || 'Kompleks Pendidikan Islam, Jl. Pesantren No. 45') : (settings?.sekolah_alamat || settings?.pondok_alamat || 'Kompleks Pendidikan Islam, Jl. Pesantren No. 45')}<br />
+                  Telp: ${settings?.sekolah_telepon || '(021) 8899-7700'} &nbsp;|&nbsp; Website: ${settings?.sekolah_website || 'www.pesantren.sch.id'} &nbsp;|&nbsp; Email: ${settings?.sekolah_email || 'info@pesantren.sch.id'}
                 </div>
               </div>
               <div style="width: 60px; flex-shrink: 0;"></div>
@@ -479,30 +487,30 @@ export default function Sivitas() {
               <div class="sig-col">
                 <div class="sig-title">Mengetahui,<br/>Orang Tua / Wali Siswa</div>
                 <div class="sig-space"></div>
-                <div class="sig-name">( ${namaAyah} )</div>
+                <div class="sig-name">( ${namaAyah !== '-' ? namaAyah : 'Orang Tua / Wali'} )</div>
                 <div class="sig-nip">Tanda Tangan & Nama Terang</div>
               </div>
 
               <div class="sig-col">
                 <div class="sig-title">Kepala Urusan Tata Usaha</div>
                 <div class="sig-space"></div>
-                <div class="sig-name">Ahmad Ghozali, S.Pd.</div>
-                <div class="sig-nip">NIP: 19851010201001</div>
+                <div class="sig-name">${settings?.nama_ka_tu || 'Ahmad Ghozali, S.Pd.'}</div>
+                <div class="sig-nip">NIP: ${settings?.nip_ka_tu || '19851010201001'}</div>
               </div>
 
               <div class="sig-col">
-                <div class="sig-title">Bogor, 14 Juli 2026<br/>Kepala Madrasah / Mudir</div>
+                <div class="sig-title">${settings?.kota_sekolah || 'Jakarta'}, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}<br/>Kepala Sekolah / Mudir</div>
                 <div class="sig-space">
-                  <div class="stempel-box">STAMPEL RESMI</div>
+                  <div class="stempel-box">STEMPEL RESMI</div>
                 </div>
-                <div class="sig-name">Dr. KH. M. Hamdan, Lc. M.A.</div>
-                <div class="sig-nip">NIP: 197805122005011002</div>
+                <div class="sig-name">${settings?.nama_kepala_sekolah || settings?.nama_mudir || 'Dr. KH. M. Hamdan, Lc. M.A.'}</div>
+                <div class="sig-nip">NIP: ${settings?.nip_kepala_sekolah || settings?.nip_mudir || '197805122005011002'}</div>
               </div>
             </div>
 
             <!-- FOOTER NOTE -->
             <div class="doc-footer">
-              <span>Sistem Informasi Management Kesiswaan & Kepondokan • Darul Huffadz Enterprise</span>
+              <span>Sistem Manajemen Kesiswaan & Kepondokan • ${schoolName}</span>
               <span>Dokumen Sah Buku Induk Kesiswaan</span>
             </div>
           </div>
@@ -1307,7 +1315,7 @@ export default function Sivitas() {
             {(subTab === 'KARTU' || subTab === 'BARCODE' || subTab === 'QR') && (
               <StudentCardPrinter
                 students={students}
-                tenantName={tenant?.name || 'Al-Ikhlas Pondok Pesantren'}
+                tenantName={settings?.sekolah_nama || settings?.pondok_nama || tenant?.name || 'Pondok Pesantren & Sekolah'}
                 subTab={subTab}
               />
             )}

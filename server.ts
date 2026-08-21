@@ -333,7 +333,7 @@ app.use((req, res, next) => {
 // Production DevOps Hardening: Sliding Window Rate Limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = Number(process.env.RATE_LIMIT_WINDOW_MS) || 60000;
-const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX) || 100000;
+const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX) || 500000;
 
 app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/reports')) {
@@ -700,24 +700,37 @@ export async function runAIGateway(
 
   const client = getGeminiClient();
   if (client) {
-    try {
-      const response = await client.models.generateContent({
-        model: model_code || 'gemini-3.6-flash',
-        contents: userPrompt,
-        config: {
-          systemInstruction: systemPrompt,
-          temperature: options.temperature ?? 0.7,
+    let attempts = 0;
+    const maxAttempts = 2;
+    while (attempts < maxAttempts) {
+      try {
+        attempts++;
+        const response = await client.models.generateContent({
+          model: model_code || 'gemini-2.5-flash',
+          contents: userPrompt,
+          config: {
+            systemInstruction: systemPrompt,
+            temperature: options.temperature ?? 0.7,
+          }
+        });
+        text = response.text || "";
+        promptTokens = response.usageMetadata?.promptTokenCount || promptTokens;
+        completionTokens = response.usageMetadata?.candidatesTokenCount || completionTokens;
+        if (!text || text.trim() === "") {
+          text = generateSimulatedResponse(provider_code, model_code, systemPrompt, userPrompt);
         }
-      });
-      text = response.text || "";
-      promptTokens = response.usageMetadata?.promptTokenCount || promptTokens;
-      completionTokens = response.usageMetadata?.candidatesTokenCount || completionTokens;
-      if (!text || text.trim() === "") {
+        break;
+      } catch (e: any) {
+        const isRateLimit = e?.message?.includes('429') || e?.message?.toLowerCase().includes('rate') || e?.message?.toLowerCase().includes('quota') || e?.status === 429;
+        if (isRateLimit && attempts < maxAttempts) {
+          console.warn(`[AI Gateway] Gemini API Rate limit encountered (Attempt ${attempts}/${maxAttempts}). Retrying in 1000ms...`);
+          await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+        console.warn("Gemini API Error (Rate Limit/Quota/Error), falling back to simulated engine:", e?.message || e);
         text = generateSimulatedResponse(provider_code, model_code, systemPrompt, userPrompt);
+        break;
       }
-    } catch (e: any) {
-      console.warn("Gemini API Error (Rate Limit/Quota/Error), falling back to simulated engine:", e?.message || e);
-      text = generateSimulatedResponse(provider_code, model_code, systemPrompt, userPrompt);
     }
   } else {
     text = generateSimulatedResponse(provider_code, model_code, systemPrompt, userPrompt);

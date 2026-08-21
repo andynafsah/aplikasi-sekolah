@@ -1404,14 +1404,7 @@ export default function Asset() {
               <div className="flex gap-2 justify-center">
                 <button
                   onClick={() => {
-                    const printContents = document.getElementById('print-asset-label-area')?.innerHTML;
-                    const originalContents = document.body.innerHTML;
-                    if (printContents) {
-                      document.body.innerHTML = printContents;
-                      window.print();
-                      document.body.innerHTML = originalContents;
-                      window.location.reload();
-                    }
+                    window.print();
                   }}
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
@@ -1420,12 +1413,12 @@ export default function Asset() {
                 </button>
                 <button
                   onClick={() => {
-                    alert('Label barcode berhasil didownload dalam format PNG/PDF!');
+                    window.print();
                   }}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <FileDown className="h-4 w-4" />
-                  <span>Download Label</span>
+                  <span>Download / Simpan PDF</span>
                 </button>
               </div>
 

@@ -40,9 +40,9 @@ apiClient.interceptors.response.use(
     const config = error.config;
     if (error.response?.status === 429 && config) {
       config._retryCount = (config._retryCount || 0) + 1;
-      if (config._retryCount <= 3) {
-        const delay = config._retryCount * 500;
-        console.warn(`API rate limited (429). Retrying request (attempt ${config._retryCount}/3) in ${delay}ms...`);
+      if (config._retryCount <= 5) {
+        const delay = Math.pow(2, config._retryCount - 1) * 500; // 500ms, 1000ms, 2000ms, 4000ms, 8000ms
+        console.warn(`API rate limited (429). Retrying request (attempt ${config._retryCount}/5) in ${delay}ms...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
         return apiClient(config);
       }
